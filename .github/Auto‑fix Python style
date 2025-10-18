@@ -1,0 +1,60 @@
+name: Auto‑fix Python style
+
+# This workflow automatically formats and lints all Python files in
+# the repository using the `ruff` tool.  It runs on pushes and pull
+# requests that modify Python sources, applies fixes in place and
+# commits the changes back to the repository.  By running the
+# formatter on the entire repository instead of expanding the file list,
+# we avoid hitting the operating system’s argument length limits.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+  pull_request:
+    paths:
+      - '**/*.py'
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # allow the action to push changes back
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensure full history so we can push changes
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir ruff
+
+      - name: Run ruff to auto‑format and lint
+        run: |
+          # Format all Python files in place and apply fixes for lints.
+          ruff format . --fix
+          ruff check . --fix
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Stage changes; if no files were modified this will do nothing.
+          git add .
+          if git diff --cached --quiet; then
+            echo "No Python formatting changes to commit."
+          else
+            git commit -m "chore: apply Python style fixes via ruff" --no-verify || true
+            # Push the changes back to the same branch.
+            git push
+          fi

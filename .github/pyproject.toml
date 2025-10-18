@@ -1,0 +1,7 @@
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["ai_backtest_dev"]
+
+[tool.ruff]
+target-version = "py311"

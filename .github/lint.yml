@@ -1,0 +1,27 @@
+# .github/workflows/lint.yml
+name: Lint & AutoFix
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tools/**"
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -U ruff black
+      - run: ruff check . --fix --exit-non-zero-on-fix
+      - run: black . --check

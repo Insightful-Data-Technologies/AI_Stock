@@ -1,0 +1,123 @@
+name: Fix All CI Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: "Python version to enforce in all workflows"
+        required: true
+        default: "3.11"
+
+jobs:
+  fix-all:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ github.event.inputs.python_version }}
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff isort pyupgrade pytest pytest-cov
+
+      - name: Run ruff (autofix)
+        run: |
+          ruff check . --fix
+          ruff format .
+
+      - name: Run isort (autofix)
+        run: |
+          isort .
+
+      - name: Run pyupgrade (autofix)
+        run: |
+          set -e
+          find . -type f -name "*.py" -not -path "./.venv/*" -print0 | \
+            xargs -0 -n 1 -- pyupgrade --py311-plus
+
+      - name: Enforce python-version in all workflow YAMLs
+        run: |
+          PYV="${{ github.event.inputs.python_version }}"
+          shopt -s globstar
+          for f in .github/workflows/**/*.yml .github/workflows/**/*.yaml; do
+            [ -f "$f" ] || continue
+            awk -v ver="$PYV" '
+              /uses:\s*actions\/setup-python@/ { print; getline;
+                if ($0 ~ /python-version:/) { sub(/python-version:.*/, "python-version: " ver); print; next }
+                else { print "      python-version: " ver }
+              ; next }
+              { print }
+            ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
+
+      # התקנת תלויות הפרויקט אם קיימות (לא נכשלת אם אין קובץ)
+      - name: Install project deps (best-effort)
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
+          if [ -f pyproject.toml ]; then pip install ".[all]" || true; fi
+
+      # מריץ בדיקות; לא מפיל את ה-job. שומר סטטוס לסביבה+אאוטפוט.
+      - name: Run tests (pytest)
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          pytest -q --maxfail=1 --disable-warnings --junitxml=pytest-report.xml
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "PYTEST_STATUS=passed" >> $GITHUB_ENV
+            echo "status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "PYTEST_STATUS=failed" >> $GITHUB_ENV
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+          exit 0
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report
+          path: pytest-report.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # יוצר PR; אם הבדיקות נכשלו מוסיף [ci skip] כדי למנוע ריצות נוספות בלופ
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto/fix-all-ci
+          title: >-
+            chore(ci): one-click Fix All
+            ${{ steps.tests.outputs.status == 'failed' && '(tests failing)' || '' }}
+          commit-message: >-
+            chore(ci): automatic fixes + Python version sync
+            ${{ steps.tests.outputs.status == 'failed' && '[ci skip]' || '' }}
+          body: |
+            This PR was created by the **Fix All CI Issues** workflow.
+
+            Performed:
+            - ruff --fix + ruff format
+            - isort
+            - pyupgrade --py311-plus
+            - Unified python-version across GitHub Actions
+            - Ran pytest (report attached as artifact)
+
+            Pytest status: **${{ steps.tests.outputs.status }}**
+          labels: |
+            automation
+            ci
+            ${{ steps.tests.outputs.status == 'failed' && 'tests-failing' || '' }}
+          delete-branch: true

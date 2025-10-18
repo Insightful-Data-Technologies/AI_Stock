@@ -1,0 +1,60 @@
+name: Pyupgrade (py311)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  pyupgrade:
+    name: Run pyupgrade on selected folders (py311)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pyupgrade
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyupgrade
+
+      - name: Run pyupgrade on target folders
+        shell: pwsh
+        run: |
+          Write-Host "Running pyupgrade only in 02_Predict, a_external_files, and utils folders..."
+          $files = git ls-files `
+            "02_Predict/*.py" "02_Predict/**/*.py" `
+            "a_external_files/*.py" "a_external_files/**/*.py" `
+            "utils/*.py" "utils/**/*.py"
+          if ($files -and $files.Count -gt 0) {
+            python -m pyupgrade --py311-plus @files
+          } else {
+            Write-Host "No Python files found in target folders."
+          }
+
+      - name: Fail if changes (enforce formatting)
+        shell: pwsh
+        run: |
+          $status = git status --porcelain
+          if ($status) {
+            Write-Host "❌ Some files need pyupgrade changes. Please run pyupgrade locally and commit the results."
+            git --no-pager diff --name-only
+            exit 1
+          } else {
+            Write-Host "✅ All files are already pyupgrade-clean"
+          }
+      - name: Auto-commit pyupgrade changes
+        if: ${{ failure() }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Auto-fix Python syntax with pyupgrade"
+          git push
