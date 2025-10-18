@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "github.copilot",
+    "github.copilot-chat",
+    "ms-azuretools.vscode-azureresourcegroups",
+    "ms-azuretools.vscode-azurefunctions",
+    "ms-mssql.mssql",
+    "ms-vscode.vscode-json",
+    "ms-toolsai.jupyter"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-html",
+    "ms-vscode.vscode-css",
+    "ms-vscode.vscode-javascript",
+    "ms-vscode.vscode-react-native",
+    "ms-vscode.cpptools",
+    "ms-dotnettools.csharp",
+    "oracle.oracle-developer-tools"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "src": {
+    "pages": [
+      "Home.vue",
+      "Performance.vue",
+      "RiskManagement.vue",
+      "Technology.vue",
+      "About.vue"
+    ],
+    "components": [
+      "Navigation.vue",
+      "Footer.vue",
+      "Charts/PerformanceChart.vue",
+      "Charts/RiskChart.vue",
+      "Dashboard/LiveDashboard.vue"
+    ],
+    "assets": [
+      "styles/main.css",
+      "images/logo.png",
+      "data/sample-data.json"
+    ]
+  },
+  "api": {
+    "functions": [
+      "GetStockData/__init__.py",
+      "GetPerformanceMetrics/__init__.py",
+      "GetRiskAnalysis/__init__.py",
+      "requirements.txt"
+    ]
+  },
+  "public": [
+    "index.html",
+    "favicon.ico"
+  ],
+  "config": [
+    "package.json",
+    "vue.config.js",
+    "azure-pipelines.yml"
+  ]
+}

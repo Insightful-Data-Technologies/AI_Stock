@@ -1,0 +1,50 @@
+{
+  "step_by_step": {
+    "1": {
+      "title": "Access GoDaddy DNS Management",
+      "actions": [
+        "Login to GoDaddy account",
+        "Go to 'My Products' → 'DNS'",
+        "Select aizevinstocks.com",
+        "Click 'DNS Records'"
+      ]
+    },
+    "2": {
+      "title": "Delete existing records",
+      "actions": [
+        "Delete the A record pointing to 160.153.0.150",
+        "Keep NS records as they are"
+      ]
+    },
+    "3": {
+      "title": "Add new DNS records",
+      "records": [
+        {
+          "type": "CNAME",
+          "name": "www",
+          "points_to": "[Azure Static App URL].azurestaticapps.net",
+          "ttl": "1 Hour"
+        },
+        {
+          "type": "CNAME",
+          "name": "asuid",
+          "points_to": "[Azure verification token]",
+          "ttl": "1 Hour"
+        },
+        {
+          "type": "A",
+          "name": "@",
+          "points_to": "[Azure Static App IP]",
+          "ttl": "1 Hour"
+        }
+      ]
+    }
+  },
+  "verification": {
+    "commands": [
+      "nslookup aizevinstocks.com",
+      "nslookup www.aizevinstocks.com",
+      "curl -I https://aizevinstocks.com"
+    ]
+  }
+}

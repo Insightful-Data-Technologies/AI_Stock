@@ -1,0 +1,32 @@
+{
+  "python.defaultInterpreterPath": "C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "extensions.autoUpdate": false,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/__pycache__/**": true,
+    "**/.env": false
+  },
+  "azure.tenant": "",
+  "azure.cloud": "AzureCloud",
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": false,
+    "plaintext": false
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "files.associations": {
+    "*.env": "dotenv",
+    "*.ipynb": "jupyter-notebook"
+  },
+  "extensions.recommendations": [
+    "ms-python.python",
+    "github.copilot",
+    "ms-vscode.vscode-json",
+    "ms-azuretools.vscode-azureresourcegroups",
+    "ms-python.debugpy"
+  ]
+}

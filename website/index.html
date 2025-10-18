@@ -1,0 +1,1241 @@
+<!DOCTYPE html><!DOCTYPE html>
+
+<html lang="en" dir="ltr"><html lang="en" dir="ltr">
+
+<head><head>
+
+    <meta charset="UTF-8">    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Stock Analysis Platform - Advanced Market Intelligence</title>    <title>AI Stock Analysis Platform - Advanced Market Intelligence</title>
+
+    <meta name="description" content="AI Stock Analysis Platform - 85% accuracy in market trend predictions | aizevinstocks.com">    <meta name="description" content="AI Stock Analysis Platform - 85% accuracy in market trend predictions | aizevinstocks.com">
+
+        
+
+    <!-- Stylesheets -->    <!-- Stylesheets -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+        
+
+    <!-- Chart.js for interactive charts -->    <!-- Chart.js for interactive charts -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+    <style>    <style>
+
+        * {        * {
+
+            margin: 0;            margin: 0;
+
+            padding: 0;            padding: 0;
+
+            box-sizing: border-box;            box-sizing: border-box;
+
+        }        }
+
+
+
+        body {        body {
+
+            font-family: 'Inter', sans-serif;            font-family: 'Inter', sans-serif;
+
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            color: #333;            color: #333;
+
+            line-height: 1.6;            line-height: 1.6;
+
+        }        }
+
+
+
+        .container {        .container {
+
+            max-width: 1200px;            max-width: 1200px;
+
+            margin: 0 auto;            margin: 0 auto;
+
+            padding: 0 20px;            padding: 0 20px;
+
+        }        }
+
+
+
+        /* Navigation */        /* Navigation */
+
+        .navbar {        .navbar {
+
+            background: rgba(255, 255, 255, 0.95);            background: rgba(255, 255, 255, 0.95);
+
+            backdrop-filter: blur(10px);            backdrop-filter: blur(10px);
+
+            padding: 1rem 0;            padding: 1rem 0;
+
+            position: fixed;            position: fixed;
+
+            width: 100%;            width: 100%;
+
+            top: 0;            top: 0;
+
+            z-index: 1000;            z-index: 1000;
+
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+
+        }        }
+
+
+
+        .nav-container {        .nav-container {
+
+            display: flex;            display: flex;
+
+            justify-content: space-between;            justify-content: space-between;
+
+            align-items: center;            align-items: center;
+
+            max-width: 1200px;            max-width: 1200px;
+
+            margin: 0 auto;            margin: 0 auto;
+
+            padding: 0 20px;            padding: 0 20px;
+
+        }        }
+
+
+
+        .nav-logo {        .nav-logo {
+
+            display: flex;            display: flex;
+
+            align-items: center;            align-items: center;
+
+            font-weight: 700;            font-weight: 700;
+
+            font-size: 1.5rem;            font-size: 1.5rem;
+
+            color: #667eea;            color: #667eea;
+
+        }        }
+
+
+
+        .nav-menu {        .nav-menu {
+
+            display: flex;            display: flex;
+
+            list-style: none;            list-style: none;
+
+            gap: 2rem;            gap: 2rem;
+
+        }        }
+
+
+
+        .nav-link {        .nav-link {
+
+            text-decoration: none;            text-decoration: none;
+
+            color: #333;            color: #333;
+
+            font-weight: 500;            font-weight: 500;
+
+            transition: color 0.3s;            transition: color 0.3s;
+
+        }        }
+
+
+
+        .nav-link:hover, .nav-link.active {        .nav-link:hover, .nav-link.active {
+
+            color: #667eea;            color: #667eea;
+
+        }        }
+
+
+
+        .cta-button {        .cta-button {
+
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;            background: linear-gradient(135deg, #667eea, #764ba2);
+
+            color: white !important;            color: white !important;
+
+            padding: 0.5rem 1rem;            padding: 0.5rem 1rem;
+
+            border-radius: 25px;            border-radius: 25px;
+
+        }        }
+
+
+
+        /* Hero Section */        /* Hero Section */
+
+        .hero {        .hero {
+
+            min-height: 100vh;            min-height: 100vh;
+
+            display: flex;            display: flex;
+
+            align-items: center;            align-items: center;
+
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            color: white;            color: white;
+
+            position: relative;            position: relative;
+
+            overflow: hidden;            overflow: hidden;
+
+        }        }
+
+
+
+        .hero-content {        .hero-content {
+
+            display: grid;            display: grid;
+
+            grid-template-columns: 1fr 1fr;            grid-template-columns: 1fr 1fr;
+
+            gap: 3rem;            gap: 3rem;
+
+            align-items: center;            align-items: center;
+
+            margin-top: 80px;            margin-top: 80px;
+
+        }        }
+
+
+
+        .hero-title {        .hero-title {
+
+            font-size: 3.5rem;            font-size: 3.5rem;
+
+            font-weight: 900;            font-weight: 900;
+
+            margin-bottom: 1rem;            margin-bottom: 1rem;
+
+            line-height: 1.2;            line-height: 1.2;
+
+        }        }
+
+
+
+        .gradient-text {        .gradient-text {
+
+            background: linear-gradient(45deg, #fff, #a8edea);            background: linear-gradient(45deg, #fff, #a8edea);
+
+            -webkit-background-clip: text;            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;            -webkit-text-fill-color: transparent;
+
+            background-clip: text;            background-clip: text;
+
+        }        }
+
+
+
+        .hero-subtitle {        .hero-subtitle {
+
+            font-size: 1.25rem;            font-size: 1.25rem;
+
+            margin-bottom: 2rem;            margin-bottom: 2rem;
+
+            opacity: 0.9;            opacity: 0.9;
+
+        }        }
+
+
+
+        .hero-stats {        .hero-stats {
+
+            display: flex;            display: flex;
+
+            gap: 2rem;            gap: 2rem;
+
+            margin-bottom: 2rem;            margin-bottom: 2rem;
+
+        }        }
+
+
+
+        .stat {        .stat {
+
+            text-align: center;            text-align: center;
+
+        }        }
+
+
+
+        .stat-number {        .stat-number {
+
+            font-size: 2.5rem;            font-size: 2.5rem;
+
+            font-weight: 700;            font-weight: 700;
+
+            color: #a8edea;            color: #a8edea;
+
+        }        }
+
+
+
+        .stat-label {        .stat-label {
+
+            font-size: 0.9rem;            font-size: 0.9rem;
+
+            opacity: 0.8;            opacity: 0.8;
+
+        }        }
+
+
+
+        .hero-buttons {        .hero-buttons {
+
+            display: flex;            display: flex;
+
+            gap: 1rem;            gap: 1rem;
+
+        }        }
+
+
+
+        .btn {        .btn {
+
+            padding: 1rem 2rem;            padding: 1rem 2rem;
+
+            border-radius: 30px;            border-radius: 30px;
+
+            text-decoration: none;            text-decoration: none;
+
+            font-weight: 600;            font-weight: 600;
+
+            transition: all 0.3s;            transition: all 0.3s;
+
+            display: inline-block;            display: inline-block;
+
+        }        }
+
+
+
+        .btn-primary {        .btn-primary {
+
+            background: white;            background: white;
+
+            color: #667eea;            color: #667eea;
+
+        }        }
+
+
+
+        .btn-secondary {        .btn-secondary {
+
+            background: transparent;            background: transparent;
+
+            color: white;            color: white;
+
+            border: 2px solid white;            border: 2px solid white;
+
+        }        }
+
+
+
+        .btn:hover {        .btn:hover {
+
+            transform: translateY(-2px);            transform: translateY(-2px);
+
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+        }        }
+
+
+
+        .chart-container {        .chart-container {
+
+            background: rgba(255, 255, 255, 0.1);            background: rgba(255, 255, 255, 0.1);
+
+            padding: 2rem;            padding: 2rem;
+
+            border-radius: 15px;            border-radius: 15px;
+
+            backdrop-filter: blur(10px);            backdrop-filter: blur(10px);
+
+        }        }
+
+
+
+        .chart-container h3 {        .chart-container h3 {
+
+            margin-bottom: 1rem;            margin-bottom: 1rem;
+
+            text-align: center;            text-align: center;
+
+        }        }
+
+
+
+        /* Performance Section */        /* Performance Section */
+
+        .performance {        .performance {
+
+            padding: 5rem 0;            padding: 5rem 0;
+
+            background: white;            background: white;
+
+        }        }
+
+
+
+        .section-header {        .section-header {
+
+            text-align: center;            text-align: center;
+
+            margin-bottom: 3rem;            margin-bottom: 3rem;
+
+        }        }
+
+
+
+        .section-header h2 {        .section-header h2 {
+
+            font-size: 2.5rem;            font-size: 2.5rem;
+
+            margin-bottom: 1rem;            margin-bottom: 1rem;
+
+            color: #333;            color: #333;
+
+        }        }
+
+
+
+        .performance-grid {        .performance-grid {
+
+            display: grid;            display: grid;
+
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+
+            gap: 2rem;            gap: 2rem;
+
+        }        }
+
+
+
+        .performance-card {        .performance-card {
+
+            background: #f8f9fa;            background: #f8f9fa;
+
+            padding: 2rem;            padding: 2rem;
+
+            border-radius: 15px;            border-radius: 15px;
+
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+        }        }
+
+
+
+        .performance-card h3 {        .performance-card h3 {
+
+            margin-bottom: 1rem;            margin-bottom: 1rem;
+
+            color: #667eea;            color: #667eea;
+
+        }        }
+
+
+
+        /* Risk Management */        /* Risk Management */
+
+        .risk-management {        .risk-management {
+
+            padding: 5rem 0;            padding: 5rem 0;
+
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+        }        }
+
+
+
+        .risk-tools {        .risk-tools {
+
+            display: grid;            display: grid;
+
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+
+            gap: 2rem;            gap: 2rem;
+
+        }        }
+
+
+
+        .risk-card {        .risk-card {
+
+            background: white;            background: white;
+
+            padding: 2rem;            padding: 2rem;
+
+            border-radius: 15px;            border-radius: 15px;
+
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+            text-align: center;            text-align: center;
+
+        }        }
+
+
+
+        .risk-icon {        .risk-icon {
+
+            font-size: 3rem;            font-size: 3rem;
+
+            margin-bottom: 1rem;            margin-bottom: 1rem;
+
+        }        }
+
+
+
+        .var-display {        .var-value {
+
+            margin-top: 1rem;            font-size: 2rem;
+
+        }            font-weight: 700;
+
+            color: #e74c3c;
+
+        .var-value {        }
+
+            font-size: 2rem;
+
+            font-weight: 700;        .var-label {
+
+            color: #e74c3c;            font-size: 0.9rem;
+
+            display: block;            color: #666;
+
+        }        }
+
+
+
+        .var-label {        /* Technology Section */
+
+            font-size: 0.9rem;        .technology {
+
+            color: #666;            padding: 5rem 0;
+
+        }            background: white;
+
+        }
+
+        /* Technology Section */
+
+        .technology {        .tech-grid {
+
+            padding: 5rem 0;            display: grid;
+
+            background: white;            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+        }            gap: 2rem;
+
+        }
+
+        .tech-grid {
+
+            display: grid;        .tech-item {
+
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));            text-align: center;
+
+            gap: 2rem;            padding: 2rem;
+
+        }        }
+
+
+
+        .tech-item {        .tech-icon {
+
+            text-align: center;            font-size: 3rem;
+
+            padding: 2rem;            margin-bottom: 1rem;
+
+        }        }
+
+
+
+        .tech-icon {        /* Footer */
+
+            font-size: 3rem;        .footer {
+
+            margin-bottom: 1rem;            background: #333;
+
+        }            color: white;
+
+            padding: 3rem 0;
+
+        /* Footer */            text-align: center;
+
+        .footer {        }
+
+            background: #333;
+
+            color: white;        /* Responsive */
+
+            padding: 3rem 0;        @media (max-width: 768px) {
+
+            text-align: center;            .hero-content {
+
+        }                grid-template-columns: 1fr;
+
+                text-align: center;
+
+        /* Responsive */            }
+
+        @media (max-width: 768px) {            
+
+            .hero-content {            .hero-title {
+
+                grid-template-columns: 1fr;                font-size: 2.5rem;
+
+                text-align: center;            }
+
+            }            
+
+                        .nav-menu {
+
+            .hero-title {                display: none;
+
+                font-size: 2.5rem;            }
+
+            }        }
+
+                </style>
+
+            .nav-menu {</head>
+
+                display: none;<body>
+
+            }    <!-- Navigation -->
+
+    <nav class="navbar">
+
+            .hero-stats {        <div class="nav-container">
+
+                justify-content: center;            <div class="nav-logo">
+
+            }                <img src="./assets/images/logo.png" alt="AI Stock Analysis" />
+
+        }                <span>AI Stock Platform</span>
+
+    </style>            </div>
+
+</head>            <ul class="nav-menu">
+
+<body>                <li><a href="#home" class="nav-link active">Home</a></li>
+
+    <!-- Navigation -->                <li><a href="#performance" class="nav-link">Performance</a></li>
+
+    <nav class="navbar">                <li><a href="#risk" class="nav-link">Risk Management</a></li>
+
+        <div class="nav-container">                <li><a href="#technology" class="nav-link">Technology</a></li>
+
+            <div class="nav-logo">                <li><a href="#about" class="nav-link">About</a></li>
+
+                🧠 AI Stock Platform                <li><a href="#dashboard" class="nav-link cta-button">Live Dashboard</a></li>
+
+            </div>            </ul>
+
+            <ul class="nav-menu">            <div class="hamburger">
+
+                <li><a href="#home" class="nav-link active">Home</a></li>                <span class="bar"></span>
+
+                <li><a href="#performance" class="nav-link">Performance</a></li>                <span class="bar"></span>
+
+                <li><a href="#risk" class="nav-link">Risk Management</a></li>                <span class="bar"></span>
+
+                <li><a href="#technology" class="nav-link">Technology</a></li>            </div>
+
+                <li><a href="#dashboard" class="nav-link cta-button">Live Dashboard</a></li>        </div>
+
+            </ul>    </nav>
+
+        </div>
+
+    </nav>    <!-- Hero Section -->
+
+    <section id="home" class="hero">
+
+    <!-- Hero Section -->        <div class="hero-background">
+
+    <section id="home" class="hero">            <canvas id="stockAnimation"></canvas>
+
+        <div class="container">        </div>
+
+            <div class="hero-content">        <div class="hero-content">
+
+                <div class="hero-text">            <div class="hero-text">
+
+                    <h1 class="hero-title">                <h1 class="hero-title">
+
+                        <span class="gradient-text">AI that Thinks</span><br>                    <span class="gradient-text">AI that Thinks</span><br>
+
+                        Like a Risk Manager                    Like a Risk Manager
+
+                    </h1>                </h1>
+
+                    <p class="hero-subtitle">                <p class="hero-subtitle">
+
+                        Advanced stock analysis platform with 85% accuracy -                     Advanced stock analysis platform with 85% accuracy - 
+
+                        The system that combines artificial intelligence with professional risk management                    The system that combines artificial intelligence with professional risk management
+
+                    </p>                </p>
+
+                    <div class="hero-stats">                <div class="hero-stats">
+
+                        <div class="stat">                    <div class="stat">
+
+                            <div class="stat-number">85%</div>                        <div class="stat-number">85%</div>
+
+                            <div class="stat-label">Prediction Accuracy</div>                        <div class="stat-label">Prediction Accuracy</div>
+
+                        </div>                    </div>
+
+                        <div class="stat">                    <div class="stat">
+
+                            <div class="stat-number">40+</div>                        <div class="stat-number">40+</div>
+
+                            <div class="stat-label">Stocks Analyzed</div>                        <div class="stat-label">Stocks Analyzed</div>
+
+                        </div>                    </div>
+
+                        <div class="stat">                    <div class="stat">
+
+                            <div class="stat-number">24/7</div>                        <div class="stat-number">24/7</div>
+
+                            <div class="stat-label">Continuous Monitoring</div>                        <div class="stat-label">Continuous Monitoring</div>
+
+                        </div>                    </div>
+
+                    </div>                </div>
+
+                    <div class="hero-buttons">                <div class="hero-buttons">
+
+                        <a href="#dashboard" class="btn btn-primary">View Live Dashboard</a>                    <a href="#dashboard" class="btn btn-primary">View Live Dashboard</a>
+
+                        <a href="#performance" class="btn btn-secondary">Discover Performance</a>                    <a href="#performance" class="btn btn-secondary">Discover Performance</a>
+
+                    </div>                </div>
+
+                </div>            </div>
+
+                <div class="hero-chart">            <div class="hero-chart">
+
+                    <div class="chart-container">                <div class="chart-container">
+
+                        <h3>Real-Time Model Performance</h3>                    <h3>Real-Time Model Performance</h3>
+
+                        <canvas id="performanceChart" width="400" height="300"></canvas>                    <canvas id="performanceChart"></canvas>
+
+                    </div>                </div>
+
+                </div>            </div>
+
+            </div>        </div>
+
+        </div>    </section>
+
+    </section>
+
+    <!-- Performance Section -->
+
+    <!-- Performance Section -->    <section id="performance" class="performance">
+
+    <section id="performance" class="performance">        <div class="container">
+
+        <div class="container">            <div class="section-header">
+
+            <div class="section-header">                <h2>Predictive Insights Engine</h2>
+
+                <h2>Predictive Insights Engine</h2>                <p>Comparing system performance against leading market indices</p>
+
+                <p>Comparing system performance against leading market indices</p>            </div>
+
+            </div>            
+
+                        <div class="performance-grid">
+
+            <div class="performance-grid">                <!-- AI vs Market Comparison -->
+
+                <div class="performance-card">                <div class="performance-card">
+
+                    <h3>Performance Comparison</h3>                    <h3>Performance Comparison</h3>
+
+                    <canvas id="comparisonChart" width="300" height="200"></canvas>                    <div class="chart-wrapper">
+
+                </div>                        <canvas id="comparisonChart"></canvas>
+
+                                    </div>
+
+                <div class="performance-card">                </div>
+
+                    <h3>Accuracy by Stock</h3>                
+
+                    <canvas id="accuracyChart" width="300" height="200"></canvas>                <!-- Accuracy Scatter -->
+
+                </div>                <div class="performance-card">
+
+                                    <h3>Accuracy by Stock</h3>
+
+                <div class="performance-card">                    <div class="chart-wrapper">
+
+                    <h3>System Development</h3>                        <canvas id="accuracyChart"></canvas>
+
+                    <canvas id="timelineChart" width="300" height="200"></canvas>                    </div>
+
+                </div>                </div>
+
+            </div>                
+
+        </div>                <!-- Development Timeline -->
+
+    </section>                <div class="performance-card full-width">
+
+                    <h3>System Development</h3>
+
+    <!-- Risk Management Section -->                    <div class="timeline-chart">
+
+    <section id="risk" class="risk-management">                        <canvas id="timelineChart"></canvas>
+
+        <div class="container">                    </div>
+
+            <div class="section-header">                </div>
+
+                <h2>Risk Management Suite</h2>            </div>
+
+                <p>Advanced tools for managing and calculating risks</p>        </div>
+
+            </div>    </section>
+
+            
+
+            <div class="risk-tools">    <!-- Risk Management Section -->
+
+                <div class="risk-card">    <section id="risk" class="risk-management">
+
+                    <div class="risk-icon">🧮</div>        <div class="container">
+
+                    <h3>VaR Calculator</h3>            <div class="section-header">
+
+                    <p>Calculate Value at Risk with 95% confidence level</p>                <h2>Risk Management Suite</h2>
+
+                    <div class="var-display">                <p>Advanced tools for managing and calculating risks</p>
+
+                        <span class="var-value">2.3%</span>            </div>
+
+                        <div class="var-label">Maximum Daily Risk</div>            
+
+                    </div>            <div class="risk-tools">
+
+                </div>                <div class="risk-card">
+
+                                    <div class="risk-icon">🧮</div>
+
+                <div class="risk-card">                    <h3>VaR Calculator</h3>
+
+                    <div class="risk-icon">🧪</div>                    <p>Calculate Value at Risk with 95% confidence level</p>
+
+                    <h3>Stress Testing</h3>                    <div class="var-display">
+
+                    <p>Test portfolio behavior in extreme scenarios</p>                        <span class="var-value">2.3%</span>
+
+                    <div class="var-display">                        <span class="var-label">Maximum Daily Risk</span>
+
+                        <span class="var-value">-15.2%</span>                    </div>
+
+                        <div class="var-label">Worst Case Scenario</div>                </div>
+
+                    </div>                
+
+                </div>                <div class="risk-card">
+
+                                    <div class="risk-icon">🧪</div>
+
+                <div class="risk-card">                    <h3>Stress Testing</h3>
+
+                    <div class="risk-icon">📊</div>                    <p>Test portfolio behavior in extreme scenarios</p>
+
+                    <h3>Correlation Analysis</h3>                    <div class="stress-results">
+
+                    <p>Monitor asset correlations and diversification</p>                        <div class="stress-scenario">
+
+                    <div class="var-display">                            <span>משבר 2008:</span>
+
+                        <span class="var-value">0.73</span>                            <span class="negative">-12.5%</span>
+
+                        <div class="var-label">Average Correlation</div>                        </div>
+
+                    </div>                        <div class="stress-scenario">
+
+                </div>                            <span>קורונה 2020:</span>
+
+            </div>                            <span class="negative">-8.3%</span>
+
+        </div>                        </div>
+
+    </section>                    </div>
+
+                </div>
+
+    <!-- Technology Section -->                
+
+    <section id="technology" class="technology">                <div class="risk-card full-width">
+
+        <div class="container">                    <h3>מפת חשיפות</h3>
+
+            <div class="section-header">                    <div id="exposureMap" class="exposure-visualization">
+
+                <h2>Advanced Technology Stack</h2>                        <!-- Interactive exposure map will be loaded here -->
+
+                <p>Powered by cutting-edge AI and machine learning algorithms</p>                    </div>
+
+            </div>                </div>
+
+                        </div>
+
+            <div class="tech-grid">        </div>
+
+                <div class="tech-item">    </section>
+
+                    <div class="tech-icon">🤖</div>
+
+                    <h3>Machine Learning</h3>    <!-- Technology Section -->
+
+                    <p>Advanced neural networks for pattern recognition</p>    <section id="technology" class="technology">
+
+                </div>        <div class="container">
+
+                            <div class="section-header">
+
+                <div class="tech-item">                <h2>AI Lab & Technology</h2>
+
+                    <div class="tech-icon">📈</div>                <p>הטכנולוגיה המתקדמת מאחורי הפלטפורמה</p>
+
+                    <h3>Real-Time Analytics</h3>            </div>
+
+                    <p>Live market data processing and analysis</p>            
+
+                </div>            <div class="tech-pipeline">
+
+                                <div class="pipeline-step">
+
+                <div class="tech-item">                    <div class="step-icon">📥</div>
+
+                    <div class="tech-icon">🔒</div>                    <h3>Data Import</h3>
+
+                    <h3>Risk Controls</h3>                    <p>איסוף נתונים מ-40+ מקורות</p>
+
+                    <p>Built-in risk management and compliance</p>                </div>
+
+                </div>                <div class="pipeline-arrow">→</div>
+
+                                <div class="pipeline-step">
+
+                <div class="tech-item">                    <div class="step-icon">🧠</div>
+
+                    <div class="tech-icon">☁️</div>                    <h3>AI Training</h3>
+
+                    <h3>Cloud Infrastructure</h3>                    <p>אימון מודלי למידה עמוקה</p>
+
+                    <p>Scalable Azure-based architecture</p>                </div>
+
+                </div>                <div class="pipeline-arrow">→</div>
+
+            </div>                <div class="pipeline-step">
+
+        </div>                    <div class="step-icon">🔮</div>
+
+    </section>                    <h3>Prediction</h3>
+
+                    <p>חיזוי מגמות עתידיות</p>
+
+    <!-- Footer -->                </div>
+
+    <footer class="footer">                <div class="pipeline-arrow">→</div>
+
+        <div class="container">                <div class="pipeline-step">
+
+            <p>&copy; 2025 AI Stock Analysis Platform. Advanced Market Intelligence.</p>                    <div class="step-icon">⚖️</div>
+
+            <p>🌐 <strong>aizevinstocks.com</strong> - Powered by Azure & AI</p>                    <h3>Risk Assessment</h3>
+
+        </div>                    <p>הערכת וניהול סיכונים</p>
+
+    </footer>                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+    <script>                <div class="pipeline-step">
+
+        // Sample chart for hero section                    <div class="step-icon">📊</div>
+
+        const ctx = document.getElementById('performanceChart').getContext('2d');                    <h3>Evaluation</h3>
+
+        new Chart(ctx, {                    <p>מדידת ביצועים ושיפור</p>
+
+            type: 'line',                </div>
+
+            data: {            </div>
+
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],            
+
+                datasets: [{            <div class="tech-features">
+
+                    label: 'AI Model',                <div class="feature-card">
+
+                    data: [12, 19, 15, 25, 22, 30],                    <h3>GPT-5 Integration</h3>
+
+                    borderColor: '#a8edea',                    <p>שילוב מודל השפה המתקדם ביותר לניתוח טקסטואלי</p>
+
+                    backgroundColor: 'rgba(168, 237, 234, 0.1)',                    <div class="tech-stack">
+
+                    tension: 0.4                        <span class="tech-badge">Azure OpenAI</span>
+
+                }, {                        <span class="tech-badge">GPT-5</span>
+
+                    label: 'S&P 500',                    </div>
+
+                    data: [8, 12, 10, 15, 14, 18],                </div>
+
+                    borderColor: '#ffffff',                
+
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',                <div class="feature-card">
+
+                    tension: 0.4                    <h3>Continuous Learning</h3>
+
+                }]                    <p>המערכת משתפרת אוטומטית מכל עסקה ותחזית</p>
+
+            },                    <div class="tech-stack">
+
+            options: {                        <span class="tech-badge">SQL Server</span>
+
+                responsive: true,                        <span class="tech-badge">Python ML</span>
+
+                plugins: {                    </div>
+
+                    legend: {                </div>
+
+                        labels: {                
+
+                            color: 'white'                <div class="feature-card">
+
+                        }                    <h3>Real-time Analytics</h3>
+
+                    }                    <p>עיבוד וניתוח נתונים בזמן אמת 24/7</p>
+
+                },                    <div class="tech-stack">
+
+                scales: {                        <span class="tech-badge">Azure Functions</span>
+
+                    y: {                        <span class="tech-badge">Power BI</span>
+
+                        ticks: {                    </div>
+
+                            color: 'white'                </div>
+
+                        },            </div>
+
+                        grid: {        </div>
+
+                            color: 'rgba(255, 255, 255, 0.2)'    </section>
+
+                        }
+
+                    },    <!-- About Section -->
+
+                    x: {    <section id="about" class="about">
+
+                        ticks: {        <div class="container">
+
+                            color: 'white'            <div class="section-header">
+
+                        },                <h2>Leadership & Vision</h2>
+
+                        grid: {                <p>הצוות שמוביל את החדשנות בתחום הפיננסים</p>
+
+                            color: 'rgba(255, 255, 255, 0.2)'            </div>
+
+                        }            
+
+                    }            <div class="leadership-grid">
+
+                }                <div class="leader-card">
+
+            }                    <div class="leader-image">
+
+        });                        <img src="./assets/images/leader-placeholder.jpg" alt="CEO & Founder">
+
+                    </div>
+
+        // Sample charts for performance section                    <div class="leader-info">
+
+        const ctx2 = document.getElementById('comparisonChart').getContext('2d');                        <h3>מייסד ומנכ"ל</h3>
+
+        new Chart(ctx2, {                        <p class="leader-title">Chief Executive Officer & AI Architect</p>
+
+            type: 'bar',                        <p class="leader-bio">
+
+            data: {                            מומחה בתחום הפיננסים והבינה המלאכותית עם ניסיון של למעלה מ-15 שנים 
+
+                labels: ['AI Model', 'S&P 500', 'NASDAQ', 'DOW'],                            בפיתוח אלגוריתמים למסחר ואסטרטגיות השקעה מתקדמות.
+
+                datasets: [{                        </p>
+
+                    label: 'Annual Return %',                        <div class="leader-links">
+
+                    data: [28.5, 18.2, 22.1, 15.8],                            <a href="#" class="social-link">LinkedIn</a>
+
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c']                            <a href="#" class="social-link">CapitalLens.ai</a>
+
+                }]                        </div>
+
+            },                    </div>
+
+            options: {                </div>
+
+                responsive: true                
+
+            }                <div class="leader-card">
+
+        });                    <div class="leader-image">
+
+                        <img src="./assets/images/leader-placeholder.jpg" alt="VP Business Development">
+
+        const ctx3 = document.getElementById('accuracyChart').getContext('2d');                    </div>
+
+        new Chart(ctx3, {                    <div class="leader-info">
+
+            type: 'scatter',                        <h3>נתנאל</h3>
+
+            data: {                        <p class="leader-title">VP Business Development</p>
+
+                datasets: [{                        <p class="leader-bio">
+
+                    label: 'Stock Accuracy',                            מוביל פיתוח עסקי ויחסי לקוחות, עם מומחיות בשיווק דיגיטלי 
+
+                    data: [                            ופיתוח אסטרטגיות צמיחה בתחום הפינטק.
+
+                        {x: 10, y: 85},                        </p>
+
+                        {x: 20, y: 88},                        <div class="leader-links">
+
+                        {x: 30, y: 82},                            <a href="#" class="social-link">LinkedIn</a>
+
+                        {x: 40, y: 91},                        </div>
+
+                        {x: 50, y: 87}                    </div>
+
+                    ],                </div>
+
+                    backgroundColor: '#667eea'            </div>
+
+                }]            
+
+            },            <div class="company-vision">
+
+            options: {                <h3>החזון שלנו</h3>
+
+                responsive: true,                <p>
+
+                scales: {                    להפוך את הבינה המלאכותית לנגישה ומועילה לכל משקיע, החל מהמשקיע הפרטי 
+
+                    x: {                    ועד למוסדות פיננסיים גדולים. אנחנו מאמינים שטכנולוגיה מתקדמת יכולה 
+
+                        title: {                    לדמוקרטיזציה את השוק ההוני ולהפוך אותו לצודק וזמין יותר.
+
+                            display: true,                </p>
+
+                            text: 'Stock Price ($)'            </div>
+
+                        }        </div>
+
+                    },    </section>
+
+                    y: {
+
+                        title: {    <!-- Footer -->
+
+                            display: true,    <footer class="footer">
+
+                            text: 'Accuracy (%)'        <div class="container">
+
+                        }            <div class="footer-content">
+
+                    }                <div class="footer-section">
+
+                }                    <h3>AI Stock Platform</h3>
+
+            }                    <p>פלטפורמה מתקדמת לניתוח מניות בבינה מלאכותית</p>
+
+        });                </div>
+
+                <div class="footer-section">
+
+        const ctx4 = document.getElementById('timelineChart').getContext('2d');                    <h3>קישורים</h3>
+
+        new Chart(ctx4, {                    <ul>
+
+            type: 'line',                        <li><a href="#performance">ביצועים</a></li>
+
+            data: {                        <li><a href="#risk">ניהול סיכונים</a></li>
+
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],                        <li><a href="#technology">טכנולוגיה</a></li>
+
+                datasets: [{                        <li><a href="#about">אודות</a></li>
+
+                    label: 'Model Accuracy',                    </ul>
+
+                    data: [65, 72, 78, 85],                </div>
+
+                    borderColor: '#667eea',                <div class="footer-section">
+
+                    fill: true,                    <h3>צור קשר</h3>
+
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)'                    <p>info@aizevinstocks.com</p>
+
+                }]                    <p>www.aizevinstocks.com</p>
+
+            },                </div>
+
+            options: {            </div>
+
+                responsive: true            <div class="footer-bottom">
+
+            }                <p>&copy; 2025 aizevinstocks.com - AI Stock Analysis Platform. כל הזכויות שמורות.</p>
+
+        });            </div>
+
+        </div>
+
+        // Smooth scrolling for navigation links    </footer>
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+
+            anchor.addEventListener('click', function (e) {    <!-- Scripts -->
+
+                e.preventDefault();    <script src="./assets/js/main.js"></script>
+
+                document.querySelector(this.getAttribute('href')).scrollIntoView({    <script src="./assets/js/charts.js"></script>
+
+                    behavior: 'smooth'    <script src="./assets/js/animations.js"></script>
+
+                });</body>
+
+            });</html>
+        });
+    </script>
+</body>
+</html>
