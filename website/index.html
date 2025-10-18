@@ -61,6 +61,33 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .logo img {
+            border: 3px solid rgba(255, 215, 0, 0.6);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .logo img:hover {
+            transform: scale(1.1);
+        }
+
+        .feature-icon img {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover .feature-icon img {
+            border-color: rgba(255, 215, 0, 0.6);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            transform: scale(1.1);
         }
 
         @keyframes pulse {
@@ -288,30 +315,52 @@
     </div>
 
     <div class="container">
-        <div class="logo">🚀 AI STOCK</div>
+        <div class="logo">
+            <img src="images/financial_city.jpg" alt="Financial City" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 15px;">
+            AI STOCK
+        </div>
         <h1 class="coming-soon">COMING SOON</h1>
-        <h2 class="subtitle">Advanced AI-Powered Stock Market Analysis Platform</h2>
+        <h2 class="subtitle">Insightful Data Technologies - 2.0 AI</h2>
+        <h3 style="font-size: 1.4rem; font-weight: 500; margin: 20px 0; opacity: 0.9;">AI Stock Prediction | Risk Management | Hedging | Exposure | Predictive Strategy</h3>
+        
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; margin: 30px 0; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <img src="images/trading_room.jpg" alt="Trading Room" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255, 215, 0, 0.5);">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.8rem; font-weight: 700; color: #ffd700; margin-bottom: 5px;">Chanan Zevin</div>
+                    <div style="font-size: 1.2rem; font-weight: 500; opacity: 0.9;">CEO & Founder</div>
+                </div>
+            </div>
+        </div>
         
         <div class="features">
             <div class="feature">
-                <div class="feature-icon">🤖</div>
-                <div class="feature-title">AI Analysis</div>
-                <div class="feature-desc">Machine learning algorithms for market prediction</div>
+                <div class="feature-icon">
+                    <img src="images/ai_analytics.jpg" alt="AI Analysis" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                </div>
+                <div class="feature-title">AI Prediction</div>
+                <div class="feature-desc">Advanced machine learning algorithms for accurate stock market forecasting</div>
             </div>
             <div class="feature">
-                <div class="feature-icon">📊</div>
-                <div class="feature-title">Real-time Data</div>
-                <div class="feature-desc">Live market data and instant analysis</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-title">Smart Alerts</div>
-                <div class="feature-desc">Intelligent notifications for trading opportunities</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🎯</div>
+                <div class="feature-icon">
+                    <img src="images/market_data.jpg" alt="Real-time Data" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                </div>
                 <div class="feature-title">Risk Management</div>
-                <div class="feature-desc">Advanced portfolio risk assessment tools</div>
+                <div class="feature-desc">Comprehensive hedging strategies and exposure analysis</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">
+                    <img src="images/financial_city.jpg" alt="Smart Alerts" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                </div>
+                <div class="feature-title">Smart Alerts</div>
+                <div class="feature-desc">Intelligent notifications for trading opportunities and market changes</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">
+                    <img src="images/trading_room.jpg" alt="Portfolio Management" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                </div>
+                <div class="feature-title">Predictive Strategy</div>
+                <div class="feature-desc">Data-driven investment strategies with advanced portfolio optimization</div>
             </div>
         </div>
 
@@ -324,10 +373,16 @@
         </div>
 
         <div class="contact-info">
-            <div class="contact-title">Get Notified When We Launch</div>
+            <div class="contact-title">Contact Insightful Data Technologies</div>
             <div class="contact-details">
-                For early access and updates, contact us at:<br>
-                <a href="mailto:info@aizevinstocks.com" class="email-link">info@aizevinstocks.com</a>
+                <strong>Chanan Zevin - CEO</strong><br>
+                For partnerships, early access, and AI solutions:<br>
+                <a href="mailto:chanan@aizevinstocks.com" class="email-link">chanan@aizevinstocks.com</a><br>
+                <br>
+                <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 15px;">
+                    Insightful Data Technologies 2.0 AI<br>
+                    Specializing in AI Stock Prediction, Risk Management & Predictive Strategy
+                </div>
             </div>
         </div>
     </div>
