@@ -28,5 +28,53 @@
     "ms-vscode.vscode-json",
     "ms-azuretools.vscode-azureresourcegroups",
     "ms-python.debugpy"
-  ]
+  ],
+  
+  // **הגדרות לצמצום כלים - חשוב מאוד!**
+  "github.copilot.chat.welcomeMessage": "never",
+  "workbench.commandPalette.experimental.suggestCommands": false,
+  "workbench.tips.enabled": false,
+  "telemetry.telemetryLevel": "off",
+  "update.mode": "manual",
+  "search.followSymlinks": false,
+  "search.useGlobalIgnoreFiles": true,
+  "files.hotExit": "off",
+  "zenMode.hideActivityBar": true,
+  "zenMode.hideStatusBar": true,
+  "zenMode.hideTabs": true,
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "extensions.ignoreRecommendations": true,
+  "workbench.startupEditor": "none",
+  
+  // **ביטול כלים שלא צריך**
+  "gitlens.enabled": false,
+  "azure.showSignedInEmail": false,
+  "debug.showInStatusBar": "never",
+  "problems.showCurrentInStatus": false,
+  "workbench.editor.decorations.colors": false,
+  "workbench.editor.decorations.badges": false,
+  "git.decorations.enabled": false,
+  
+  // **הגדרות ביצועים**
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/venv": true,
+    "**/.venv": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/venv": true,
+    "**/.venv": true,
+    "**/__pycache__": true
+  }
 }
