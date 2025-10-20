@@ -41,7 +41,6 @@
   "files.hotExit": "off",
   "zenMode.hideActivityBar": true,
   "zenMode.hideStatusBar": true,
-  "zenMode.hideTabs": true,
   "workbench.editor.enablePreview": false,
   "workbench.editor.enablePreviewFromQuickOpen": false,
   "extensions.ignoreRecommendations": true,
@@ -76,5 +75,6 @@
     "**/venv": true,
     "**/.venv": true,
     "**/__pycache__": true
-  }
+  },
+  "zenMode.showTabs": "single"
 }
