@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <!-- DNS Update: 2025-10-20 -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI STOCK - Insightful Data Technologies 2.0 AI | Coming Soon</title>
+    <meta name="description" content="AI STOCK - Led by Chanan Zevin | AI Stock Prediction, Risk Management, Hedging, Exposure, Predictive Strategy | aizevinstocks.com">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d3561 100%);
+            color: white;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://aizevinstocks.my.canva.site/aizevinstocks/_assets/media/f00efed2e60ee23f956e8451d5b785c1.jpg') center/cover;
+            opacity: 0.3;
+            z-index: -2;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.8) 0%, rgba(26, 31, 58, 0.9) 100%);
+            z-index: -1;
+        }
+
+        .coming-soon {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.5);
+            }
+            to {
+                text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7), 0 0 50px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .join-us {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #0a0e27;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: inline-block;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .join-us:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5);
+        }
+
+        .company-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 40px 0 20px 0;
+            color: #ffffff;
+        }
+
+        .led-by {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 30px;
+        }
+
+        .ai-stock-logo {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 30px 0;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .services-list {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin: 30px 0;
+            line-height: 2;
+            color: #e1e5f2;
+        }
+
+        .mission-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 60px 40px;
+            margin: 80px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mission-title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ffd700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mission-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #e1e5f2;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .about-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .about-content h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffd700;
+            margin-bottom: 30px;
+        }
+
+        .about-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #e1e5f2;
+            margin-bottom: 20px;
+        }
+
+        .team-member {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 40px 20px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .team-member h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .team-member .role {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #a8b2d1;
+            margin-bottom: 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .feature-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .feature-card p {
+            font-size: 1.1rem;
+            color: #e1e5f2;
+            line-height: 1.6;
+        }
+
+        .performance-section {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .metric {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .metric-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ffd700;
+        }
+
+        .metric-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e1e5f2;
+            margin-top: 10px;
+        }
+
+        .contact-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .contact-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffd700;
+            margin-bottom: 40px;
+        }
+
+        .contact-info {
+            font-size: 1.2rem;
+            line-height: 2;
+            color: #e1e5f2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .contact-info a {
+            color: #ffd700;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .coming-soon {
+                font-size: 2.5rem;
+            }
+            
+            .ai-stock-logo {
+                font-size: 3rem;
+            }
+            
+            .company-title {
+                font-size: 2rem;
+            }
+            
+            .about-section {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-background"></div>
+        <div class="hero-overlay"></div>
+        
+        <h1 class="coming-soon">COMING SOON</h1>
+        
+        <a href="mailto:chanan@ezevin.com" class="join-us">JOIN US</a>
+        
+        <h2 class="company-title">Insightful Data Technologies – 2.0 AI</h2>
+        
+        <h3 class="led-by">Led By Chanan Zevin</h3>
+        
+        <div class="ai-stock-logo">AI STOCK</div>
+        
+        <div class="services-list">
+            AI Stock Prediction |<br>
+            Risk Management |<br>
+            Hedging |<br>
+            Exposure |<br>
+            Predictive Strategy
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission-section">
+        <h2 class="mission-title">Revolutionizing Financial Markets</h2>
+        <p class="mission-text">
+            AI STOCK is COMING SOON – here to transform your investment strategies with cutting-edge technology and 
+            empower institutional investors through unparalleled market intelligence. Insightful Data Technologies aims to empower 
+            institutional investors with cutting-edge AI solutions. Our mission is to deliver data-driven insights 
+            that enhance decision-making and optimize risk management, fostering a future where financial strategies 
+            are informed by intelligent technology and predictive analytics.
+        </p>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="about-content">
+            <h2>About Chanan Zevin</h2>
+            <p>
+                Chanan Zevin has a passion for leveraging technology to drive innovation and enhance 
+                financial strategic decisions. He enjoys exploring new advancements in AI and their 
+                application in the finance sector.
+            </p>
+            <p>
+                With over 25 years of experience, Chanan combines deep knowledge of data systems, 
+                financial markets, and AI to lead Insightful Data Technologies 2.0. His expertise in AI risk 
+                management and predictive strategies is pivotal in redefining how institutions manage currency 
+                exposure and volatility, ensuring clients are always prepared for the future.
+            </p>
+        </div>
+        <div class="about-image">
+            <img src="https://aizevinstocks.my.canva.site/aizevinstocks/_assets/media/b21cf8ccdc489bfb9dba2cce4eb0fe8a.jpg" 
+                 alt="Chanan Zevin" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+        </div>
+    </section>
+
+    <!-- Team Member Section -->
+    <section class="team-member">
+        <h3>Netanel Zevin</h3>
+        <div class="role">Vice President of Operations</div>
+        <p>
+            Netanel Zevin holds the position of Vice President of Operations at Insightful Data Technologies – AI 2.0. 
+            In this role, he is responsible for overseeing the company's daily operations, resource planning, and the 
+            strategic implementation of initiatives across various AI and data management divisions. With a robust 
+            background in business optimization, process automation, and project leadership, Netanel ensures that each 
+            phase—from research to production—operates seamlessly and efficiently. His practical approach, combined with 
+            an innovative mindset, positions him as a pivotal contributor to the company's success, effectively 
+            translating complex technologies into smooth, scalable execution.
+        </p>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-grid">
+        <div class="feature-card">
+            <h3>AI Stock Prediction</h3>
+            <p>
+                Our AI-driven solutions forecast market trends, enabling investors to make informed decisions with 
+                precise insights into stock movements. AI Stock Prediction leverages advanced algorithms and historical 
+                data to forecast market trends, empowering investors with valuable insights for informed decision-making.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <h3>Risk Management</h3>
+            <p>
+                Implementing sophisticated algorithms, our service effectively assesses risk, providing tailored 
+                strategies to safeguard investments against market volatility. Risk Management strategies are designed 
+                to identify, assess, and mitigate financial risks, ensuring your investment portfolio remains resilient 
+                in dynamic market conditions.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <h3>Predictive Strategy</h3>
+            <p>
+                Our predictive strategies enhance trading performance, leveraging data analytics to optimize portfolio 
+                management and maximize returns.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <h3>Hedging</h3>
+            <p>
+                Hedging solutions utilize sophisticated techniques to reduce potential losses in investments, providing 
+                a vital safety net for institutional investors navigating volatile markets.
+            </p>
+        </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section class="performance-section">
+        <h2 class="mission-title">Performance</h2>
+        <div class="performance-grid">
+            <div class="metric">
+                <div class="metric-number">98.7%</div>
+                <div class="metric-label">Accuracy</div>
+            </div>
+            <div class="metric">
+                <div class="metric-number">95.5%</div>
+                <div class="metric-label">Key Metrics</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <h2 class="contact-title">Connect with us!</h2>
+        <div class="contact-info">
+            <p><strong>Phone:</strong> +972 50 8700767</p>
+            <p><strong>Email:</strong> <a href="mailto:chanan@ezevin.com">chanan@ezevin.com</a></p>
+            <p><strong>Websites:</strong> 
+                <a href="https://www.aizevin.com">www.aizevin.com</a> | 
+                <a href="https://www.aizevinstocks.com">www.aizevinstocks.com</a>
+            </p>
+            <p><strong>Address:</strong><br>
+                Marina Moon Tower, Floor 15<br>
+                13 Al Suwayeb St<br>
+                Dubai Marina, United Arab Emirates<br>
+                Postal Code: 500001
+            </p>
+        </div>
+    </section>
+</body>
+</html>
