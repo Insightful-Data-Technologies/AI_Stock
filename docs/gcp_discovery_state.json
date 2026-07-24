@@ -1,0 +1,37 @@
+{
+  "discovery_timestamp_utc": "2026-07-24T13:20:00Z",
+  "project_id": "gen-lang-client-0386540117",
+  "project_number_lead": "184723980511",
+  "gcloud_sdk_version": "577.0.0",
+  "active_account": null,
+  "credentialed_accounts": [],
+  "adc_present": false,
+  "google_application_credentials": null,
+  "firebase_authenticated_user": null,
+  "firebase_active_project": null,
+  "firebase_json_present": false,
+  "firebase_hosting_default_urls": {
+    "web_app": {"url": "https://gen-lang-client-0386540117.web.app", "http_status": 404},
+    "firebaseapp": {"url": "https://gen-lang-client-0386540117.firebaseapp.com", "http_status": 404}
+  },
+  "inventory": {
+    "enabled_apis": "BLOCKED_NO_AUTH",
+    "agent_platform": "BLOCKED_NO_AUTH",
+    "cloud_run": "BLOCKED_NO_AUTH",
+    "cloud_functions": "BLOCKED_NO_AUTH",
+    "firestore": "BLOCKED_NO_AUTH",
+    "redis_memorystore": "BLOCKED_NO_AUTH",
+    "iam_service_accounts": "BLOCKED_NO_AUTH",
+    "secret_manager": "BLOCKED_NO_AUTH",
+    "compute_gke_appengine_deploy": "BLOCKED_NO_AUTH"
+  },
+  "workspace_gemini_api_key": "PRESENT_BUT_INVALID",
+  "cursor_secrets_names": ["cz", "cz1"],
+  "cursor_secrets_usable_as_gcp_sa": false,
+  "repo_target_system_present": false,
+  "gcp_mutations_this_run": false,
+  "deployment_evidence_for_target": null,
+  "e2e_test": "NOT_RUN_BLOCKED",
+  "completion_claimed": false,
+  "hard_blocker": "No authenticated Google Cloud or Firebase identity in this environment"
+}
