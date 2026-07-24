@@ -199,6 +199,7 @@ Workspace Gemini key is **not valid** for Generative Language API. No passwords/
 | Install Google Cloud SDK 577.0.0 | Local agent filesystem | No |
 | Install gcloud `alpha` / `beta` components | Local SDK | No |
 | `gcloud config set project gen-lang-client-0386540117` | Local CLI config | No |
+| List/describe HTTP probes | Read-only attempts | No (all failed auth) |
 | List/describe/list HTTP probes | Read-only attempts | No (all failed auth) |
 | Write this report to git | Repo docs only | No |
 
