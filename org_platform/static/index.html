@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Insightful Data Technologies — Agent Organization</title>
+  <title>Insightful Data Technologies – 2.o AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,13 +12,14 @@
 <body>
   <main class="shell">
     <header class="brand-lockup">
-      <div class="company">Insightful Data Technologies</div>
-      <div class="tag">Enterprise multi-agent organization chaired by VP R&amp;D Super Admin, with CEO Chanan Zevin on the escalation path — plus a live meeting room.</div>
+      <div class="company">Insightful Data Technologies – 2.o AI</div>
+      <div class="tag"><strong>Chanan Zevin – CEO</strong> · AI Risk Management | Hedging | Exposure | Predictive Strategy</div>
       <div class="pillrow">
-        <span class="pill">CEO · Chanan Zevin</span>
-        <span class="pill">VP R&amp;D · Super Admin (all approvals)</span>
-        <span class="pill">PMO · Dev · QA · DevOps · IT</span>
-        <span class="pill">Realtime meeting room</span>
+        <span class="pill">AI Capital Enterprise Team</span>
+        <span class="pill">VP R&amp;D · ChatGPT/Codex</span>
+        <span class="pill">Claude · Dev PM</span>
+        <span class="pill">Cursor · Dev TL</span>
+        <span class="pill">Live morning meetings</span>
       </div>
     </header>
 
@@ -28,21 +29,27 @@
         <div id="roster" class="roster"></div>
       </div>
       <div class="panel">
-        <h2>Open a meeting room</h2>
+        <h2>Operations</h2>
         <form id="createForm" class="form">
           <label>Meeting title
-            <input id="title" name="title" value="Executive Delivery Sync" required />
+            <input id="title" value="Daily Morning Meeting" required />
           </label>
           <label>Chair
-            <select id="chair" name="chair_id"></select>
+            <select id="chair"></select>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;flex-direction:row;">
+            <input id="morning" type="checkbox" checked /> Morning meeting agenda
           </label>
           <div class="actions">
             <button class="btn btn-primary" type="submit">Enter meeting room</button>
-            <button class="btn btn-ghost" type="button" id="refreshMeetings">Refresh history</button>
+            <a class="btn btn-steel" href="/dashboard">Dashboards</a>
+            <button class="btn btn-ghost" type="button" id="runComm">Run comm tests</button>
+            <button class="btn btn-ghost" type="button" id="runE2E">Run SRS workflow</button>
           </div>
         </form>
         <div id="meetings" class="meet-list"></div>
-        <p id="health" class="s" style="color:var(--muted);margin-top:1rem;font-size:0.82rem;"></p>
+        <p id="health" style="color:var(--muted);margin-top:1rem;font-size:0.82rem;"></p>
+        <pre id="opsOut" style="white-space:pre-wrap;color:var(--muted);font-size:0.75rem;"></pre>
       </div>
     </section>
   </main>

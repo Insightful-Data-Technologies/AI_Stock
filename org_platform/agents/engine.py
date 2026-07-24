@@ -1,164 +1,125 @@
-"""Deterministic multi-agent response engine with escalation + approvals."""
+"""Agent response engine aligned to SRS hierarchy and workflows."""
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from org_platform.agents.roster import (
     CEO_ID,
+    DEV_PM_ID,
+    DEV_TL_ID,
+    EA_ID,
+    MAIN_PM_ID,
     ROSTER,
-    SUPER_ADMIN_ID,
+    VP_RD_ID,
     OrgAgent,
-    escalate_from,
-    next_approver,
 )
-
-
-APPROVAL_PATTERNS = re.compile(
-    r"\b(approve|approved|authorization|sign[\s-]?off|green[\s-]?light|go ahead)\b",
-    re.I,
-)
-ESCALATE_PATTERNS = re.compile(
-    r"\b(escalate|urgent|blocker|blocked|critical|sev-?1|outage|ceo|executive)\b",
-    re.I,
-)
-DEPLOY_PATTERNS = re.compile(r"\b(deploy|release|production|prod|rollout|cloud run)\b", re.I)
-TEST_PATTERNS = re.compile(r"\b(test|qa|regression|e2e|acceptance|bug)\b", re.I)
-INFRA_PATTERNS = re.compile(r"\b(infra|devops|pipeline|ci/?cd|redis|firestore|secret|iam)\b", re.I)
-IT_PATTERNS = re.compile(r"\b(access|vpn|laptop|account|sso|identity|permission)\b", re.I)
-MEETING_PATTERNS = re.compile(r"\b(agenda|standup|sync|meeting|status)\b", re.I)
 
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def route_speakers(message: str, chair_id: str = SUPER_ADMIN_ID) -> List[str]:
-    """Pick which agents should respond live to a human message."""
-    speakers: List[str] = []
-    text = message or ""
-
-    if MEETING_PATTERNS.search(text) or not text.strip():
-        speakers.extend(["pm-nova", chair_id])
-    if DEPLOY_PATTERNS.search(text) or INFRA_PATTERNS.search(text):
-        speakers.extend(["devops-lead-kai", "devops-lee"])
-    if TEST_PATTERNS.search(text):
-        speakers.extend(["qa-lead-sam", "qa-tess"])
-    if IT_PATTERNS.search(text):
-        speakers.extend(["it-lead-ava", "it-ben"])
-    if re.search(r"\b(code|api|frontend|backend|implement|feature)\b", text, re.I):
-        speakers.extend(["dev-lead-mira", "dev-jordan", "dev-rina"])
-    if APPROVAL_PATTERNS.search(text):
-        speakers.append(chair_id)
-    if ESCALATE_PATTERNS.search(text) or "chanan" in text.lower() or "ceo" in text.lower():
-        speakers.extend([chair_id, CEO_ID])
-
-    # Always include chair for control surface
-    if chair_id not in speakers:
-        speakers.insert(0, chair_id)
-
-    # Dedupe preserving order
-    seen = set()
-    ordered: List[str] = []
+def route_speakers(message: str, chair_id: str = VP_RD_ID) -> List[str]:
+    text = (message or "").lower()
+    speakers = [chair_id, MAIN_PM_ID]
+    if any(k in text for k in ["ceo", "executive", "priority", "escalat"]):
+        speakers += [EA_ID, CEO_ID]
+    if any(k in text for k in ["develop", "code", "frontend", "backend", "api", "claude", "cursor"]):
+        speakers += [DEV_PM_ID, DEV_TL_ID, "dev-ultra-1"]
+    if any(k in text for k in ["qa", "test", "regress", "defect", "pass", "fail"]):
+        speakers += ["qa-tl", "qa-1"]
+    if any(k in text for k in ["deploy", "cloud run", "ssl", "dns", "devops", "rollback"]):
+        speakers += ["pm-devops", "devops-tl", "devops-1"]
+    if any(k in text for k in ["email", "slack", "identity", "permission", "meeting room", "it "]):
+        speakers += ["it-tl", "it-1", "it-2"]
+    if "morning" in text or "standup" in text or "agenda" in text:
+        speakers += [MAIN_PM_ID, DEV_PM_ID, "qa-tl", "pm-devops", "it-tl", VP_RD_ID]
+    # unique
+    out: List[str] = []
     for s in speakers:
-        if s in ROSTER and s not in seen:
-            seen.add(s)
-            ordered.append(s)
-    return ordered[:6]
+        if s in ROSTER and s not in out:
+            out.append(s)
+    return out[:8]
 
 
 def craft_reply(agent: OrgAgent, message: str, meeting_title: str) -> Dict[str, Any]:
     text = (message or "").strip()
-    lower = text.lower()
     approval = None
     escalate_to = None
 
-    if agent.id == SUPER_ADMIN_ID:
-        if APPROVAL_PATTERNS.search(text) or DEPLOY_PATTERNS.search(text) or not text:
-            approval = {
-                "status": "approved",
-                "by": agent.id,
-                "scope": "org-wide (super admin)",
-                "note": "VP R&D Super Admin blanket approval granted.",
-            }
-            body = (
-                f"As VP R&D Super Admin I am chairing this room for “{meeting_title}”. "
-                "All team tracks are cleared to proceed under my authority — Dev, QA, DevOps, IT, and PMO. "
-                "I will escalate to CEO Chanan Zevin only for company-level strategic risk."
-            )
-            if text:
-                body = (
-                    f"Acknowledged: “{text}”. {body} "
-                    "Action: owners respond with concrete next steps in the next 60 seconds."
-                )
-        elif ESCALATE_PATTERNS.search(text):
+    if agent.id == CEO_ID:
+        body = (
+            "Chanan Zevin — CEO. I will take strategic decisions and high-impact approvals only. "
+            f"On “{text or meeting_title}”: route execution through VP R&D and keep routine technical noise away from my queue."
+        )
+        if any(k in text.lower() for k in ["approve release", "production release", "executive approval"]):
+            approval = {"status": "approved", "by": agent.id, "scope": "executive", "note": "CEO production approval"}
+    elif agent.id == EA_ID:
+        body = (
+            "Executive Assistant: agenda updated, duplicate noise filtered. "
+            "I will package an executive summary for CEO Chanan Zevin and coordinate with VP R&D."
+        )
+    elif agent.id == VP_RD_ID:
+        approval = {
+            "status": "approved",
+            "by": agent.id,
+            "scope": "engineering-qa-devops-it",
+            "note": "VP R&D operational approval",
+        }
+        body = (
+            f"VP R&D chairing “{meeting_title}”. Directive acknowledged: “{text or 'continue program'}”. "
+            "Main PM owns coordination; Claude owns development delivery; DevOps PM owns release evidence; "
+            "QA issues independent verdicts. Escalate to CEO only for genuine executive decisions."
+        )
+        if "escalat" in text.lower() and any(k in text.lower() for k in ["security", "legal", "financial", "production incident"]):
             escalate_to = CEO_ID
-            body = (
-                "Severity noted. I am escalating to CEO Chanan Zevin now while keeping delivery teams moving "
-                "on mitigation in parallel."
-            )
-        else:
-            body = (
-                f"VP R&D here — owning “{text}”. Routing to the right leads and approving the execution path."
-            )
-    elif agent.id == CEO_ID:
-        if escalate_to or ESCALATE_PATTERNS.search(text) or APPROVAL_PATTERNS.search(text):
-            approval = {
-                "status": "approved",
-                "by": agent.id,
-                "scope": "executive",
-                "note": "CEO final endorsement.",
-            }
+            body += " Urgent class detected — escalating to CEO via Executive Assistant."
+    elif agent.id == MAIN_PM_ID:
         body = (
-            "Chanan Zevin speaking. I expect crisp ownership, measurable outcomes, and no silent blockers. "
-            f"On “{text or meeting_title}”: proceed with VP R&D Super Admin as executive operator. "
-            "Escalate back to me only if capital, legal, or brand risk appears."
+            "Main PM: master plan updated. Every active task must have an owner. "
+            "Collecting Dev/QA/DevOps/IT reports and blockers for consolidation."
         )
-    elif agent.role.value.startswith("project_manager") or agent.team.value == "pmo":
+    elif agent.id == DEV_PM_ID:
         body = (
-            f"{agent.name} (PM): Agenda locked for “{meeting_title}”. "
-            f"Captured ask: “{text or 'general sync'}”. "
-            "Owners: Dev (Mira), QA (Sam), DevOps (Kai), IT (Ava). "
-            "I will track blockers and escalate to VP R&D if dates slip."
+            "Claude (Development PM): breaking work into implementation tasks for Cursor. "
+            "I will review architecture/code and reject unsupported completion claims before QA handoff."
         )
-    elif agent.team.value == "engineering":
+    elif agent.id == DEV_TL_ID:
         body = (
-            f"{agent.name}: Implementation path for “{text or 'the current initiative'}” — "
-            "split API/WebSocket contracts first, then UI participants + history, then E2E gate. "
-            "Estimate follows after DevOps confirms runtime targets."
+            "Cursor (Dev Team Leader): assigning non-conflicting files to Ultra developers, "
+            "reviewing diffs, confirming builds/tests, then delivering to QA."
+        )
+    elif agent.role.value == "developer":
+        body = (
+            f"{agent.name}: implementing assigned components against the real codebase, "
+            "updating tests, and returning changed-file list + validation evidence to Cursor."
+        )
+    elif agent.id == "qa-tl":
+        body = (
+            "QA Team Leader: independent verification only. Formal verdict will be PASS, FAIL, or BLOCKED "
+            "with evidence. Defects return to Development — QA does not silently repair."
         )
     elif agent.team.value == "qa":
         body = (
-            f"{agent.name}: Acceptance gates — join room, see all participants, send message, "
-            "receive live multi-agent replies, trigger voice playback, escalate, and verify history persistence. "
-            "No release without evidence."
+            f"{agent.name}: executing assigned test coverage and attaching evidence. No defect repairs unless separately tasked."
+        )
+    elif agent.id == "pm-devops":
+        body = (
+            "DevOps PM: deployment is incomplete until public service health is verified. "
+            "Require URL, HTTP status, SSL/domain checks, and rollback readiness."
         )
     elif agent.team.value == "devops":
         body = (
-            f"{agent.name}: Runtime plan — containerized FastAPI service, health checks, "
-            "Redis/Firestore adapters when credentials exist, Secret Manager for keys, Cloud Run deploy. "
-            "Rollback via prior revision."
+            f"{agent.name}: configuring/operating Google Cloud targets (Cloud Run, CI/CD, DNS/TLS, monitoring) "
+            "and returning deployment evidence — not build-only success."
         )
     elif agent.team.value == "it":
         body = (
-            f"{agent.name}: Access posture — least privilege for service accounts, no secrets in chat logs, "
-            "SSO-ready operator seat for VP Super Admin, audit trail on approvals/escalations."
+            f"{agent.name}: validating identities, Slack channels, simulated email labeling, and meeting-room voice connectivity."
         )
     else:
-        body = f"{agent.name}: Noted — standing by."
-
-    # Auto-escalation suggestion when non-approver hits approval language
-    if APPROVAL_PATTERNS.search(text) and not agent.can_approve:
-        nxt = next_approver(agent.id)
-        if nxt:
-            escalate_to = nxt.id
-            body += f" Escalating approval to {nxt.name}."
-
-    if ESCALATE_PATTERNS.search(text) and agent.id not in (SUPER_ADMIN_ID, CEO_ID):
-        nxt = escalate_from(agent.id) or ROSTER[SUPER_ADMIN_ID]
-        escalate_to = nxt.id
-        body += f" Flagging up to {nxt.name}."
+        body = f"{agent.name}: standing by with an owned task or documented waiting state."
 
     return {
         "agent_id": agent.id,
@@ -178,34 +139,43 @@ def craft_reply(agent: OrgAgent, message: str, meeting_title: str) -> Dict[str, 
 def generate_live_responses(
     message: str,
     meeting_title: str,
-    chair_id: str = SUPER_ADMIN_ID,
+    chair_id: str = VP_RD_ID,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     speakers = route_speakers(message, chair_id=chair_id)
     replies: List[Dict[str, Any]] = []
     events: List[Dict[str, Any]] = []
     for sid in speakers:
-        agent = ROSTER[sid]
-        reply = craft_reply(agent, message, meeting_title)
+        reply = craft_reply(ROSTER[sid], message, meeting_title)
         replies.append(reply)
         if reply.get("approval"):
             events.append({"type": "approval", "payload": reply["approval"], "ts": _utcnow()})
         if reply.get("escalate_to"):
-            target = ROSTER.get(reply["escalate_to"])
+            target = ROSTER[reply["escalate_to"]]
             events.append(
                 {
                     "type": "escalation",
-                    "payload": {
-                        "from": agent.id,
-                        "to": reply["escalate_to"],
-                        "to_name": target.name if target else reply["escalate_to"],
-                    },
+                    "payload": {"from": sid, "to": target.id, "to_name": target.name},
                     "ts": _utcnow(),
                 }
             )
-            # Ensure escalated party also speaks if missing
-            if reply["escalate_to"] not in speakers:
-                esc_agent = ROSTER[reply["escalate_to"]]
-                esc_reply = craft_reply(esc_agent, message, meeting_title)
-                replies.append(esc_reply)
-                speakers.append(reply["escalate_to"])
+            if target.id not in speakers:
+                replies.append(craft_reply(target, message, meeting_title))
+                speakers.append(target.id)
     return replies, events
+
+
+def morning_meeting_script() -> List[Dict[str, str]]:
+    return [
+        {"owner": MAIN_PM_ID, "item": "Attendance and system-health check"},
+        {"owner": EA_ID, "item": "CEO priorities"},
+        {"owner": MAIN_PM_ID, "item": "Previous-day completion review"},
+        {"owner": DEV_PM_ID, "item": "Development report"},
+        {"owner": "qa-tl", "item": "QA report"},
+        {"owner": "pm-devops", "item": "DevOps report"},
+        {"owner": "it-tl", "item": "IT and communication report"},
+        {"owner": MAIN_PM_ID, "item": "Current blockers"},
+        {"owner": MAIN_PM_ID, "item": "Cross-team dependencies"},
+        {"owner": VP_RD_ID, "item": "Task assignments"},
+        {"owner": MAIN_PM_ID, "item": "Owners and expected completion times"},
+        {"owner": EA_ID, "item": "Decisions requiring escalation"},
+    ]

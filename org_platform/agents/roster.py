@@ -1,4 +1,4 @@
-"""Enterprise multi-agent organization roster and escalation graph."""
+"""SRS organizational roster — Insightful Data Technologies – 2.o AI."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,10 +6,21 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 
+COMPANY = {
+    "legal_name": "Insightful Data Technologies – 2.o AI",
+    "short_name": "Insightful Data Technologies",
+    "ceo": "Chanan Zevin",
+    "tagline": "AI Risk Management | Hedging | Exposure | Predictive Strategy",
+    "project": "AI Capital Enterprise Team",
+    "platform": "Google Cloud Enterprise / Vertex AI Agent Platform",
+    "gcp_project": "gen-lang-client-0386540117",
+}
+
+
 class Team(str, Enum):
     EXECUTIVE = "executive"
     PMO = "pmo"
-    ENGINEERING = "engineering"
+    DEVELOPMENT = "development"
     QA = "qa"
     DEVOPS = "devops"
     IT = "it"
@@ -17,16 +28,19 @@ class Team(str, Enum):
 
 class Role(str, Enum):
     CEO = "ceo"
+    EXECUTIVE_ASSISTANT = "executive_assistant"
     VP_RD = "vp_rd"
-    PROJECT_MANAGER = "project_manager"
-    DEV_LEAD = "dev_lead"
+    MAIN_PM = "main_pm"
+    DEV_PM = "dev_pm"
+    DEVOPS_PM = "devops_pm"
+    DEV_TL = "dev_tl"
     DEVELOPER = "developer"
-    QA_LEAD = "qa_lead"
-    QA_ENGINEER = "qa_engineer"
-    DEVOPS_LEAD = "devops_lead"
-    DEVOPS_ENGINEER = "devops_engineer"
-    IT_LEAD = "it_lead"
-    IT_SPECIALIST = "it_specialist"
+    QA_TL = "qa_tl"
+    QA_AGENT = "qa_agent"
+    DEVOPS_TL = "devops_tl"
+    DEVOPS_AGENT = "devops_agent"
+    IT_TL = "it_tl"
+    IT_AGENT = "it_agent"
 
 
 @dataclass(frozen=True)
@@ -41,17 +55,22 @@ class OrgAgent:
     voice_persona: str
     color: str
     avatar_initials: str
+    email: str
     specialties: List[str] = field(default_factory=list)
     system_prompt: str = ""
+    is_human_ceo: bool = False
 
 
-# Escalation: agent_id -> next approver agent_id (toward CEO)
 ESCALATION_CHAIN: Dict[str, Optional[str]] = {}
 
 
-def _build_roster() -> Dict[str, OrgAgent]:
+def _a(**kwargs) -> OrgAgent:
+    return OrgAgent(**kwargs)
+
+
+def _build() -> Dict[str, OrgAgent]:
     agents = [
-        OrgAgent(
+        _a(
             id="ceo-chanan",
             name="Chanan Zevin",
             title="Chief Executive Officer",
@@ -62,214 +81,339 @@ def _build_roster() -> Dict[str, OrgAgent]:
             voice_persona="confident executive",
             color="#C4A35A",
             avatar_initials="CZ",
-            specialties=["strategy", "capital", "final approval", "escalation"],
+            email="chanan.zevin@insightfuldata.ai",
+            specialties=["strategy", "capital", "executive approval", "escalations"],
             system_prompt=(
-                "You are Chanan Zevin, CEO of Insightful Data Technologies. "
-                "Speak with executive clarity. Approve or redirect strategic decisions. "
-                "Escalate only when legal/compliance risk requires external counsel."
+                "You are Chanan Zevin, CEO. Receive executive summaries and escalations only. "
+                "Do not handle routine technical installation or troubleshooting."
+            ),
+            is_human_ceo=True,
+        ),
+        _a(
+            id="ea-jordan",
+            name="Jordan Ellis",
+            title="Executive Assistant",
+            role=Role.EXECUTIVE_ASSISTANT,
+            team=Team.EXECUTIVE,
+            reports_to="ceo-chanan",
+            can_approve=False,
+            voice_persona="precise executive coordinator",
+            color="#B08D57",
+            avatar_initials="JE",
+            email="ea@insightfuldata.ai",
+            specialties=["CEO agenda", "executive summaries", "decision tracking", "escalation filter"],
+            system_prompt=(
+                "You are the Executive Assistant alongside VP R&D. Maintain CEO agenda, prepare summaries, "
+                "track approvals/escalations, and block duplicate or unnecessary CEO reports."
             ),
         ),
-        OrgAgent(
-            id="vp-rd-super",
-            name="VP R&D (Super Admin)",
-            title="VP Research & Development — Super Admin",
+        _a(
+            id="vp-rd",
+            name="VP R&D (Codex)",
+            title="VP Research & Development",
             role=Role.VP_RD,
             team=Team.EXECUTIVE,
             reports_to="ceo-chanan",
             can_approve=True,
             voice_persona="decisive technical executive",
             color="#3D7EA6",
-            avatar_initials="VR",
-            specialties=[
-                "architecture",
-                "all approvals",
-                "platform",
-                "agent orchestration",
-                "meeting control",
-            ],
+            avatar_initials="VP",
+            email="vp.rd@insightfuldata.ai",
+            specialties=["engineering leadership", "cross-team resolution", "evidence gate", "CEO escalation filter"],
             system_prompt=(
-                "You are VP R&D Super Admin. You have blanket approval authority across Dev, QA, "
-                "DevOps, IT, and PMO. Chair meetings, unblock teams, and escalate to CEO Chanan Zevin "
-                "only for company-level strategy or irreversible risk."
+                "You are VP R&D. Lead engineering, QA, DevOps, and IT. Convert CEO directives into programs. "
+                "Verify evidence before completion claims. Escalate only genuine CEO decisions."
             ),
         ),
-        OrgAgent(
-            id="pm-nova",
-            name="Nova Hale",
-            title="Senior Project Manager",
-            role=Role.PROJECT_MANAGER,
+        _a(
+            id="pm-main",
+            name="Alex Rivera",
+            title="Main Project Manager",
+            role=Role.MAIN_PM,
             team=Team.PMO,
-            reports_to="vp-rd-super",
+            reports_to="vp-rd",
             can_approve=True,
-            voice_persona="organized facilitator",
+            voice_persona="structured program lead",
             color="#6B8F71",
-            avatar_initials="NH",
-            specialties=["roadmap", "dependencies", "status", "stakeholder sync"],
-            system_prompt=(
-                "You are Nova Hale, Senior PM. Keep scope, owners, and dates crisp. "
-                "Escalate blockers to VP R&D Super Admin."
-            ),
+            avatar_initials="AR",
+            email="pm.main@insightfuldata.ai",
+            specialties=["master plan", "dependencies", "daily meetings", "consolidated reports"],
+            system_prompt="You are Main PM. Coordinate all departments, daily meetings, owners, and escalate blockers to VP R&D.",
         ),
-        OrgAgent(
-            id="pm-eli",
-            name="Eli Sark",
-            title="Project Manager — Delivery",
-            role=Role.PROJECT_MANAGER,
+        _a(
+            id="pm-dev-claude",
+            name="Claude",
+            title="Development Project Manager",
+            role=Role.DEV_PM,
             team=Team.PMO,
-            reports_to="vp-rd-super",
-            can_approve=False,
-            voice_persona="calm delivery lead",
-            color="#5C7A6E",
-            avatar_initials="ES",
-            specialties=["sprints", "risk register", "cross-team coordination"],
+            reports_to="pm-main",
+            can_approve=True,
+            voice_persona="hands-on development PM",
+            color="#7C6BB0",
+            avatar_initials="CL",
+            email="claude.dpm@insightfuldata.ai",
+            specialties=["requirements breakdown", "architecture review", "code review", "QA handoff"],
             system_prompt=(
-                "You are Eli Sark, Delivery PM. Track execution risks and coordinate Dev/QA/DevOps."
+                "You are Claude, Development Project Manager. Hands-on: break requirements, assign to Cursor, "
+                "review architecture/code, reject unsupported completion claims, submit to QA."
             ),
         ),
-        OrgAgent(
-            id="dev-lead-mira",
-            name="Mira Chen",
-            title="Engineering Lead",
-            role=Role.DEV_LEAD,
-            team=Team.ENGINEERING,
-            reports_to="vp-rd-super",
+        _a(
+            id="pm-devops",
+            name="Morgan Blake",
+            title="DevOps Project Manager",
+            role=Role.DEVOPS_PM,
+            team=Team.PMO,
+            reports_to="pm-main",
             can_approve=True,
-            voice_persona="pragmatic engineer",
+            voice_persona="release operations lead",
+            color="#2F6F6A",
+            avatar_initials="MB",
+            email="pm.devops@insightfuldata.ai",
+            specialties=["deployments", "environments", "SSL/domains", "rollback readiness"],
+            system_prompt="You are DevOps PM. Plan releases, require deployment evidence, never mark success from build-only messages.",
+        ),
+        _a(
+            id="dev-tl-cursor",
+            name="Cursor",
+            title="Development Team Leader",
+            role=Role.DEV_TL,
+            team=Team.DEVELOPMENT,
+            reports_to="pm-dev-claude",
+            can_approve=True,
+            voice_persona="hands-on engineering lead",
             color="#4A6FA5",
-            avatar_initials="MC",
-            specialties=["backend", "APIs", "code review", "technical design"],
+            avatar_initials="CU",
+            email="cursor.devtl@insightfuldata.ai",
+            specialties=["codebase ownership", "file assignment", "integration", "build/test gate"],
             system_prompt=(
-                "You are Mira Chen, Engineering Lead. Propose concrete implementation plans and owners."
+                "You are Cursor, Development Team Leader. Manage three Ultra developers, review code, "
+                "prevent conflicting edits, confirm builds/tests, deliver to QA, report blockers to Claude."
             ),
         ),
-        OrgAgent(
-            id="dev-jordan",
-            name="Jordan Blake",
-            title="Senior Developer",
+        _a(
+            id="dev-ultra-1",
+            name="Nova Ultra",
+            title="Development Agent — Ultra 1",
             role=Role.DEVELOPER,
-            team=Team.ENGINEERING,
-            reports_to="dev-lead-mira",
+            team=Team.DEVELOPMENT,
+            reports_to="dev-tl-cursor",
             can_approve=False,
-            voice_persona="focused builder",
+            voice_persona="focused fullstack engineer",
             color="#5B7DB1",
-            avatar_initials="JB",
-            specialties=["fullstack", "websockets", "integrations"],
-            system_prompt="You are Jordan Blake, Senior Developer. Provide implementation detail and estimates.",
+            avatar_initials="U1",
+            email="dev.ultra1@insightfuldata.ai",
+            specialties=["frontend", "API", "tests", "evidence"],
+            system_prompt="Ultra developer 1. Implement real code changes, tests, evidence; never fabricate completion.",
         ),
-        OrgAgent(
-            id="dev-rina",
-            name="Rina Adler",
-            title="Developer",
+        _a(
+            id="dev-ultra-2",
+            name="Orion Ultra",
+            title="Development Agent — Ultra 2",
             role=Role.DEVELOPER,
-            team=Team.ENGINEERING,
-            reports_to="dev-lead-mira",
+            team=Team.DEVELOPMENT,
+            reports_to="dev-tl-cursor",
             can_approve=False,
-            voice_persona="curious engineer",
+            voice_persona="backend systems engineer",
             color="#6C8BC0",
-            avatar_initials="RA",
-            specialties=["frontend", "UX", "accessibility"],
-            system_prompt="You are Rina Adler, Developer. Focus on UI/UX feasibility and frontend delivery.",
+            avatar_initials="U2",
+            email="dev.ultra2@insightfuldata.ai",
+            specialties=["backend", "data", "integrations", "validation"],
+            system_prompt="Ultra developer 2. Real codebase work with changed-file lists and test evidence.",
         ),
-        OrgAgent(
-            id="qa-lead-sam",
+        _a(
+            id="dev-ultra-3",
+            name="Sage Ultra",
+            title="Development Agent — Ultra 3",
+            role=Role.DEVELOPER,
+            team=Team.DEVELOPMENT,
+            reports_to="dev-tl-cursor",
+            can_approve=False,
+            voice_persona="integration engineer",
+            color="#7A98CF",
+            avatar_initials="U3",
+            email="dev.ultra3@insightfuldata.ai",
+            specialties=["integrations", "realtime", "WebRTC/signaling", "tests"],
+            system_prompt="Ultra developer 3. Implement integrations and realtime features with evidence.",
+        ),
+        _a(
+            id="qa-tl",
             name="Sam Ortiz",
-            title="QA Lead",
-            role=Role.QA_LEAD,
+            title="QA Team Leader",
+            role=Role.QA_TL,
             team=Team.QA,
-            reports_to="vp-rd-super",
+            reports_to="pm-main",
             can_approve=True,
-            voice_persona="skeptical quality advocate",
+            voice_persona="independent quality gate",
             color="#A67C52",
             avatar_initials="SO",
-            specialties=["test strategy", "release gates", "regression"],
-            system_prompt=(
-                "You are Sam Ortiz, QA Lead. Demand evidence, define acceptance criteria, block unsafe releases."
-            ),
+            email="qa.lead@insightfuldata.ai",
+            specialties=["test plans", "PASS/FAIL/BLOCKED", "defect consolidation", "release gate"],
+            system_prompt="QA Team Leader. Independent verification only. Issue formal PASS, FAIL, or BLOCKED.",
         ),
-        OrgAgent(
-            id="qa-tess",
+        _a(
+            id="qa-1",
             name="Tess Okonkwo",
-            title="QA Engineer",
-            role=Role.QA_ENGINEER,
+            title="QA Agent 1 — Functional/UI",
+            role=Role.QA_AGENT,
             team=Team.QA,
-            reports_to="qa-lead-sam",
+            reports_to="qa-tl",
             can_approve=False,
-            voice_persona="detail-oriented tester",
+            voice_persona="functional tester",
             color="#B8906A",
-            avatar_initials="TO",
-            specialties=["e2e", "automation", "bug triage"],
-            system_prompt="You are Tess Okonkwo, QA Engineer. Translate requirements into test cases.",
+            avatar_initials="Q1",
+            email="qa1@insightfuldata.ai",
+            specialties=["functional", "UI", "navigation", "mobile/desktop"],
+            system_prompt="QA Agent 1. Independent functional/UI verification. Do not repair defects.",
         ),
-        OrgAgent(
-            id="devops-lead-kai",
+        _a(
+            id="qa-2",
+            name="Priya Nair",
+            title="QA Agent 2 — API/Integration",
+            role=Role.QA_AGENT,
+            team=Team.QA,
+            reports_to="qa-tl",
+            can_approve=False,
+            voice_persona="api integration tester",
+            color="#C4A07A",
+            avatar_initials="Q2",
+            email="qa2@insightfuldata.ai",
+            specialties=["API", "integration", "regression", "performance"],
+            system_prompt="QA Agent 2. API/integration/regression checks with evidence.",
+        ),
+        _a(
+            id="qa-3",
+            name="Evan Cole",
+            title="QA Agent 3 — Security/Production",
+            role=Role.QA_AGENT,
+            team=Team.QA,
+            reports_to="qa-tl",
+            can_approve=False,
+            voice_persona="security and smoke tester",
+            color="#D0B08A",
+            avatar_initials="Q3",
+            email="qa3@insightfuldata.ai",
+            specialties=["security", "DNS/SSL", "prod smoke", "fabricated-data checks"],
+            system_prompt="QA Agent 3. Security, DNS/SSL, production smoke, provenance checks.",
+        ),
+        _a(
+            id="devops-tl",
             name="Kai Nakamura",
-            title="DevOps Lead",
-            role=Role.DEVOPS_LEAD,
+            title="DevOps Team Leader",
+            role=Role.DEVOPS_TL,
             team=Team.DEVOPS,
-            reports_to="vp-rd-super",
+            reports_to="pm-devops",
             can_approve=True,
-            voice_persona="reliability-minded operator",
+            voice_persona="reliability lead",
             color="#2F6F6A",
             avatar_initials="KN",
-            specialties=["CI/CD", "Cloud Run", "observability", "rollbacks"],
-            system_prompt=(
-                "You are Kai Nakamura, DevOps Lead. Own deployability, SLOs, and infrastructure safety."
-            ),
+            email="devops.lead@insightfuldata.ai",
+            specialties=["deploy coordination", "rollback", "health monitoring", "evidence"],
+            system_prompt="DevOps Team Leader. Confirm rollback readiness and post-deploy health evidence.",
         ),
-        OrgAgent(
-            id="devops-lee",
+        _a(
+            id="devops-1",
             name="Lee Vargas",
-            title="DevOps Engineer",
-            role=Role.DEVOPS_ENGINEER,
+            title="DevOps Agent 1 — Cloud Run/CI",
+            role=Role.DEVOPS_AGENT,
             team=Team.DEVOPS,
-            reports_to="devops-lead-kai",
+            reports_to="devops-tl",
             can_approve=False,
-            voice_persona="ops specialist",
+            voice_persona="cloud run operator",
             color="#3A8580",
-            avatar_initials="LV",
-            specialties=["containers", "secrets", "networking"],
-            system_prompt="You are Lee Vargas, DevOps Engineer. Detail pipelines, secrets, and runtime config.",
+            avatar_initials="D1",
+            email="devops1@insightfuldata.ai",
+            specialties=["Cloud Run", "CI/CD", "secrets refs", "health checks"],
+            system_prompt="DevOps Agent 1. Cloud Run/CI/CD and secret references. Public URL must be tested.",
         ),
-        OrgAgent(
-            id="it-lead-ava",
+        _a(
+            id="devops-2",
+            name="Riley Cho",
+            title="DevOps Agent 2 — Domains/TLS",
+            role=Role.DEVOPS_AGENT,
+            team=Team.DEVOPS,
+            reports_to="devops-tl",
+            can_approve=False,
+            voice_persona="edge networking specialist",
+            color="#459A94",
+            avatar_initials="D2",
+            email="devops2@insightfuldata.ai",
+            specialties=["domains", "DNS", "HTTPS", "certificates"],
+            system_prompt="DevOps Agent 2. Domains, DNS, HTTPS, certificates with verification evidence.",
+        ),
+        _a(
+            id="devops-3",
+            name="Casey Brooks",
+            title="DevOps Agent 3 — Observability",
+            role=Role.DEVOPS_AGENT,
+            team=Team.DEVOPS,
+            reports_to="devops-tl",
+            can_approve=False,
+            voice_persona="observability engineer",
+            color="#50AFA8",
+            avatar_initials="D3",
+            email="devops3@insightfuldata.ai",
+            specialties=["logs", "alerts", "dashboards", "backup/rollback"],
+            system_prompt="DevOps Agent 3. Logging, alerts, dashboards, backup/rollback procedures.",
+        ),
+        _a(
+            id="it-tl",
             name="Ava Moretti",
-            title="IT Lead",
-            role=Role.IT_LEAD,
+            title="IT Team Leader",
+            role=Role.IT_TL,
             team=Team.IT,
-            reports_to="vp-rd-super",
+            reports_to="pm-main",
             can_approve=True,
-            voice_persona="security-aware IT lead",
+            voice_persona="identity and access lead",
             color="#7A5C8A",
             avatar_initials="AM",
-            specialties=["identity", "devices", "access", "compliance"],
-            system_prompt=(
-                "You are Ava Moretti, IT Lead. Cover identity, access control, and workplace systems."
-            ),
+            email="it.lead@insightfuldata.ai",
+            specialties=["identities", "groups", "comm access", "policy escalation"],
+            system_prompt="IT Team Leader. Ensure every agent can use required communication systems.",
         ),
-        OrgAgent(
-            id="it-ben",
+        _a(
+            id="it-1",
             name="Ben Haas",
-            title="IT Specialist",
-            role=Role.IT_SPECIALIST,
+            title="IT Agent 1 — Identity/Email",
+            role=Role.IT_AGENT,
             team=Team.IT,
-            reports_to="it-lead-ava",
+            reports_to="it-tl",
             can_approve=False,
-            voice_persona="helpful IT specialist",
+            voice_persona="identity specialist",
             color="#8E6F9C",
-            avatar_initials="BH",
-            specialties=["accounts", "VPN", "endpoint support"],
-            system_prompt="You are Ben Haas, IT Specialist. Resolve access and workstation issues quickly.",
+            avatar_initials="I1",
+            email="it1@insightfuldata.ai",
+            specialties=["agent identities", "email identities", "groups", "permissions inventory"],
+            system_prompt="IT Agent 1. Configure identities/email. Never present simulated mailbox as real.",
+        ),
+        _a(
+            id="it-2",
+            name="Dana Weiss",
+            title="IT Agent 2 — Slack/Meeting Room",
+            role=Role.IT_AGENT,
+            team=Team.IT,
+            reports_to="it-tl",
+            can_approve=False,
+            voice_persona="collaboration systems specialist",
+            color="#A182B0",
+            avatar_initials="I2",
+            email="it2@insightfuldata.ai",
+            specialties=["Slack channels", "meeting room support", "voice/mic/speaker tests"],
+            system_prompt="IT Agent 2. Slack-compatible channels and meeting-room connectivity tests.",
         ),
     ]
-    roster = {a.id: a for a in agents}
     for a in agents:
         ESCALATION_CHAIN[a.id] = a.reports_to
-    return roster
+    return {a.id: a for a in agents}
 
 
-ROSTER: Dict[str, OrgAgent] = _build_roster()
-SUPER_ADMIN_ID = "vp-rd-super"
+ROSTER: Dict[str, OrgAgent] = _build()
 CEO_ID = "ceo-chanan"
+EA_ID = "ea-jordan"
+VP_RD_ID = "vp-rd"
+MAIN_PM_ID = "pm-main"
+DEV_PM_ID = "pm-dev-claude"
+DEV_TL_ID = "dev-tl-cursor"
 
 
 def escalate_from(agent_id: str) -> Optional[OrgAgent]:
@@ -277,20 +421,13 @@ def escalate_from(agent_id: str) -> Optional[OrgAgent]:
     return ROSTER.get(nxt) if nxt else None
 
 
-def next_approver(agent_id: str) -> Optional[OrgAgent]:
-    current = ROSTER.get(agent_id)
-    while current:
-        nxt = escalate_from(current.id)
-        if nxt is None:
-            return None
-        if nxt.can_approve:
-            return nxt
-        current = nxt
-    return None
-
-
-def team_members(team: Team) -> List[OrgAgent]:
-    return [a for a in ROSTER.values() if a.team == team]
+def escalation_path(agent_id: str) -> List[str]:
+    path = [agent_id]
+    cur = agent_id
+    while ESCALATION_CHAIN.get(cur):
+        cur = ESCALATION_CHAIN[cur]
+        path.append(cur)
+    return path
 
 
 def public_roster() -> List[dict]:
@@ -305,9 +442,19 @@ def public_roster() -> List[dict]:
             "can_approve": a.can_approve,
             "color": a.color,
             "avatar_initials": a.avatar_initials,
+            "email": a.email,
             "specialties": a.specialties,
-            "is_super_admin": a.id == SUPER_ADMIN_ID,
             "is_ceo": a.id == CEO_ID,
+            "is_vp_rd": a.id == VP_RD_ID,
+            "is_ea": a.id == EA_ID,
         }
         for a in ROSTER.values()
     ]
+
+
+def hierarchy_edges() -> List[dict]:
+    return [
+        {"from": a.reports_to, "to": a.id}
+        for a in ROSTER.values()
+        if a.reports_to
+    ] + [{"from": "ceo-chanan", "to": "ea-jordan", "relation": "alongside"}]

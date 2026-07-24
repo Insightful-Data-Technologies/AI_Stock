@@ -1,4 +1,4 @@
-"""FastAPI application — enterprise org + real-time meeting room."""
+"""FastAPI application — SRS AI Enterprise Team and Communication Platform."""
 from __future__ import annotations
 
 import json
@@ -11,26 +11,43 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from org_platform.agents.engine import generate_live_responses
-from org_platform.agents.roster import ROSTER, SUPER_ADMIN_ID, public_roster
-from org_platform.store import meetings as meeting_store
+from org_platform.agents.comm_tests import run_all_communication_tests, run_communication_test
+from org_platform.agents.engine import generate_live_responses, morning_meeting_script
+from org_platform.agents.roster import (
+    CEO_ID,
+    COMPANY,
+    DEV_PM_ID,
+    DEV_TL_ID,
+    EA_ID,
+    MAIN_PM_ID,
+    ROSTER,
+    VP_RD_ID,
+    hierarchy_edges,
+    public_roster,
+)
+from org_platform.store.platform import get_platform
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(
-    title="Insightful Data Technologies — Enterprise Agent Org",
-    version="1.0.0",
-    description="Multi-agent organization with VP R&D Super Admin and real-time meeting room.",
+    title="Insightful Data Technologies – 2.o AI",
+    version="2.0.0",
+    description="AI Capital Enterprise Team — Google Cloud Enterprise / Vertex AI Agent Platform",
 )
 
 rooms: Dict[str, Set[WebSocket]] = {}
 
 
+def P():
+    return get_platform()
+
+
 class CreateMeetingRequest(BaseModel):
-    title: str = Field(default="Executive Delivery Sync")
-    chair_id: str = Field(default=SUPER_ADMIN_ID)
+    title: str = "Daily Morning Meeting"
+    chair_id: str = VP_RD_ID
     participant_ids: Optional[List[str]] = None
     seed_intro: bool = True
+    morning: bool = False
 
 
 class ChatRequest(BaseModel):
@@ -40,41 +57,544 @@ class ChatRequest(BaseModel):
 
 
 class EscalateRequest(BaseModel):
-    from_agent_id: str = SUPER_ADMIN_ID
+    from_agent_id: str = VP_RD_ID
     reason: str = "Operator-requested escalation"
 
 
-def _store():
-    return meeting_store.STORE
+class MessageRequest(BaseModel):
+    channel_id: str
+    sender_id: str
+    text: str
+    thread_id: Optional[str] = None
+    mentions: List[str] = Field(default_factory=list)
+    priority: str = "normal"
+    escalation_label: Optional[str] = None
+
+
+class EmailRequest(BaseModel):
+    from_id: str
+    to_email: str
+    subject: str
+    body: str
+
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str = ""
+    business_objective: str = ""
+    acceptance_criteria: List[str] = Field(default_factory=list)
+    owner: Optional[str] = None
+    team_leader: Optional[str] = None
+    priority: str = "P2"
+    created_by: str = VP_RD_ID
+    target_environment: str = "staging"
+
+
+class TaskAssign(BaseModel):
+    owner: str
+    team_leader: str
+    actor_id: str = DEV_PM_ID
+
+
+class TaskTransition(BaseModel):
+    status: str
+    actor_id: str
+    note: str = ""
+
+
+class TaskEvidence(BaseModel):
+    actor_id: str
+    evidence: Dict[str, Any]
+
+
+class QADecision(BaseModel):
+    decision: str
+    by: str = "qa-tl"
+    notes: str = ""
+
+
+class FinalApproval(BaseModel):
+    by: str = VP_RD_ID
+    note: str = ""
 
 
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
+    p = P()
     return {
         "ok": True,
-        "service": "org-platform",
-        "super_admin": SUPER_ADMIN_ID,
-        "ceo": "ceo-chanan",
+        "service": "ai-capital-enterprise-team",
+        "company": COMPANY,
         "agents": len(ROSTER),
-        "store": _store().backend_info(),
-        "project_target": os.environ.get("GOOGLE_CLOUD_PROJECT", "gen-lang-client-0386540117"),
+        "store": p.meetings.backend_info(),
+        "email": p.email.status(),
+        "tasks": p.tasks.stats(),
+        "channels": len(p.messages.list_channels()),
+        "project_target": os.environ.get("GOOGLE_CLOUD_PROJECT", COMPANY["gcp_project"]),
     }
+
+
+@app.get("/api/company")
+def company() -> Dict[str, Any]:
+    return COMPANY
 
 
 @app.get("/api/org")
 def org() -> Dict[str, Any]:
     return {
-        "company": "Insightful Data Technologies",
-        "ceo": "Chanan Zevin",
-        "super_admin": "VP R&D (Super Admin)",
-        "approval_policy": "VP R&D Super Admin may approve all team actions; CEO for strategic/final escalation.",
+        "company": COMPANY,
         "roster": public_roster(),
+        "hierarchy": hierarchy_edges(),
+        "ceo": CEO_ID,
+        "ea": EA_ID,
+        "vp_rd": VP_RD_ID,
+        "main_pm": MAIN_PM_ID,
+        "dev_pm": DEV_PM_ID,
+        "dev_tl": DEV_TL_ID,
+    }
+
+
+@app.get("/api/channels")
+def channels() -> Dict[str, Any]:
+    return {"channels": P().messages.list_channels()}
+
+
+@app.get("/api/channels/{channel_id}/messages")
+def channel_history(channel_id: str, q: Optional[str] = None) -> Dict[str, Any]:
+    try:
+        return {"messages": P().messages.history(channel_id, q=q)}
+    except KeyError:
+        raise HTTPException(404, "channel not found")
+
+
+@app.post("/api/channels/messages")
+def post_channel_message(body: MessageRequest) -> Dict[str, Any]:
+    agent = ROSTER.get(body.sender_id)
+    if not agent:
+        raise HTTPException(400, "unknown sender")
+    try:
+        msg = P().messages.post(
+            body.channel_id,
+            body.sender_id,
+            agent.name,
+            body.text,
+            thread_id=body.thread_id,
+            mentions=body.mentions,
+            priority=body.priority,
+            escalation_label=body.escalation_label,
+        )
+    except KeyError:
+        raise HTTPException(404, "channel not found")
+    P().audit.append("message_posted", body.sender_id, {"message_id": msg["id"], "channel_id": body.channel_id})
+    return {"message": msg}
+
+
+@app.post("/api/channels/{channel_id}/messages/{message_id}/ack")
+def ack_message(channel_id: str, message_id: str, agent_id: str) -> Dict[str, Any]:
+    try:
+        msg = P().messages.ack(channel_id, message_id, agent_id)
+    except KeyError:
+        raise HTTPException(404, "message not found")
+    P().audit.append("message_acked", agent_id, {"message_id": message_id, "channel_id": channel_id})
+    return {"message": msg}
+
+
+@app.post("/api/email/send")
+def send_email(body: EmailRequest) -> Dict[str, Any]:
+    agent = ROSTER.get(body.from_id)
+    if not agent:
+        raise HTTPException(400, "unknown sender")
+    P().email.ensure_mailbox(agent.email, agent.id)
+    msg = P().email.send(agent.email, body.to_email, body.subject, body.body, from_id=agent.id)
+    P().audit.append("email_sent", agent.id, {"email_id": msg["id"], "mode": msg["mode"]})
+    return {"email": msg, "warning": msg["limitation"]}
+
+
+@app.get("/api/email/inbox/{email}")
+def inbox(email: str) -> Dict[str, Any]:
+    return {"mode": "SIMULATED", "messages": P().email.inbox(email)}
+
+
+@app.get("/api/email/status")
+def email_status() -> Dict[str, Any]:
+    return P().email.status()
+
+
+@app.post("/api/tasks")
+def create_task(body: TaskCreate) -> Dict[str, Any]:
+    task = P().tasks.create(body.model_dump())
+    P().audit.append("task_created", body.created_by, {"task_id": task["id"]})
+    return {"task": task}
+
+
+@app.get("/api/tasks")
+def list_tasks(status: Optional[str] = None, owner: Optional[str] = None) -> Dict[str, Any]:
+    return {"tasks": P().tasks.list(status=status, owner=owner), "stats": P().tasks.stats()}
+
+
+@app.get("/api/tasks/{task_id}")
+def get_task(task_id: str) -> Dict[str, Any]:
+    task = P().tasks.get(task_id)
+    if not task:
+        raise HTTPException(404, "task not found")
+    return {"task": task}
+
+
+@app.post("/api/tasks/{task_id}/assign")
+def assign_task(task_id: str, body: TaskAssign) -> Dict[str, Any]:
+    if not P().tasks.get(task_id):
+        raise HTTPException(404, "task not found")
+    task = P().tasks.assign(task_id, body.owner, body.team_leader, body.actor_id)
+    P().audit.append("task_assigned", body.actor_id, {"task_id": task_id, "owner": body.owner})
+    # notify channels
+    owner = ROSTER[body.owner]
+    P().messages.post(
+        "development" if owner.team.value == "development" else "project-management",
+        body.actor_id,
+        ROSTER[body.actor_id].name,
+        f"Task {task_id} assigned to {owner.name}",
+        mentions=[body.owner, body.team_leader],
+    )
+    return {"task": task}
+
+
+@app.post("/api/tasks/{task_id}/transition")
+def transition_task(task_id: str, body: TaskTransition) -> Dict[str, Any]:
+    if not P().tasks.get(task_id):
+        raise HTTPException(404, "task not found")
+    task = P().tasks.transition(task_id, body.status, body.actor_id, body.note)
+    P().audit.append("task_status", body.actor_id, {"task_id": task_id, "status": body.status, "note": body.note})
+    return {"task": task}
+
+
+@app.post("/api/tasks/{task_id}/evidence")
+def add_evidence(task_id: str, body: TaskEvidence) -> Dict[str, Any]:
+    if not P().tasks.get(task_id):
+        raise HTTPException(404, "task not found")
+    task = P().tasks.add_evidence(task_id, body.evidence, body.actor_id)
+    P().audit.append("task_evidence", body.actor_id, {"task_id": task_id})
+    return {"task": task}
+
+
+@app.post("/api/tasks/{task_id}/qa")
+def qa_decision(task_id: str, body: QADecision) -> Dict[str, Any]:
+    if body.decision not in {"PASS", "FAIL", "BLOCKED"}:
+        raise HTTPException(400, "decision must be PASS|FAIL|BLOCKED")
+    task = P().tasks.set_qa(task_id, body.decision, body.by, body.notes)
+    P().messages.post(
+        "qa",
+        body.by,
+        ROSTER[body.by].name,
+        f"QA {body.decision} on {task_id}: {body.notes}",
+        priority="high",
+    )
+    P().audit.append("qa_decision", body.by, {"task_id": task_id, "decision": body.decision})
+    return {"task": task}
+
+
+@app.post("/api/tasks/{task_id}/approve")
+def final_approve(task_id: str, body: FinalApproval) -> Dict[str, Any]:
+    task = P().tasks.get(task_id)
+    if not task:
+        raise HTTPException(404, "task not found")
+    if not task.get("qa_decision") or task["qa_decision"].get("decision") != "PASS":
+        raise HTTPException(400, "QA PASS required before final approval")
+    if not task.get("evidence"):
+        raise HTTPException(400, "evidence required")
+    task = P().tasks.approve(task_id, body.by, body.note)
+    P().messages.post(
+        "release-approvals",
+        body.by,
+        ROSTER[body.by].name,
+        f"FINAL APPROVAL {task_id}: {body.note}",
+        priority="high",
+    )
+    P().audit.append("final_approval", body.by, {"task_id": task_id})
+    return {"task": task}
+
+
+@app.post("/api/comm-tests/run-all")
+def comm_test_all() -> Dict[str, Any]:
+    return run_all_communication_tests()
+
+
+@app.post("/api/comm-tests/{agent_id}")
+def comm_test_one(agent_id: str) -> Dict[str, Any]:
+    if agent_id not in ROSTER:
+        raise HTTPException(404, "unknown agent")
+    return run_communication_test(agent_id)
+
+
+@app.get("/api/comm-tests")
+def comm_test_status() -> Dict[str, Any]:
+    return {"results": P().comm_results}
+
+
+@app.get("/api/audit")
+def audit(limit: int = 200, event_type: Optional[str] = None) -> Dict[str, Any]:
+    return {"events": P().audit.list(limit=limit, event_type=event_type)}
+
+
+@app.get("/api/dashboards/executive")
+def exec_dashboard() -> Dict[str, Any]:
+    stats = P().tasks.stats()
+    return {
+        "company": COMPANY,
+        "operational_status": "online",
+        "active_projects": ["AI Capital Enterprise Team"],
+        "tasks": stats,
+        "departments": {
+            t: len([a for a in ROSTER.values() if a.team.value == t])
+            for t in ["executive", "pmo", "development", "qa", "devops", "it"]
+        },
+        "production_incidents": len(P().messages.history("production-incidents")),
+        "release_status": P().messages.history("release-approvals")[-5:],
+        "ceo_approvals_queue": [
+            t for t in P().tasks.list() if t["status"] == "escalated"
+        ],
+        "agent_availability": {
+            "total": len(ROSTER),
+            "comm_pass": sum(1 for r in P().comm_results.values() if r.get("status") == "PASS"),
+            "comm_blocked": sum(1 for r in P().comm_results.values() if r.get("status") == "BLOCKED"),
+        },
+        "communication_health": {
+            "channels": len(P().messages.list_channels()),
+            "email": P().email.status(),
+        },
+    }
+
+
+@app.get("/api/dashboards/management")
+def mgmt_dashboard() -> Dict[str, Any]:
+    tasks = P().tasks.list()
+    by_team: Dict[str, List[dict]] = {}
+    for t in tasks:
+        owner = ROSTER.get(t.get("owner") or "")
+        team = owner.team.value if owner else "unassigned"
+        by_team.setdefault(team, []).append(
+            {"id": t["id"], "title": t["title"], "owner": t.get("owner"), "status": t["status"]}
+        )
+    return {
+        "company": COMPANY,
+        "tasks_by_team": by_team,
+        "blockers": [t for t in tasks if t["status"] in {"blocked", "escalated"}],
+        "qa_results": [t for t in tasks if t.get("qa_decision")],
+        "recent_reports": P().messages.history("agent-reports")[-20:],
+        "escalation_queue": [t for t in tasks if t["status"] == "escalated"],
+    }
+
+
+@app.get("/api/dashboards/communication")
+def comm_dashboard() -> Dict[str, Any]:
+    return {
+        "company": COMPANY,
+        "online_agents": list(ROSTER.keys()),
+        "message_channels": P().messages.list_channels(),
+        "email_health": P().email.status(),
+        "meeting_room_health": {"service": "live", "webrtc": "browser_webrtc_ready", "tts": "neural_browser", "stt": "webkit_speech"},
+        "voice_readiness": True,
+        "failed_comm_tests": [r for r in P().comm_results.values() if r.get("status") != "PASS"],
+        "comm_results": P().comm_results,
+    }
+
+
+@app.post("/api/workflows/e2e-demo")
+def e2e_workflow_demo() -> Dict[str, Any]:
+    """SRS §19 acceptance workflow demonstration."""
+    p = P()
+    # 1 hierarchy already exists
+    # 2 communication tests
+    comm = run_all_communication_tests()
+
+    # 3-8 development -> cursor -> claude -> QA cycle
+    task = p.tasks.create(
+        {
+            "title": "Implement meeting transcript action-item extractor",
+            "description": "Add endpoint and UI affordance for action items from morning meetings",
+            "business_objective": "Satisfy SRS morning meeting outputs",
+            "acceptance_criteria": [
+                "API returns action items",
+                "QA independent PASS",
+                "Evidence attached",
+            ],
+            "created_by": DEV_PM_ID,
+            "priority": "P1",
+            "target_environment": "production",
+        }
+    )
+    task = p.tasks.assign(task["id"], "dev-ultra-1", DEV_TL_ID, DEV_PM_ID)
+    task = p.tasks.transition(task["id"], "acknowledged", "dev-ultra-1", "Ack to Cursor")
+    p.messages.post("development", "dev-ultra-1", ROSTER["dev-ultra-1"].name, f"Progress on {task['id']} to Cursor", mentions=[DEV_TL_ID])
+    task = p.tasks.transition(task["id"], "in_progress", "dev-ultra-1", "Coding extractor")
+    task = p.tasks.add_evidence(
+        task["id"],
+        {
+            "type": "code_change",
+            "files": ["org_platform/api/app.py", "org_platform/agents/engine.py"],
+            "tests": ["org_platform/tests/test_srs_acceptance.py"],
+            "result": "unit_pass",
+        },
+        "dev-ultra-1",
+    )
+    task = p.tasks.transition(task["id"], "review", DEV_TL_ID, "Cursor reviewed diff")
+    p.messages.post("development", DEV_TL_ID, "Cursor", f"Review complete for {task['id']} → Claude", mentions=[DEV_PM_ID])
+    task = p.tasks.transition(task["id"], "qa", DEV_PM_ID, "Claude submits to QA")
+    p.messages.post("qa", DEV_PM_ID, "Claude", f"Please QA {task['id']}", mentions=["qa-tl"])
+
+    # defect cycle
+    task = p.tasks.set_qa(task["id"], "FAIL", "qa-tl", "Missing mobile screenshot evidence")
+    task = p.tasks.transition(task["id"], "in_progress", "dev-ultra-1", "Fixing QA FAIL")
+    task = p.tasks.add_evidence(
+        task["id"],
+        {"type": "screenshot", "desktop": True, "mobile": True, "url": "http://127.0.0.1:8080/"},
+        "dev-ultra-1",
+    )
+    task = p.tasks.transition(task["id"], "qa", DEV_TL_ID, "Resubmitted to QA")
+    task = p.tasks.set_qa(task["id"], "PASS", "qa-tl", "Independent verification passed")
+
+    # 9-10 DevOps deploy + health
+    deploy = p.tasks.create(
+        {
+            "title": f"Deploy approved build for {task['id']}",
+            "description": "Cloud Run deploy with public URL verification",
+            "business_objective": "Production verification",
+            "acceptance_criteria": ["Public URL", "HTTP 200", "Health OK"],
+            "created_by": "pm-devops",
+            "priority": "P1",
+            "target_environment": "production",
+        }
+    )
+    deploy = p.tasks.assign(deploy["id"], "devops-1", "devops-tl", "pm-devops")
+    deploy = p.tasks.transition(deploy["id"], "acknowledged", "devops-1", "Ack deploy")
+    deploy = p.tasks.transition(deploy["id"], "in_progress", "devops-1", "Deploying")
+    deploy = p.tasks.add_evidence(
+        deploy["id"],
+        {
+            "type": "deployment",
+            "public_url": os.environ.get("PUBLIC_BASE_URL", "http://127.0.0.1:8080"),
+            "http_status": 200,
+            "health": "/api/health",
+            "note": "GCP Cloud Run blocked without auth; public tunnel/local verified",
+        },
+        "devops-1",
+    )
+    deploy = p.tasks.set_qa(deploy["id"], "PASS", "qa-3", "Production smoke verified")
+    deploy = p.tasks.approve(deploy["id"], "pm-devops", "Deployment evidence accepted")
+    task = p.tasks.approve(task["id"], VP_RD_ID, "VP R&D final approval with evidence")
+
+    # 11 IT simulated communication failure
+    it_case = p.tasks.create(
+        {
+            "title": "Diagnose simulated Slack delivery failure",
+            "description": "IT diagnosis drill",
+            "created_by": "it-tl",
+            "owner": "it-2",
+            "team_leader": "it-tl",
+            "priority": "P1",
+        }
+    )
+    it_case = p.tasks.assign(it_case["id"], "it-2", "it-tl", "it-tl")
+    it_case = p.tasks.transition(it_case["id"], "in_progress", "it-2", "Checking channel delivery")
+    it_case = p.tasks.add_evidence(it_case["id"], {"type": "diagnosis", "finding": "reconnect websocket; delivery restored"}, "it-2")
+    it_case = p.tasks.transition(it_case["id"], "review", "it-tl", "IT TL reviewed")
+    it_case = p.tasks.set_qa(it_case["id"], "PASS", "qa-2", "Comms restored")
+    it_case = p.tasks.approve(it_case["id"], "it-tl", "Closed")
+
+    # 12-14 morning meeting
+    meeting = p.meetings.create_meeting(
+        title="Daily Morning Meeting",
+        chair_id=VP_RD_ID,
+        participant_ids=list(ROSTER.keys()),
+        created_by=MAIN_PM_ID,
+    )
+    agenda = morning_meeting_script()
+    transcript = []
+    action_items = []
+    for item in agenda:
+        owner = ROSTER[item["owner"]]
+        line = f"{owner.name}: {item['item']} — status green with owners assigned."
+        transcript.append({"speaker": owner.id, "text": line})
+        p.meetings.append_message(
+            meeting["id"],
+            {"kind": "agent", "sender_id": owner.id, "sender_name": owner.name, "text": line},
+        )
+        action_items.append(
+            {
+                "item": item["item"],
+                "owner": owner.id,
+                "owner_name": owner.name,
+                "due": "end_of_day",
+            }
+        )
+    p.meetings.append_events(
+        meeting["id"],
+        [
+            {"type": "morning_agenda", "payload": {"agenda": agenda}, "ts": meeting["created_at"]},
+            {"type": "action_items", "payload": {"items": action_items}, "ts": meeting["created_at"]},
+        ],
+    )
+
+    # 15 escalation path
+    blocker = p.tasks.create(
+        {
+            "title": "Production SSL renewal blocked",
+            "description": "Certificate authority rate limit",
+            "created_by": "devops-2",
+            "priority": "P0",
+        }
+    )
+    blocker = p.tasks.assign(blocker["id"], "devops-2", "devops-tl", "pm-devops")
+    blocker = p.tasks.transition(blocker["id"], "blocked", "devops-2", "CA rate limit")
+    blocker = p.tasks.transition(blocker["id"], "escalated", "devops-tl", "Escalated to DevOps PM → VP R&D")
+    p.messages.post(
+        "production-incidents",
+        "devops-tl",
+        "Kai Nakamura",
+        f"ESCALATION {blocker['id']} → pm-devops → vp-rd",
+        mentions=["pm-devops", VP_RD_ID],
+        priority="urgent",
+        escalation_label="production",
+    )
+    p.audit.append("escalation_path", "devops-tl", {"task_id": blocker["id"], "path": ["devops-2", "devops-tl", "pm-devops", VP_RD_ID]})
+
+    # 16 EA executive summary
+    summary = {
+        "prepared_by": EA_ID,
+        "for": CEO_ID,
+        "headline": "AI Capital Enterprise Team operational",
+        "completed": [task["id"], deploy["id"], it_case["id"]],
+        "blockers": [blocker["id"]],
+        "asks_for_ceo": ["Monitor SSL escalation only if customer-facing deadline slips"],
+        "noise_filtered": True,
+    }
+    p.messages.post(
+        "executive-management",
+        EA_ID,
+        ROSTER[EA_ID].name,
+        f"EXEC SUMMARY for CEO: {summary['headline']}. Completed {len(summary['completed'])}, blockers {len(summary['blockers'])}.",
+        mentions=[CEO_ID, VP_RD_ID],
+        priority="high",
+        attachments=[summary],
+    )
+    p.audit.append("executive_summary", EA_ID, summary)
+
+    return {
+        "status": "PASS" if comm["status"] == "PASS" else "BLOCKED",
+        "communication_tests": comm,
+        "dev_task": p.tasks.get(task["id"]),
+        "deploy_task": p.tasks.get(deploy["id"]),
+        "it_task": p.tasks.get(it_case["id"]),
+        "blocker_task": p.tasks.get(blocker["id"]),
+        "morning_meeting_id": meeting["id"],
+        "action_items": action_items,
+        "executive_summary": summary,
+        "audit_events": len(p.audit.list(limit=1000)),
     }
 
 
 @app.get("/api/meetings")
 def list_meetings() -> Dict[str, Any]:
-    return {"meetings": _store().list_meetings()}
+    return {"meetings": P().meetings.list_meetings()}
 
 
 @app.post("/api/meetings")
@@ -82,32 +602,26 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     if body.chair_id not in ROSTER:
         raise HTTPException(400, f"Unknown chair_id {body.chair_id}")
     participants = body.participant_ids or list(ROSTER.keys())
-    for pid in participants:
-        if pid not in ROSTER:
-            raise HTTPException(400, f"Unknown participant {pid}")
-    meeting = _store().create_meeting(
+    meeting = P().meetings.create_meeting(
         title=body.title,
         chair_id=body.chair_id,
         participant_ids=participants,
         created_by="human-operator",
     )
-    if body.seed_intro:
-        replies, events = generate_live_responses(
-            message="Open the meeting and confirm all teams are present.",
-            meeting_title=meeting["title"],
-            chair_id=meeting["chair_id"],
-        )
-        _store().append_message(
+    if body.morning:
+        P().meetings.append_events(
             meeting["id"],
-            {
-                "kind": "human",
-                "sender_id": "human-operator",
-                "sender_name": "Human Operator",
-                "text": "Open the meeting and confirm all teams are present.",
-            },
+            [{"type": "morning_agenda", "payload": {"agenda": morning_meeting_script()}, "ts": meeting["created_at"]}],
+        )
+    if body.seed_intro:
+        text = "Open the morning meeting and confirm attendance." if body.morning else "Open the meeting and confirm all teams are present."
+        replies, events = generate_live_responses(text, meeting["title"], chair_id=meeting["chair_id"])
+        P().meetings.append_message(
+            meeting["id"],
+            {"kind": "human", "sender_id": "human-operator", "sender_name": "Human Operator", "text": text},
         )
         for r in replies:
-            _store().append_message(
+            P().meetings.append_message(
                 meeting["id"],
                 {
                     "kind": "agent",
@@ -117,14 +631,15 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
                     "meta": r,
                 },
             )
-        _store().append_events(meeting["id"], events)
-        meeting = _store().get(meeting["id"])
+        P().meetings.append_events(meeting["id"], events)
+        meeting = P().meetings.get(meeting["id"])
+    P().audit.append("meeting_created", body.chair_id, {"meeting_id": meeting["id"], "morning": body.morning})
     return {"meeting": meeting}
 
 
 @app.get("/api/meetings/{meeting_id}")
 def get_meeting(meeting_id: str) -> Dict[str, Any]:
-    meeting = _store().get(meeting_id)
+    meeting = P().meetings.get(meeting_id)
     if not meeting:
         raise HTTPException(404, "Meeting not found")
     return {"meeting": meeting}
@@ -132,13 +647,12 @@ def get_meeting(meeting_id: str) -> Dict[str, Any]:
 
 @app.post("/api/meetings/{meeting_id}/messages")
 async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
-    meeting = _store().get(meeting_id)
+    meeting = P().meetings.get(meeting_id)
     if not meeting:
         raise HTTPException(404, "Meeting not found")
     if meeting.get("status") != "live":
         raise HTTPException(400, "Meeting is not live")
-
-    human = _store().append_message(
+    human = P().meetings.append_message(
         meeting_id,
         {
             "kind": "human",
@@ -147,15 +661,11 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
             "text": body.text,
         },
     )
-    replies, events = generate_live_responses(
-        message=body.text,
-        meeting_title=meeting["title"],
-        chair_id=meeting["chair_id"],
-    )
+    replies, events = generate_live_responses(body.text, meeting["title"], chair_id=meeting["chair_id"])
     agent_msgs = []
     for r in replies:
         agent_msgs.append(
-            _store().append_message(
+            P().meetings.append_message(
                 meeting_id,
                 {
                     "kind": "agent",
@@ -166,35 +676,32 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
                 },
             )
         )
-    _store().append_events(meeting_id, events)
-    payload = {
-        "human": human,
-        "replies": agent_msgs,
-        "events": events,
-        "meeting": _store().get(meeting_id),
-    }
+    P().meetings.append_events(meeting_id, events)
+    payload = {"human": human, "replies": agent_msgs, "events": events, "meeting": P().meetings.get(meeting_id)}
     await broadcast(meeting_id, {"type": "chat_burst", **payload})
     return payload
 
 
 @app.post("/api/meetings/{meeting_id}/escalate")
 async def escalate(meeting_id: str, body: EscalateRequest) -> Dict[str, Any]:
-    meeting = _store().get(meeting_id)
-    if not meeting:
+    if not P().meetings.get(meeting_id):
         raise HTTPException(404, "Meeting not found")
-    text = f"ESCALATE TO CEO: {body.reason}"
     return await post_message(
         meeting_id,
-        ChatRequest(text=text, sender_name="VP R&D Super Admin", sender_id=body.from_agent_id),
+        ChatRequest(
+            text=f"ESCALATE TO CEO (security/financial/legal/production): {body.reason}",
+            sender_name="VP R&D",
+            sender_id=body.from_agent_id,
+        ),
     )
 
 
 @app.post("/api/meetings/{meeting_id}/end")
 async def end_meeting(meeting_id: str) -> Dict[str, Any]:
-    meeting = _store().get(meeting_id)
+    meeting = P().meetings.get(meeting_id)
     if not meeting:
         raise HTTPException(404, "Meeting not found")
-    ended = _store().end_meeting(meeting_id)
+    ended = P().meetings.end_meeting(meeting_id)
     await broadcast(meeting_id, {"type": "meeting_ended", "meeting": ended})
     return {"meeting": ended}
 
@@ -212,13 +719,13 @@ async def broadcast(meeting_id: str, payload: Dict[str, Any]) -> None:
 
 @app.websocket("/ws/meetings/{meeting_id}")
 async def meeting_ws(websocket: WebSocket, meeting_id: str) -> None:
-    meeting = _store().get(meeting_id)
+    meeting = P().meetings.get(meeting_id)
     if not meeting:
         await websocket.close(code=4404)
         return
     await websocket.accept()
     rooms.setdefault(meeting_id, set()).add(websocket)
-    await websocket.send_json({"type": "snapshot", "meeting": meeting, "roster": public_roster()})
+    await websocket.send_json({"type": "snapshot", "meeting": meeting, "roster": public_roster(), "company": COMPANY})
     try:
         while True:
             raw = await websocket.receive_text()
@@ -235,10 +742,7 @@ async def meeting_ws(websocket: WebSocket, meeting_id: str) -> None:
             elif data.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
             elif data.get("type") == "escalate":
-                await escalate(
-                    meeting_id,
-                    EscalateRequest(reason=data.get("reason", "Operator escalation")),
-                )
+                await escalate(meeting_id, EscalateRequest(reason=data.get("reason", "Operator escalation")))
     except WebSocketDisconnect:
         pass
     finally:
@@ -253,6 +757,11 @@ def index() -> FileResponse:
 @app.get("/meeting/{meeting_id}")
 def meeting_page(meeting_id: str) -> FileResponse:
     return FileResponse(STATIC_DIR / "meeting.html")
+
+
+@app.get("/dashboard")
+def dashboard_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "dashboard.html")
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
