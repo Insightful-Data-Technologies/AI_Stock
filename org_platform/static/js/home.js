@@ -19,9 +19,9 @@ function renderRoster(roster) {
   root.innerHTML = roster
     .map(
       (a) => `<article class="agent">
-        <div class="avatar" style="background:${a.color}">${a.avatar_initials}</div>
+        ${a.photo ? `<img class="avatar-img" src="${a.photo}" alt="${a.name}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" />` : `<div class="avatar" style="background:${a.color}">${a.avatar_initials}</div>`}
         <div>
-          <div class="name">${a.name}</div>
+          <div class="name">${a.name}${a.join_seat === "me" ? " · ME" : a.join_seat === "you" ? " · YOU" : ""}</div>
           <div class="title">${a.title}</div>
           <div class="meta">${a.team}${a.can_approve ? " · approver" : ""}${a.is_ceo ? " · CEO" : ""}${a.is_vp_rd ? " · VP R&D" : ""}${a.is_ea ? " · EA" : ""}</div>
         </div>

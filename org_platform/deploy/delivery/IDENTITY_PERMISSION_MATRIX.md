@@ -3,7 +3,7 @@
 | ID | Name | Role | Reports to | Approve | Channels (primary) | Email |
 |----|------|------|------------|---------|--------------------|-------|
 | ceo-chanan | Chanan Zevin | CEO | — | Yes (executive) | #executive-management | chanan.zevin@insightfuldata.ai |
-| ea-jordan | Jordan Ellis | Executive Assistant | CEO (alongside VP) | No | #executive-management | ea@insightfuldata.ai |
+| ea-sofia | Sofia Marchetti | Executive Assistant | CEO (alongside VP) | No | #executive-management | sofia.marchetti@insightfuldata.ai |
 | vp-rd | VP R&D (Codex) | VP R&D | CEO | Yes (ops) | #executive-management, #project-management | vp.rd@insightfuldata.ai |
 | pm-main | Alex Rivera | Main PM | VP R&D | Yes | #project-management | pm.main@insightfuldata.ai |
 | pm-dev-claude | Claude | Development PM | Main PM | Yes | #development, #project-management | claude.dpm@insightfuldata.ai |

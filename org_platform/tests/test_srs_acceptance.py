@@ -38,7 +38,7 @@ def test_hierarchy_complete(client):
     ids = {a["id"] for a in org["roster"]}
     required = {
         "ceo-chanan",
-        "ea-jordan",
+        "ea-sofia",
         "vp-rd",
         "pm-main",
         "pm-dev-claude",
@@ -107,7 +107,7 @@ def test_srs_e2e_workflow(client):
     assert result["dev_task"]["evidence"]
     assert result["deploy_task"]["status"] == "completed"
     assert result["morning_meeting_id"]
-    assert result["executive_summary"]["prepared_by"] == "ea-jordan"
+    assert result["executive_summary"]["prepared_by"] == "ea-sofia"
     assert result["audit_events"] > 10
     # dashboards
     assert client.get("/api/dashboards/executive").status_code == 200

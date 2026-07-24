@@ -59,6 +59,9 @@ class OrgAgent:
     specialties: List[str] = field(default_factory=list)
     system_prompt: str = ""
     is_human_ceo: bool = False
+    photo: str = ""
+    voice_gender: str = "male"
+    join_seat: str = ""
 
 
 ESCALATION_CHAIN: Dict[str, Optional[str]] = {}
@@ -83,34 +86,36 @@ def _build() -> Dict[str, OrgAgent]:
             avatar_initials="CZ",
             email="chanan.zevin@insightfuldata.ai",
             specialties=["strategy", "capital", "executive approval", "escalations"],
-            system_prompt=(
-                "You are Chanan Zevin, CEO. Receive executive summaries and escalations only. "
-                "Do not handle routine technical installation or troubleshooting."
-            ),
+            system_prompt="You are Chanan Zevin, CEO. Strategy and high-impact approvals only.",
             is_human_ceo=True,
+            photo="/static/assets/portraits/ceo-chanan.png",
+            voice_gender="male",
+            join_seat="me",
         ),
         _a(
-            id="ea-jordan",
-            name="Jordan Ellis",
-            title="Executive Assistant",
+            id="ea-sofia",
+            name="Sofia Marchetti",
+            title="Executive Assistant to the CEO",
             role=Role.EXECUTIVE_ASSISTANT,
             team=Team.EXECUTIVE,
             reports_to="ceo-chanan",
             can_approve=False,
-            voice_persona="precise executive coordinator",
+            voice_persona="warm polished professional woman",
             color="#B08D57",
-            avatar_initials="JE",
-            email="ea@insightfuldata.ai",
+            avatar_initials="SM",
+            email="sofia.marchetti@insightfuldata.ai",
             specialties=["CEO agenda", "executive summaries", "decision tracking", "escalation filter"],
             system_prompt=(
-                "You are the Executive Assistant alongside VP R&D. Maintain CEO agenda, prepare summaries, "
-                "track approvals/escalations, and block duplicate or unnecessary CEO reports."
+                "You are Sofia Marchetti, Executive Assistant to CEO Chanan Zevin, alongside VP R&D. "
+                "Prepare polished executive summaries and protect the CEO from routine noise."
             ),
+            photo="/static/assets/portraits/ea-sofia.png",
+            voice_gender="female",
         ),
         _a(
             id="vp-rd",
-            name="VP R&D (Codex)",
-            title="VP Research & Development",
+            name="VP R&D (You)",
+            title="VP Research & Development — Super Admin",
             role=Role.VP_RD,
             team=Team.EXECUTIVE,
             reports_to="ceo-chanan",
@@ -119,11 +124,11 @@ def _build() -> Dict[str, OrgAgent]:
             color="#3D7EA6",
             avatar_initials="VP",
             email="vp.rd@insightfuldata.ai",
-            specialties=["engineering leadership", "cross-team resolution", "evidence gate", "CEO escalation filter"],
-            system_prompt=(
-                "You are VP R&D. Lead engineering, QA, DevOps, and IT. Convert CEO directives into programs. "
-                "Verify evidence before completion claims. Escalate only genuine CEO decisions."
-            ),
+            specialties=["engineering leadership", "cross-team resolution", "evidence gate"],
+            system_prompt="You are VP R&D Super Admin. Lead Dev/QA/DevOps/IT and escalate only genuine CEO decisions.",
+            photo="/static/assets/portraits/vp-rd.png",
+            voice_gender="male",
+            join_seat="you",
         ),
         _a(
             id="pm-main",
@@ -137,8 +142,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#6B8F71",
             avatar_initials="AR",
             email="pm.main@insightfuldata.ai",
-            specialties=["master plan", "dependencies", "daily meetings", "consolidated reports"],
-            system_prompt="You are Main PM. Coordinate all departments, daily meetings, owners, and escalate blockers to VP R&D.",
+            specialties=["master plan", "dependencies", "daily meetings"],
+            system_prompt="You are Main PM. Coordinate departments and daily meetings.",
+            photo="/static/assets/portraits/pm-main.png",
+            voice_gender="female",
         ),
         _a(
             id="pm-dev-claude",
@@ -152,11 +159,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#7C6BB0",
             avatar_initials="CL",
             email="claude.dpm@insightfuldata.ai",
-            specialties=["requirements breakdown", "architecture review", "code review", "QA handoff"],
-            system_prompt=(
-                "You are Claude, Development Project Manager. Hands-on: break requirements, assign to Cursor, "
-                "review architecture/code, reject unsupported completion claims, submit to QA."
-            ),
+            specialties=["requirements", "architecture review", "QA handoff"],
+            system_prompt="You are Claude, Development PM. Hands-on delivery ownership.",
+            photo="/static/assets/portraits/pm-claude.png",
+            voice_gender="male",
         ),
         _a(
             id="pm-devops",
@@ -170,8 +176,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#2F6F6A",
             avatar_initials="MB",
             email="pm.devops@insightfuldata.ai",
-            specialties=["deployments", "environments", "SSL/domains", "rollback readiness"],
-            system_prompt="You are DevOps PM. Plan releases, require deployment evidence, never mark success from build-only messages.",
+            specialties=["deployments", "SSL/domains", "rollback"],
+            system_prompt="You are DevOps PM. Require public deployment evidence.",
+            photo="/static/assets/portraits/pm-devops.png",
+            voice_gender="female",
         ),
         _a(
             id="dev-tl-cursor",
@@ -185,11 +193,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#4A6FA5",
             avatar_initials="CU",
             email="cursor.devtl@insightfuldata.ai",
-            specialties=["codebase ownership", "file assignment", "integration", "build/test gate"],
-            system_prompt=(
-                "You are Cursor, Development Team Leader. Manage three Ultra developers, review code, "
-                "prevent conflicting edits, confirm builds/tests, deliver to QA, report blockers to Claude."
-            ),
+            specialties=["codebase", "reviews", "build/test gate"],
+            system_prompt="You are Cursor, Dev Team Leader managing three Ultra developers.",
+            photo="/static/assets/portraits/dev-cursor.png",
+            voice_gender="male",
         ),
         _a(
             id="dev-ultra-1",
@@ -203,8 +210,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#5B7DB1",
             avatar_initials="U1",
             email="dev.ultra1@insightfuldata.ai",
-            specialties=["frontend", "API", "tests", "evidence"],
-            system_prompt="Ultra developer 1. Implement real code changes, tests, evidence; never fabricate completion.",
+            specialties=["frontend", "API", "tests"],
+            system_prompt="Ultra developer 1.",
+            photo="/static/assets/portraits/dev-ultra1.png",
+            voice_gender="female",
         ),
         _a(
             id="dev-ultra-2",
@@ -218,8 +227,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#6C8BC0",
             avatar_initials="U2",
             email="dev.ultra2@insightfuldata.ai",
-            specialties=["backend", "data", "integrations", "validation"],
-            system_prompt="Ultra developer 2. Real codebase work with changed-file lists and test evidence.",
+            specialties=["backend", "data", "integrations"],
+            system_prompt="Ultra developer 2.",
+            photo="/static/assets/portraits/dev-ultra2.png",
+            voice_gender="male",
         ),
         _a(
             id="dev-ultra-3",
@@ -233,8 +244,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#7A98CF",
             avatar_initials="U3",
             email="dev.ultra3@insightfuldata.ai",
-            specialties=["integrations", "realtime", "WebRTC/signaling", "tests"],
-            system_prompt="Ultra developer 3. Implement integrations and realtime features with evidence.",
+            specialties=["realtime", "WebRTC", "tests"],
+            system_prompt="Ultra developer 3.",
+            photo="/static/assets/portraits/dev-ultra3.png",
+            voice_gender="female",
         ),
         _a(
             id="qa-tl",
@@ -248,8 +261,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#A67C52",
             avatar_initials="SO",
             email="qa.lead@insightfuldata.ai",
-            specialties=["test plans", "PASS/FAIL/BLOCKED", "defect consolidation", "release gate"],
-            system_prompt="QA Team Leader. Independent verification only. Issue formal PASS, FAIL, or BLOCKED.",
+            specialties=["PASS/FAIL/BLOCKED", "release gate"],
+            system_prompt="QA Team Leader. Independent verification only.",
+            photo="/static/assets/portraits/qa-tl.png",
+            voice_gender="female",
         ),
         _a(
             id="qa-1",
@@ -263,8 +278,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#B8906A",
             avatar_initials="Q1",
             email="qa1@insightfuldata.ai",
-            specialties=["functional", "UI", "navigation", "mobile/desktop"],
-            system_prompt="QA Agent 1. Independent functional/UI verification. Do not repair defects.",
+            specialties=["functional", "UI", "mobile/desktop"],
+            system_prompt="QA Agent 1.",
+            photo="/static/assets/portraits/qa-1.png",
+            voice_gender="female",
         ),
         _a(
             id="qa-2",
@@ -278,8 +295,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#C4A07A",
             avatar_initials="Q2",
             email="qa2@insightfuldata.ai",
-            specialties=["API", "integration", "regression", "performance"],
-            system_prompt="QA Agent 2. API/integration/regression checks with evidence.",
+            specialties=["API", "integration", "regression"],
+            system_prompt="QA Agent 2.",
+            photo="/static/assets/portraits/qa-2.png",
+            voice_gender="female",
         ),
         _a(
             id="qa-3",
@@ -293,8 +312,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#D0B08A",
             avatar_initials="Q3",
             email="qa3@insightfuldata.ai",
-            specialties=["security", "DNS/SSL", "prod smoke", "fabricated-data checks"],
-            system_prompt="QA Agent 3. Security, DNS/SSL, production smoke, provenance checks.",
+            specialties=["security", "DNS/SSL", "prod smoke"],
+            system_prompt="QA Agent 3.",
+            photo="/static/assets/portraits/qa-3.png",
+            voice_gender="male",
         ),
         _a(
             id="devops-tl",
@@ -308,8 +329,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#2F6F6A",
             avatar_initials="KN",
             email="devops.lead@insightfuldata.ai",
-            specialties=["deploy coordination", "rollback", "health monitoring", "evidence"],
-            system_prompt="DevOps Team Leader. Confirm rollback readiness and post-deploy health evidence.",
+            specialties=["deploy", "rollback", "health"],
+            system_prompt="DevOps Team Leader.",
+            photo="/static/assets/portraits/devops-tl.png",
+            voice_gender="male",
         ),
         _a(
             id="devops-1",
@@ -323,8 +346,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#3A8580",
             avatar_initials="D1",
             email="devops1@insightfuldata.ai",
-            specialties=["Cloud Run", "CI/CD", "secrets refs", "health checks"],
-            system_prompt="DevOps Agent 1. Cloud Run/CI/CD and secret references. Public URL must be tested.",
+            specialties=["Cloud Run", "CI/CD"],
+            system_prompt="DevOps Agent 1.",
+            photo="/static/assets/portraits/devops-1.png",
+            voice_gender="male",
         ),
         _a(
             id="devops-2",
@@ -338,8 +363,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#459A94",
             avatar_initials="D2",
             email="devops2@insightfuldata.ai",
-            specialties=["domains", "DNS", "HTTPS", "certificates"],
-            system_prompt="DevOps Agent 2. Domains, DNS, HTTPS, certificates with verification evidence.",
+            specialties=["domains", "DNS", "HTTPS"],
+            system_prompt="DevOps Agent 2.",
+            photo="/static/assets/portraits/devops-2.png",
+            voice_gender="female",
         ),
         _a(
             id="devops-3",
@@ -353,8 +380,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#50AFA8",
             avatar_initials="D3",
             email="devops3@insightfuldata.ai",
-            specialties=["logs", "alerts", "dashboards", "backup/rollback"],
-            system_prompt="DevOps Agent 3. Logging, alerts, dashboards, backup/rollback procedures.",
+            specialties=["logs", "alerts", "dashboards"],
+            system_prompt="DevOps Agent 3.",
+            photo="/static/assets/portraits/devops-3.png",
+            voice_gender="male",
         ),
         _a(
             id="it-tl",
@@ -368,8 +397,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#7A5C8A",
             avatar_initials="AM",
             email="it.lead@insightfuldata.ai",
-            specialties=["identities", "groups", "comm access", "policy escalation"],
-            system_prompt="IT Team Leader. Ensure every agent can use required communication systems.",
+            specialties=["identities", "groups", "comm access"],
+            system_prompt="IT Team Leader.",
+            photo="/static/assets/portraits/it-tl.png",
+            voice_gender="female",
         ),
         _a(
             id="it-1",
@@ -383,8 +414,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#8E6F9C",
             avatar_initials="I1",
             email="it1@insightfuldata.ai",
-            specialties=["agent identities", "email identities", "groups", "permissions inventory"],
-            system_prompt="IT Agent 1. Configure identities/email. Never present simulated mailbox as real.",
+            specialties=["identities", "email"],
+            system_prompt="IT Agent 1.",
+            photo="/static/assets/portraits/it-1.png",
+            voice_gender="male",
         ),
         _a(
             id="it-2",
@@ -398,8 +431,10 @@ def _build() -> Dict[str, OrgAgent]:
             color="#A182B0",
             avatar_initials="I2",
             email="it2@insightfuldata.ai",
-            specialties=["Slack channels", "meeting room support", "voice/mic/speaker tests"],
-            system_prompt="IT Agent 2. Slack-compatible channels and meeting-room connectivity tests.",
+            specialties=["Slack", "meeting room", "voice tests"],
+            system_prompt="IT Agent 2.",
+            photo="/static/assets/portraits/it-2.png",
+            voice_gender="female",
         ),
     ]
     for a in agents:
@@ -409,7 +444,7 @@ def _build() -> Dict[str, OrgAgent]:
 
 ROSTER: Dict[str, OrgAgent] = _build()
 CEO_ID = "ceo-chanan"
-EA_ID = "ea-jordan"
+EA_ID = "ea-sofia"
 VP_RD_ID = "vp-rd"
 MAIN_PM_ID = "pm-main"
 DEV_PM_ID = "pm-dev-claude"
@@ -444,6 +479,9 @@ def public_roster() -> List[dict]:
             "avatar_initials": a.avatar_initials,
             "email": a.email,
             "specialties": a.specialties,
+            "photo": a.photo,
+            "voice_gender": a.voice_gender,
+            "join_seat": a.join_seat,
             "is_ceo": a.id == CEO_ID,
             "is_vp_rd": a.id == VP_RD_ID,
             "is_ea": a.id == EA_ID,
@@ -457,4 +495,4 @@ def hierarchy_edges() -> List[dict]:
         {"from": a.reports_to, "to": a.id}
         for a in ROSTER.values()
         if a.reports_to
-    ] + [{"from": "ceo-chanan", "to": "ea-jordan", "relation": "alongside"}]
+    ] + [{"from": "ceo-chanan", "to": "ea-sofia", "relation": "alongside"}]

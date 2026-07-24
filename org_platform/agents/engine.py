@@ -57,8 +57,8 @@ def craft_reply(agent: OrgAgent, message: str, meeting_title: str) -> Dict[str, 
             approval = {"status": "approved", "by": agent.id, "scope": "executive", "note": "CEO production approval"}
     elif agent.id == EA_ID:
         body = (
-            "Executive Assistant: agenda updated, duplicate noise filtered. "
-            "I will package an executive summary for CEO Chanan Zevin and coordinate with VP R&D."
+            "Sofia Marchetti, Executive Assistant: agenda updated and noise filtered. "
+            "I will prepare a polished executive summary for CEO Chanan Zevin and sync with VP R&D."
         )
     elif agent.id == VP_RD_ID:
         approval = {
