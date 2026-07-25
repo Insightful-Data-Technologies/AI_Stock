@@ -63,6 +63,17 @@ def parse_studio_url(site_url: str) -> Dict[str, Any]:
     }
 
 
+# Standard Google Front End targets used by Cloud Run / AI Studio custom domains.
+CLOUD_RUN_WWW_CNAME = "ghs.googlehosted.com"
+CLOUD_RUN_APEX_A = ["216.239.32.21", "216.239.34.21", "216.239.36.21", "216.239.38.21"]
+CLOUD_RUN_APEX_AAAA = [
+    "2001:4860:4802:32::15",
+    "2001:4860:4802:34::15",
+    "2001:4860:4802:36::15",
+    "2001:4860:4802:38::15",
+]
+
+
 def build_publish_plan(
     site_url: str,
     domain: str,
@@ -76,18 +87,24 @@ def build_publish_plan(
     root = normalize_domain(domain)
     records: List[Dict[str, Any]] = []
     steps: List[str] = []
+    cloud_runish = studio["kind"] in {"cloud_run", "google_ai_studio", "app_engine"}
 
     if include_www:
+        www_target = CLOUD_RUN_WWW_CNAME if cloud_runish else studio["host"]
         records.append(
             {
                 "type": "CNAME",
                 "name": "www",
-                "data": studio["host"],
+                "data": www_target,
                 "ttl": ttl,
-                "purpose": "Point www.<domain> at Google Studio host",
+                "purpose": (
+                    "Point www at Google hosting (Cloud Run / AI Studio domain mapping)"
+                    if cloud_runish
+                    else "Point www.<domain> at Studio host"
+                ),
             }
         )
-        steps.append(f"Set CNAME www → {studio['host']}")
+        steps.append(f"Set CNAME www → {www_target}")
 
     if verification_txt:
         records.append(
@@ -101,14 +118,41 @@ def build_publish_plan(
         )
         steps.append("Set TXT @ verification token from Google Studio / Firebase")
 
-    if apex_forward:
+    apex_forward_to = None
+    if cloud_runish:
+        for ip in CLOUD_RUN_APEX_A:
+            records.append(
+                {
+                    "type": "A",
+                    "name": "@",
+                    "data": ip,
+                    "ttl": ttl,
+                    "purpose": "Cloud Run / AI Studio apex IPv4",
+                }
+            )
+        for ip in CLOUD_RUN_APEX_AAAA:
+            records.append(
+                {
+                    "type": "AAAA",
+                    "name": "@",
+                    "data": ip,
+                    "ttl": ttl,
+                    "purpose": "Cloud Run / AI Studio apex IPv6",
+                }
+            )
+        steps.append("Set apex A/AAAA records to Google Front End IPs")
+        steps.append(
+            f"In Google Cloud Run → Domain mappings: map {root} and www.{root} "
+            f"to service host {studio['host']}"
+        )
+    elif apex_forward:
+        apex_forward_to = f"https://www.{root}"
         steps.append(f"Forward apex {root} → https://www.{root} (or add provider A records)")
 
     steps.extend(
         [
-            "In Google Studio / Firebase Hosting, add custom domain and wait for SSL",
-            "Wait for DNS propagation (often 5–60 minutes)",
-            f"Verify https://www.{root} loads the Studio site",
+            "Wait for DNS propagation + Google SSL certificate (often 15–60 minutes)",
+            f"Verify https://www.{root} serves the Studio app (not the old placeholder)",
         ]
     )
 
@@ -116,7 +160,7 @@ def build_publish_plan(
         "domain": root,
         "studio": studio,
         "records": records,
-        "apex_forward_to": f"https://www.{root}" if apex_forward else None,
+        "apex_forward_to": apex_forward_to,
         "public_urls": {
             "www": f"https://www.{root}",
             "apex": f"https://{root}",
@@ -124,8 +168,8 @@ def build_publish_plan(
         },
         "steps": steps,
         "notes": [
-            "Google Studio / Firebase must also authorize this custom domain (SSL issuance).",
-            "Apex (@) cannot be a CNAME on GoDaddy — use forwarding to www or A records from Google.",
+            "For Cloud Run / Google AI Studio, DNS alone is not enough: create Domain mappings in GCP.",
+            "www should CNAME to ghs.googlehosted.com (not the *.run.app hostname) when using domain mappings.",
             "API credentials are used only to write DNS; they are never stored in job history.",
         ],
     }
@@ -170,15 +214,27 @@ def apply_plan(
             }
         )
 
+    # Group by (type, name) — GoDaddy PUT replaces the whole set for that key.
+    grouped: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
     for rec in plan["records"]:
+        grouped.setdefault((rec["type"], rec["name"]), []).append(rec)
+
+    for (rtype, name), recs in grouped.items():
+        payload = [{"data": r["data"], "ttl": int(r.get("ttl") or 600)} for r in recs]
         try:
-            client.put_record(plan["domain"], rec["type"], rec["name"], rec["data"], ttl=int(rec.get("ttl") or 600))
-            results.append({"action": "put_record", "record": rec, "ok": True})
+            client._request(
+                "PUT",
+                f"/domains/{plan['domain']}/records/{rtype}/{name}",
+                json=payload,
+            )
+            results.append({"action": "put_records", "type": rtype, "name": name, "records": recs, "ok": True})
         except GoDaddyError as exc:
             results.append(
                 {
-                    "action": "put_record",
-                    "record": rec,
+                    "action": "put_records",
+                    "type": rtype,
+                    "name": name,
+                    "records": recs,
                     "ok": False,
                     "error": str(exc),
                     "status_code": exc.status_code,
@@ -190,8 +246,8 @@ def apply_plan(
         ok, msg = client.set_forwarding(plan["domain"], plan["apex_forward_to"])
         results.append({"action": "apex_forward", "ok": ok, "detail": msg, "to": plan["apex_forward_to"]})
 
-    applied = any(r.get("action") == "put_record" and r.get("ok") for r in results)
-    failed = [r for r in results if r.get("ok") is False and r.get("action") == "put_record"]
+    applied = any(r.get("action") == "put_records" and r.get("ok") for r in results)
+    failed = [r for r in results if r.get("ok") is False and r.get("action") == "put_records"]
     return {
         "mode": "live",
         "applied": applied and not failed,

@@ -35,8 +35,23 @@ def test_publish_page_and_dry_run(client):
     ).json()["plan"]
     assert plan["studio"]["kind"] == "firebase_hosting"
     assert plan["studio"]["host"] == "my-cool-app.web.app"
-    assert any(r["type"] == "CNAME" and r["name"] == "www" for r in plan["records"])
+    assert any(r["type"] == "CNAME" and r["name"] == "www" and r["data"] == "my-cool-app.web.app" for r in plan["records"])
     assert plan["public_urls"]["www"] == "https://www.aizevinstocks.com"
+
+
+def test_cloud_run_ai_studio_plan_uses_google_hosted(client):
+    plan = client.post(
+        "/api/publish/plan",
+        json={
+            "site_url": "https://zevin-stocks-intelligence-184723980511.europe-west2.run.app",
+            "domain": "aizevinstocks.com",
+        },
+    ).json()["plan"]
+    assert plan["studio"]["kind"] == "cloud_run"
+    www = next(r for r in plan["records"] if r["type"] == "CNAME" and r["name"] == "www")
+    assert www["data"] == "ghs.googlehosted.com"
+    assert any(r["type"] == "A" and r["name"] == "@" for r in plan["records"])
+    assert any(r["type"] == "AAAA" and r["name"] == "@" for r in plan["records"])
 
     published = client.post(
         "/api/publish",
@@ -59,7 +74,7 @@ def test_live_publish_mocked_godaddy(client):
         inst = MockClient.return_value
         inst.configured = True
         inst.get_domain.return_value = {"domain": "example.com"}
-        inst.put_record.return_value = None
+        inst._request.return_value = None
         inst.set_forwarding.return_value = (True, "apex forwarding configured")
 
         res = client.post(
@@ -75,7 +90,8 @@ def test_live_publish_mocked_godaddy(client):
 
     assert res["status"] == "published"
     assert res["application"]["applied"] is True
-    assert any(r.get("action") == "put_record" and r.get("ok") for r in res["application"]["results"])
+    assert any(r.get("action") == "put_records" and r.get("ok") for r in res["application"]["results"])
+    assert inst._request.called
     # devops notified
     msgs = client.get("/api/channels/devops/messages").json()["messages"]
     assert any("Domain publish" in m["text"] for m in msgs)
