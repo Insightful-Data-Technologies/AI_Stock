@@ -11,12 +11,20 @@ bash org_platform/deploy/run_local.sh
 
 Open:
 
+### Google Cloud Enterprise (Cloud Run — production)
+
+- **Org home / Agents:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/
+- **Meeting room:** create from home, or open `/meeting/{id}`
+- **VP Delivery Studio:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/studio
+- **Slack `#devops`:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/slack
+- **Dashboards:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/dashboard
+- **Domain Publisher:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/publish
+- Project: `gen-lang-client-0386540117` · Region: `europe-west2` · Service: `enterprise-org-meeting`
+
+### Local / temporary tunnel
+
 - Local: http://127.0.0.1:8080
-- Public tunnel (temporary; refreshes if it drops): https://cons-jon-schedules-beaver.trycloudflare.com
-- **VP Delivery Studio (screen share → DevOps):** https://cons-jon-schedules-beaver.trycloudflare.com/studio
-- **Domain Publisher (Google Studio → GoDaddy):** https://cons-jon-schedules-beaver.trycloudflare.com/publish
-- Slack `#devops`: https://cons-jon-schedules-beaver.trycloudflare.com/slack
-- Meeting room: https://cons-jon-schedules-beaver.trycloudflare.com/meeting/565ea73f-91f2-4dc1-b42c-2c76e7844647
+- Cloudflare quick tunnel (temporary only; prefer Cloud Run URL above)
 
 ## Domain Publisher (Google Studio site → GoDaddy domain)
 
