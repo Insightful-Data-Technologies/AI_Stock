@@ -14,8 +14,21 @@ Open:
 - Local: http://127.0.0.1:8080
 - Public tunnel (temporary; refreshes if it drops): https://cons-jon-schedules-beaver.trycloudflare.com
 - **VP Delivery Studio (screen share → DevOps):** https://cons-jon-schedules-beaver.trycloudflare.com/studio
+- **Domain Publisher (Google Studio → GoDaddy):** https://cons-jon-schedules-beaver.trycloudflare.com/publish
 - Slack `#devops`: https://cons-jon-schedules-beaver.trycloudflare.com/slack
 - Meeting room: https://cons-jon-schedules-beaver.trycloudflare.com/meeting/565ea73f-91f2-4dc1-b42c-2c76e7844647
+
+## Domain Publisher (Google Studio site → GoDaddy domain)
+
+1. Open `/publish`.
+2. Paste your **Google Studio / Firebase** site URL (e.g. `https://your-app.web.app`).
+3. Enter the **GoDaddy domain** you already own.
+4. Click **Build DNS plan** (always safe) or uncheck dry-run and **Publish to GoDaddy**.
+5. Provide GoDaddy API key/secret in the form, or set server env:
+   - `GODADDY_API_KEY`
+   - `GODADDY_API_SECRET`
+
+The app writes `www` CNAME → Studio host, optionally forwards apex → `www`, and can add a verification TXT. You must also add the custom domain inside Google Studio / Firebase so SSL can issue.
 
 ## VP Delivery Studio (share screen in a meeting)
 

@@ -25,6 +25,8 @@ from org_platform.agents.roster import (
     hierarchy_edges,
     public_roster,
 )
+from org_platform.publish.godaddy import GoDaddyError
+from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
 from org_platform.store.platform import get_platform
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -1063,6 +1065,121 @@ def studio_home() -> FileResponse:
 @app.get("/studio/{session_id}")
 def studio_session_page(session_id: str) -> FileResponse:
     return FileResponse(STATIC_DIR / "studio.html")
+
+
+class PublishRequest(BaseModel):
+    site_url: str
+    domain: str
+    verification_txt: Optional[str] = None
+    include_www: bool = True
+    apex_forward: bool = True
+    dry_run: bool = True
+    api_key: Optional[str] = None
+    api_secret: Optional[str] = None
+
+
+class PublishCredsRequest(BaseModel):
+    api_key: Optional[str] = None
+    api_secret: Optional[str] = None
+
+
+@app.get("/publish")
+def publish_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "publish.html")
+
+
+@app.get("/api/publish/jobs")
+def list_publish_jobs() -> Dict[str, Any]:
+    return {"jobs": P().publish_jobs.list()}
+
+
+@app.get("/api/publish/jobs/{job_id}")
+def get_publish_job(job_id: str) -> Dict[str, Any]:
+    job = P().publish_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Publish job not found")
+    return {"job": job}
+
+
+@app.post("/api/publish/credentials")
+def publish_credentials_check(body: PublishCredsRequest) -> Dict[str, Any]:
+    return credentials_status(api_key=body.api_key, api_secret=body.api_secret)
+
+
+@app.post("/api/publish/plan")
+def publish_plan(body: PublishRequest) -> Dict[str, Any]:
+    try:
+        plan = build_publish_plan(
+            body.site_url,
+            body.domain,
+            include_www=body.include_www,
+            apex_forward=body.apex_forward,
+            verification_txt=body.verification_txt,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"plan": plan, "status": "planned"}
+
+
+@app.post("/api/publish")
+def publish_domain(body: PublishRequest) -> Dict[str, Any]:
+    try:
+        result = run_publish(
+            body.site_url,
+            body.domain,
+            api_key=body.api_key,
+            api_secret=body.api_secret,
+            dry_run=body.dry_run,
+            include_www=body.include_www,
+            apex_forward=body.apex_forward,
+            verification_txt=body.verification_txt,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except GoDaddyError as exc:
+        raise HTTPException(502, f"{exc}" + (f" — {exc.body}" if exc.body else "")) from exc
+
+    plan = result["plan"]
+    job = P().publish_jobs.create(
+        {
+            "domain": plan["domain"],
+            "studio_host": plan["studio"]["host"],
+            "studio_url": plan["studio"]["canonical_url"],
+            "site_url": body.site_url,
+            "dry_run": body.dry_run,
+            "status": result["status"],
+            "credentials_configured": result["credentials_configured"],
+            "plan": plan,
+            "application": result["application"],
+            # never persist secrets
+        }
+    )
+    P().audit.append(
+        "domain_publish",
+        VP_RD_ID,
+        {
+            "job_id": job["id"],
+            "domain": plan["domain"],
+            "studio_host": plan["studio"]["host"],
+            "dry_run": body.dry_run,
+            "status": result["status"],
+        },
+    )
+    # Notify devops channel on live publish
+    if not body.dry_run:
+        P().messages.post(
+            "devops",
+            VP_RD_ID,
+            ROSTER[VP_RD_ID].name,
+            (
+                f"Domain publish {result['status']}: {plan['domain']} → {plan['studio']['host']} "
+                f"(job {job['id']}). Public: {plan['public_urls']['www']}"
+            ),
+            mentions=["devops-tl", "pm-devops", CEO_ID],
+            priority="high",
+            attachments=[{"job_id": job["id"], "domain": plan["domain"]}],
+        )
+    return {**result, "job": job}
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
