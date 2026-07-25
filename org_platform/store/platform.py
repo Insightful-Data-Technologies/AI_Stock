@@ -8,6 +8,7 @@ from org_platform.store.audit import AuditLog
 from org_platform.store.email_store import EmailStore
 from org_platform.store.meetings import MeetingStore
 from org_platform.store.messaging import MessagingStore
+from org_platform.store.studio import StudioStore
 from org_platform.store.tasks import TaskStore
 
 
@@ -20,6 +21,7 @@ class Platform:
         self.email = EmailStore(self.data_dir / "email.json")
         self.tasks = TaskStore(self.data_dir / "tasks.json")
         self.meetings = MeetingStore(str(self.data_dir))
+        self.studio = StudioStore(self.data_dir)
         self.comm_results: dict = {}
 
     def reset_comm_results(self) -> None:

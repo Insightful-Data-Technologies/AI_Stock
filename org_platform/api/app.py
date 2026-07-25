@@ -749,6 +749,292 @@ async def meeting_ws(websocket: WebSocket, meeting_id: str) -> None:
         rooms.get(meeting_id, set()).discard(websocket)
 
 
+studio_rooms: Dict[str, Set[WebSocket]] = {}
+
+
+class CreateStudioRequest(BaseModel):
+    title: str = "VP Delivery Studio — Screen Share Briefing"
+
+
+class StudioChatRequest(BaseModel):
+    text: str
+    sender_id: str = CEO_ID
+    sender_name: str = "Me (Chanan Zevin)"
+
+
+class StudioFrameRequest(BaseModel):
+    data_url: str
+    note: str = ""
+
+
+class StudioShareRequest(BaseModel):
+    active: bool
+
+
+class StudioDeliverRequest(BaseModel):
+    briefing: str
+    owner: str = "devops-1"
+    title: Optional[str] = None
+    priority: str = "P1"
+
+
+def _vp_studio_reply(text: str, screen_sharing: bool, frame_count: int) -> str:
+    seen = (
+        f"I can see your shared screen ({frame_count} frame(s) received)."
+        if screen_sharing or frame_count
+        else "Share your screen so I can follow visually while you brief me."
+    )
+    return (
+        f"VP R&D here. {seen} "
+        f"Understood briefing: “{text}”. "
+        "I will package this as a DevOps delivery task with screen evidence, assign an owner, "
+        "and post it to #devops. Click Deliver to DevOps when you want me to send it — or say deliver now."
+    )
+
+
+async def studio_broadcast(session_id: str, payload: Dict[str, Any]) -> None:
+    dead: List[WebSocket] = []
+    for ws in list(studio_rooms.get(session_id, set())):
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        studio_rooms.get(session_id, set()).discard(ws)
+
+
+@app.get("/api/studio/sessions")
+def list_studio_sessions() -> Dict[str, Any]:
+    return {"sessions": P().studio.list()}
+
+
+@app.post("/api/studio/sessions")
+async def create_studio_session(body: CreateStudioRequest) -> Dict[str, Any]:
+    session = P().studio.create(title=body.title, host_id=CEO_ID, vp_id=VP_RD_ID)
+    intro = (
+        "VP R&D joined. You are Me (CEO). Share your screen, explain the DevOps task, "
+        "and I will deliver it to the DevOps team with evidence."
+    )
+    P().studio.add_message(
+        session["id"],
+        {"kind": "agent", "sender_id": VP_RD_ID, "sender_name": "VP R&D (You)", "text": intro},
+    )
+    P().audit.append("studio_created", VP_RD_ID, {"session_id": session["id"]})
+    return {"session": P().studio.get(session["id"])}
+
+
+@app.get("/api/studio/sessions/{session_id}")
+def get_studio_session(session_id: str) -> Dict[str, Any]:
+    session = P().studio.get(session_id)
+    if not session:
+        raise HTTPException(404, "Studio session not found")
+    return {"session": session}
+
+
+@app.post("/api/studio/sessions/{session_id}/share")
+async def studio_share(session_id: str, body: StudioShareRequest) -> Dict[str, Any]:
+    if not P().studio.get(session_id):
+        raise HTTPException(404, "Studio session not found")
+    session = P().studio.set_sharing(session_id, body.active)
+    note = (
+        "Screen share is live — I am watching your screen now. Explain the DevOps task."
+        if body.active
+        else "Screen share stopped."
+    )
+    msg = P().studio.add_message(
+        session_id,
+        {"kind": "agent", "sender_id": VP_RD_ID, "sender_name": "VP R&D (You)", "text": note},
+    )
+    payload = {"type": "studio_event", "event": "share", "active": body.active, "message": msg, "session": P().studio.get(session_id)}
+    await studio_broadcast(session_id, payload)
+    return payload
+
+
+@app.post("/api/studio/sessions/{session_id}/frames")
+async def studio_frame(session_id: str, body: StudioFrameRequest) -> Dict[str, Any]:
+    if not P().studio.get(session_id):
+        raise HTTPException(404, "Studio session not found")
+    if not body.data_url or len(body.data_url) < 32:
+        raise HTTPException(400, "data_url required")
+    # limit very large payloads (~8MB chars)
+    if len(body.data_url) > 12_000_000:
+        raise HTTPException(400, "frame too large")
+    frame = P().studio.add_frame(session_id, body.data_url, note=body.note)
+    P().audit.append("studio_frame", CEO_ID, {"session_id": session_id, "frame_id": frame["id"], "bytes": frame["bytes"]})
+    payload = {"type": "studio_event", "event": "frame", "frame": frame, "session": P().studio.get(session_id)}
+    await studio_broadcast(session_id, payload)
+    return {"frame": frame}
+
+
+@app.get("/api/studio/frames/{session_id}/{filename}")
+def studio_frame_file(session_id: str, filename: str) -> FileResponse:
+    path = P().studio.frame_file(session_id, filename)
+    if not path or not path.exists():
+        # try composed name session_id_filename if filename is uuid.ext
+        alt = P().studio.data_dir / "studio_frames" / f"{session_id}_{filename}"
+        path = alt if alt.exists() else None
+    if not path:
+        raise HTTPException(404, "frame not found")
+    media = "image/jpeg" if str(path).endswith((".jpg", ".jpeg")) else "image/png"
+    return FileResponse(path, media_type=media)
+
+
+@app.post("/api/studio/sessions/{session_id}/messages")
+async def studio_chat(session_id: str, body: StudioChatRequest) -> Dict[str, Any]:
+    session = P().studio.get(session_id)
+    if not session:
+        raise HTTPException(404, "Studio session not found")
+    human = P().studio.add_message(
+        session_id,
+        {
+            "kind": "human",
+            "sender_id": body.sender_id,
+            "sender_name": body.sender_name,
+            "text": body.text,
+        },
+    )
+    session = P().studio.get(session_id)
+    vp_text = _vp_studio_reply(
+        body.text,
+        bool(session.get("screen_sharing")),
+        len(session.get("frames") or []),
+    )
+    # Auto-deliver if user says so
+    auto_deliver = any(k in body.text.lower() for k in ["deliver now", "send to devops", "assign devops", "deliver to devops"])
+    vp = P().studio.add_message(
+        session_id,
+        {"kind": "agent", "sender_id": VP_RD_ID, "sender_name": "VP R&D (You)", "text": vp_text},
+    )
+    delivery = None
+    if auto_deliver:
+        delivery = await _deliver_studio_task(session_id, body.text, "devops-1", None, "P1")
+    payload = {
+        "type": "studio_chat",
+        "human": human,
+        "vp": vp,
+        "delivery": delivery,
+        "session": P().studio.get(session_id),
+    }
+    await studio_broadcast(session_id, payload)
+    return payload
+
+
+async def _deliver_studio_task(
+    session_id: str,
+    briefing: str,
+    owner: str,
+    title: Optional[str],
+    priority: str,
+) -> Dict[str, Any]:
+    session = P().studio.get(session_id)
+    if not session:
+        raise HTTPException(404, "Studio session not found")
+    P().studio.set_briefing(session_id, {"text": briefing, "by": CEO_ID})
+    task_title = title or f"DevOps from studio: {briefing[:80]}"
+    frames = session.get("frames") or []
+    latest = frames[-1] if frames else None
+    task = P().tasks.create(
+        {
+            "title": task_title,
+            "description": briefing,
+            "business_objective": "Deliver CEO-briefed DevOps work from VP Delivery Studio",
+            "acceptance_criteria": [
+                "Acknowledge in #devops",
+                "Attach execution evidence",
+                "Confirm public verification when deploy-related",
+            ],
+            "created_by": VP_RD_ID,
+            "priority": priority,
+            "target_environment": "production",
+        }
+    )
+    team_leader = "devops-tl" if owner.startswith("devops-") and owner != "pm-devops" else "pm-devops"
+    task = P().tasks.assign(task["id"], owner, team_leader, VP_RD_ID)
+    if latest:
+        task = P().tasks.add_evidence(
+            task["id"],
+            {
+                "type": "screen_share_frame",
+                "frame_id": latest["id"],
+                "url": latest["path"],
+                "source": "vp_delivery_studio",
+                "session_id": session_id,
+            },
+            VP_RD_ID,
+        )
+    slack = P().messages.post(
+        "devops",
+        VP_RD_ID,
+        ROSTER[VP_RD_ID].name,
+        f"VP DELIVERY from studio session {session_id}: task {task['id']} for <@{owner}>. Briefing: {briefing}",
+        mentions=[owner, "devops-tl", "pm-devops", CEO_ID],
+        priority="high",
+        attachments=[{"task_id": task["id"], "frame": latest["path"] if latest else None}],
+    )
+    delivery = {
+        "task_id": task["id"],
+        "owner": owner,
+        "slack_message_id": slack["id"],
+        "frame": latest,
+        "briefing": briefing,
+    }
+    P().studio.set_delivery(session_id, delivery)
+    P().studio.add_message(
+        session_id,
+        {
+            "kind": "agent",
+            "sender_id": VP_RD_ID,
+            "sender_name": "VP R&D (You)",
+            "text": (
+                f"Delivered to DevOps. Task {task['id']} assigned to {ROSTER[owner].name}. "
+                f"Posted in #devops"
+                + (f" with screen evidence {latest['path']}." if latest else ".")
+            ),
+        },
+    )
+    P().audit.append("studio_delivery", VP_RD_ID, delivery)
+    return {"delivery": delivery, "task": P().tasks.get(task["id"]), "session": P().studio.get(session_id)}
+
+
+@app.post("/api/studio/sessions/{session_id}/deliver")
+async def studio_deliver(session_id: str, body: StudioDeliverRequest) -> Dict[str, Any]:
+    if body.owner not in ROSTER:
+        raise HTTPException(400, "unknown owner")
+    result = await _deliver_studio_task(session_id, body.briefing, body.owner, body.title, body.priority)
+    await studio_broadcast(session_id, {"type": "studio_delivery", **result})
+    return result
+
+
+@app.websocket("/ws/studio/{session_id}")
+async def studio_ws(websocket: WebSocket, session_id: str) -> None:
+    session = P().studio.get(session_id)
+    if not session:
+        await websocket.close(code=4404)
+        return
+    await websocket.accept()
+    studio_rooms.setdefault(session_id, set()).add(websocket)
+    await websocket.send_json({"type": "snapshot", "session": session, "roster": public_roster(), "company": COMPANY})
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            data = json.loads(raw)
+            if data.get("type") == "chat":
+                await studio_chat(
+                    session_id,
+                    StudioChatRequest(
+                        text=data.get("text", ""),
+                        sender_id=data.get("sender_id", CEO_ID),
+                        sender_name=data.get("sender_name", "Me (Chanan Zevin)"),
+                    ),
+                )
+            elif data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        pass
+    finally:
+        studio_rooms.get(session_id, set()).discard(websocket)
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
@@ -767,6 +1053,16 @@ def dashboard_page() -> FileResponse:
 @app.get("/slack")
 def slack_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "slack.html")
+
+
+@app.get("/studio")
+def studio_home() -> FileResponse:
+    return FileResponse(STATIC_DIR / "studio.html")
+
+
+@app.get("/studio/{session_id}")
+def studio_session_page(session_id: str) -> FileResponse:
+    return FileResponse(STATIC_DIR / "studio.html")
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
