@@ -12,7 +12,8 @@ bash org_platform/deploy/run_local.sh
 Open:
 
 - Local: http://127.0.0.1:8080
-- Public tunnel (if running): https://floor-students-estimated-apache.trycloudflare.com
+- Public tunnel (temporary; refreshes if it drops): https://cons-jon-schedules-beaver.trycloudflare.com
+- Meeting room: https://cons-jon-schedules-beaver.trycloudflare.com/meeting/565ea73f-91f2-4dc1-b42c-2c76e7844647
 
 ## Use the meeting
 
