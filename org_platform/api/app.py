@@ -764,4 +764,9 @@ def dashboard_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "dashboard.html")
 
 
+@app.get("/slack")
+def slack_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "slack.html")
+
+
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
