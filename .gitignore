@@ -3,3 +3,4 @@
 org_platform/**/__pycache__/
 *.py[cod]
 .org_platform_data/
+.env

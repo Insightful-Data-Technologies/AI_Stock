@@ -25,9 +25,13 @@ from org_platform.agents.roster import (
     hierarchy_edges,
     public_roster,
 )
+from org_platform.publish.env_loader import load_dotenv
 from org_platform.publish.godaddy import GoDaddyError
 from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
 from org_platform.store.platform import get_platform
+
+# Load /workspace/.env (or cwd .env) so GODADDY_* keys are available when present.
+load_dotenv()
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
