@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -345,10 +346,19 @@ def audit(limit: int = 200, event_type: Optional[str] = None) -> Dict[str, Any]:
 @app.get("/api/dashboards/executive")
 def exec_dashboard() -> Dict[str, Any]:
     stats = P().tasks.stats()
+    live_one_on_one = _find_live_one_on_one()
     return {
         "company": COMPANY,
         "operational_status": "online",
         "active_projects": ["AI Capital Enterprise Team"],
+        "one_on_one": {
+            "available": True,
+            "path": "/dashboard",
+            "simulation_path": "/meeting-simulation.html",
+            "live_meeting_id": live_one_on_one["id"] if live_one_on_one else None,
+            "live_meeting_title": live_one_on_one.get("title") if live_one_on_one else None,
+            "status": "live" if live_one_on_one else "ready",
+        },
         "tasks": stats,
         "departments": {
             t: len([a for a in ROSTER.values() if a.team.value == t])
@@ -604,27 +614,39 @@ def list_meetings() -> Dict[str, Any]:
     return {"meetings": P().meetings.list_meetings()}
 
 
+def _find_live_one_on_one() -> Optional[Dict[str, Any]]:
+    for summary in P().meetings.list_meetings():
+        if summary.get("status") != "live":
+            continue
+        meeting = P().meetings.get(summary["id"]) or summary
+        title = meeting.get("title") or ""
+        events = meeting.get("events") or []
+        if any(e.get("type") == "one_on_one" for e in events) or re_search_one_on_one(title):
+            return meeting
+    return None
+
+
+def re_search_one_on_one(title: str) -> bool:
+    return bool(re.search(r"1:1|one[- ]?on[- ]?one", title, re.I))
+
+
 @app.post("/api/meetings/one-on-one/ensure")
 async def ensure_one_on_one_meeting() -> Dict[str, Any]:
-    """Return a live Ultra Agent 1:1 room, creating one if needed."""
-    existing = [
-        m
-        for m in P().meetings.list_meetings()
-        if m.get("status") == "live" and ("1:1" in (m.get("title") or "") or "one-on-one" in (m.get("title") or "").lower())
-    ]
+    """Find a live Ultra Agent 1:1 room or create one (used by meeting-simulation.html)."""
+    existing = _find_live_one_on_one()
     if existing:
-        meeting = P().meetings.get(existing[0]["id"])
-        return {"meeting": meeting, "created": False}
-    body = CreateMeetingRequest(
-        title="Ultra Agent Meeting 1:1",
-        chair_id=VP_RD_ID,
-        participant_ids=[CEO_ID, VP_RD_ID, DEV_TL_ID],
-        seed_intro=True,
-        morning=False,
-        one_on_one=True,
+        return {"meeting": existing, "created": False}
+    created = await create_meeting(
+        CreateMeetingRequest(
+            title="Ultra Agent Meeting 1:1",
+            chair_id=VP_RD_ID,
+            participant_ids=[CEO_ID, VP_RD_ID, DEV_TL_ID],
+            seed_intro=True,
+            morning=False,
+            one_on_one=True,
+        )
     )
-    created = await create_meeting(body)
-    return {"meeting": created["meeting"], "created": True}
+    return {**created, "created": True}
 
 
 @app.post("/api/meetings")
@@ -1111,7 +1133,9 @@ def index() -> FileResponse:
 
 
 @app.get("/meeting-simulation.html")
+@app.get("/meeting-simulation")
 def meeting_simulation_page() -> FileResponse:
+    """Local App Launch Center target for One on One Meeting (port 3000)."""
     return FileResponse(STATIC_DIR / "meeting-simulation.html")
 
 

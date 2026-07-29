@@ -73,9 +73,28 @@ def test_meeting_simulation_page_and_ensure(client):
     assert page.status_code == 200
     assert "AI Agent Meeting Simulation" in page.text
     assert "Ultra Agent" in page.text
-    ensured = client.post("/api/meetings/one-on-one/ensure").json()
-    assert ensured["meeting"]["status"] == "live"
-    assert "1:1" in ensured["meeting"]["title"]
-    again = client.post("/api/meetings/one-on-one/ensure").json()
-    assert again["meeting"]["id"] == ensured["meeting"]["id"]
-    assert again["created"] is False
+    assert page.headers.get("content-type", "").startswith("text/html")
+
+    first = client.post("/api/meetings/one-on-one/ensure").json()
+    assert first["created"] is True
+    mid = first["meeting"]["id"]
+    assert first["meeting"]["status"] == "live"
+
+    second = client.post("/api/meetings/one-on-one/ensure").json()
+    assert second["created"] is False
+    assert second["meeting"]["id"] == mid
+
+
+def test_dashboard_one_on_one_box(client):
+    dash = client.get("/dashboard")
+    assert dash.status_code == 200
+    assert "dashboardOneOnOne" in dash.text
+    assert "General dashboard · One on One" in dash.text
+    assert "dashLaunchOneOnOne" in dash.text
+    assert "Ultra Agent Meeting 1:1" in dash.text
+
+    created = client.post("/api/meetings/one-on-one/ensure").json()
+    exec_dash = client.get("/api/dashboards/executive").json()
+    assert exec_dash["one_on_one"]["available"] is True
+    assert exec_dash["one_on_one"]["live_meeting_id"] == created["meeting"]["id"]
+    assert exec_dash["one_on_one"]["status"] == "live"

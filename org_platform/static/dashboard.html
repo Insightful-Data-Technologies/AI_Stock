@@ -13,31 +13,131 @@
   <main class="shell">
     <header class="brand-lockup">
       <div class="company">Insightful Data Technologies – 2.o AI</div>
-      <div class="tag"><strong>Chanan Zevin – CEO</strong> · Executive · Management · Communication dashboards</div>
+      <div class="tag"><strong>Chanan Zevin – CEO</strong> · General dashboard · Executive · Management · Communication</div>
       <div class="actions" style="margin-top:0.8rem;">
         <a class="btn btn-ghost" href="/">Org home</a>
+        <a class="btn btn-ghost" href="/meeting-simulation.html">Meeting simulation</a>
         <button class="btn btn-steel" id="refresh" type="button">Refresh</button>
       </div>
     </header>
+
+    <section class="dashboard-meeting-launch" id="dashboardOneOnOne" aria-label="One-on-one meeting on general dashboard">
+      <div class="dashboard-meeting-copy">
+        <div class="eyebrow">General dashboard · One on One</div>
+        <div class="company">Ultra Agent Meeting 1:1</div>
+        <p>Open the private room with Cursor · VP R&amp;D from this dashboard — voice, barge-in, screen share, summary.</p>
+        <div class="pillrow">
+          <span class="pill">CEO · Me</span>
+          <span class="pill">Cursor · VP R&amp;D</span>
+          <span class="pill" id="dashMeetingStatus">Checking…</span>
+        </div>
+      </div>
+      <div class="one-on-one-actions">
+        <button class="btn btn-ok" type="button" id="dashLaunchOneOnOne">Launch 1:1</button>
+        <a class="btn btn-ghost" id="dashOpenOneOnOneLink" href="/meeting-simulation.html">Open Link</a>
+        <div class="one-on-one-url" id="dashOneOnOneUrl">Resolving meeting link…</div>
+      </div>
+    </section>
+
     <section class="grid" style="grid-template-columns:1fr;">
       <div class="panel"><h2>Executive</h2><pre id="exec" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
       <div class="panel"><h2>Management</h2><pre id="mgmt" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
       <div class="panel"><h2>Communication</h2><pre id="comm" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
     </section>
   </main>
+  <div id="toast" class="toast"></div>
   <script>
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    function setDashMeetingLink(meetingId, absolutePreferred) {
+      const path = `/meeting/${meetingId}`;
+      const absolute = absolutePreferred || `${location.origin}${path}`;
+      const openLink = document.getElementById("dashOpenOneOnOneLink");
+      const urlEl = document.getElementById("dashOneOnOneUrl");
+      const statusEl = document.getElementById("dashMeetingStatus");
+      if (openLink) openLink.href = path;
+      if (urlEl) urlEl.textContent = absolute;
+      if (statusEl) statusEl.textContent = "Live room";
+      try {
+        localStorage.setItem("one_on_one_meeting_id", meetingId);
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    async function hydrateDashMeeting() {
+      const statusEl = document.getElementById("dashMeetingStatus");
+      try {
+        const meetings = await api("/api/meetings");
+        let oneOnOneId = null;
+        try {
+          oneOnOneId = localStorage.getItem("one_on_one_meeting_id");
+        } catch (_) {
+          oneOnOneId = null;
+        }
+        const live = (meetings.meetings || []).find(
+          (m) => m.status === "live" && /1:1|one[- ]?on[- ]?one/i.test(m.title || "")
+        );
+        if (live) {
+          setDashMeetingLink(live.id);
+          return;
+        }
+        if (oneOnOneId) {
+          setDashMeetingLink(oneOnOneId);
+          if (statusEl) statusEl.textContent = "Saved room";
+          return;
+        }
+        if (statusEl) statusEl.textContent = "Ready to launch";
+        document.getElementById("dashOneOnOneUrl").textContent =
+          `${location.origin}/meeting-simulation.html`;
+        document.getElementById("dashOpenOneOnOneLink").href = "/meeting-simulation.html";
+      } catch (err) {
+        if (statusEl) statusEl.textContent = "Offline";
+        document.getElementById("dashOneOnOneUrl").textContent = String(err.message || err);
+      }
+    }
+
+    document.getElementById("dashLaunchOneOnOne").addEventListener("click", async () => {
+      const btn = document.getElementById("dashLaunchOneOnOne");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/meetings/one-on-one/ensure", { method: "POST" });
+        setDashMeetingLink(data.meeting.id);
+        toast(data.created ? "1:1 room created" : "1:1 room ready");
+        location.href = `/meeting/${data.meeting.id}`;
+      } catch (err) {
+        toast(String(err.message || err));
+        btn.disabled = false;
+      }
+    });
+
     async function load() {
       const [e, m, c] = await Promise.all([
-        fetch('/api/dashboards/executive').then(r => r.json()),
-        fetch('/api/dashboards/management').then(r => r.json()),
-        fetch('/api/dashboards/communication').then(r => r.json()),
+        fetch("/api/dashboards/executive").then((r) => r.json()),
+        fetch("/api/dashboards/management").then((r) => r.json()),
+        fetch("/api/dashboards/communication").then((r) => r.json()),
       ]);
       exec.textContent = JSON.stringify(e, null, 2);
       mgmt.textContent = JSON.stringify(m, null, 2);
       comm.textContent = JSON.stringify(c, null, 2);
+      await hydrateDashMeeting();
     }
     refresh.onclick = load;
-    load();
+    load().catch((err) => toast(String(err.message || err)));
   </script>
 </body>
 </html>

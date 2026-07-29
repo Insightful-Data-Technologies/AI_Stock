@@ -1,5 +1,28 @@
 # How to run the meeting room
 
+## One on One Meeting (App Launch Center · port 3000)
+
+If **Meetings → One on One Meeting** shows **Off · 3000** or
+`http://127.0.0.1:3000/meeting-simulation.html` is blank, start the meeting service:
+
+```bash
+export PYTHONPATH=/workspace
+bash org_platform/deploy/run_meeting_3000.sh
+```
+
+Then open:
+
+- http://127.0.0.1:3000/dashboard — **General dashboard** yellow box → **Launch 1:1** / **Open Link**
+- http://127.0.0.1:3000/meeting-simulation.html — boots Ultra Agent 1:1 and enters the live room
+- Or use the hub:
+
+```bash
+bash app_launch_center/run_hub.sh
+```
+
+- Hub: http://127.0.0.1:4720/ → **General dashboard** (yellow) or **Meetings → Launch**
+- If **3000** is already taken (Next.js, etc.), Launch automatically uses **4050** (then 4051…)
+
 ## Quick start (this environment)
 
 ```bash
@@ -25,13 +48,13 @@ Open:
 
 ### Local / temporary tunnel
 
-- Local: http://127.0.0.1:8080
-- **Meeting simulation (fixes blank :3000 page):**
+- Local default: http://127.0.0.1:8080
+- One-on-one / Launch Center target: http://127.0.0.1:3000/meeting-simulation.html (or :4050 if 3000 is busy)
+- Alternate combined starter:
   ```bash
   bash org_platform/deploy/run_meeting_hub.sh
   ```
-  Then open http://127.0.0.1:3000/meeting-simulation.html
-  and App Launch Center at http://127.0.0.1:4720/
+  Then open http://127.0.0.1:3000/meeting-simulation.html and App Launch Center at http://127.0.0.1:4720/
 - If Next.js on Windows still serves an empty `meeting-simulation.html`, copy
   `website/meeting-simulation.html` into that app's `public/` folder (instant redirect to Cloud 1:1).
 - Cloudflare quick tunnel (temporary only; prefer Cloud Run URL above)

@@ -4,156 +4,385 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Capital — App Launch Center</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #10161c;
-      --ink: #eef3f6;
-      --muted: #9bb0bc;
-      --ok: #6b8f71;
-      --line: rgba(238,243,246,0.12);
-      --font-display: "Fraunces", Georgia, serif;
-      --font-body: "Outfit", sans-serif;
+      --bg: #0b0f14;
+      --panel: #121820;
+      --panel-2: #18212b;
+      --ink: #e7eef5;
+      --muted: #8fa3b5;
+      --line: rgba(231, 238, 245, 0.1);
+      --cyan: #2fd3d8;
+      --cyan-ink: #042226;
+      --off: #d45a5a;
+      --on: #5fbf7a;
+      --font-display: "Syne", "Avenir Next", sans-serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100%;
       color: var(--ink);
       font-family: var(--font-body);
       background:
-        radial-gradient(900px 500px at 10% -20%, rgba(107,143,113,0.25), transparent 55%),
-        linear-gradient(165deg, #0d1217, #182028);
+        radial-gradient(900px 500px at 10% -20%, rgba(47, 211, 216, 0.12), transparent 55%),
+        radial-gradient(700px 420px at 90% 0%, rgba(95, 191, 122, 0.08), transparent 50%),
+        linear-gradient(180deg, #0b0f14, #10161d 40%, #0b0f14);
     }
-    .shell { width: min(980px, calc(100% - 2rem)); margin: 0 auto; padding: 1.5rem 0 3rem; }
-    .brand { font-family: var(--font-display); font-size: 1.8rem; margin: 0 0 0.35rem; }
-    .sub { color: var(--muted); margin: 0 0 1.25rem; }
-    nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem; }
-    nav button {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.03);
-      color: var(--ink);
-      border-radius: 999px;
-      padding: 0.4rem 0.8rem;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity: 0.5;
+    }
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(1100px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.25rem 0 2.5rem;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 1rem;
+      animation: rise 600ms ease both;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.65rem;
+    }
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
       cursor: pointer;
+      font: inherit;
+      font-weight: 500;
     }
-    nav button.active { border-color: rgba(107,143,113,0.9); background: rgba(107,143,113,0.18); }
-    .grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .tab[aria-selected="true"] {
+      color: var(--ink);
+      background: rgba(47, 211, 216, 0.12);
+      box-shadow: inset 0 -2px 0 var(--cyan);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
     .card {
+      background: linear-gradient(165deg, var(--panel-2), var(--panel));
       border: 1px solid var(--line);
       border-radius: 14px;
-      padding: 1rem;
-      background: rgba(0,0,0,0.18);
+      padding: 1.1rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-height: 210px;
+      animation: rise 700ms ease both;
     }
-    .card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
-    .card p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.9rem; }
-    .meta { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; margin-bottom: 0.75rem; }
-    .dot { color: #c07070; }
-    .dot.on { color: #8fbf97; }
-    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .card[data-id="general-dashboard"] {
+      border-color: rgba(232, 196, 74, 0.85);
+      background:
+        linear-gradient(165deg, rgba(60, 48, 18, 0.95), rgba(24, 28, 18, 0.98));
+      box-shadow: 0 0 0 1px rgba(232, 196, 74, 0.25) inset;
+    }
+    .card[data-id="general-dashboard"] h2 { color: #fff6d4; }
+    .card[data-id="general-dashboard"] .sub,
+    .card[data-id="general-dashboard"] p { color: #e8d9a8; }
+    .card h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+    .card .sub {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: -0.25rem;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.4;
+      flex: 1;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--off);
+      box-shadow: 0 0 0 3px rgba(212, 90, 90, 0.18);
+    }
+    .dot.on {
+      background: var(--on);
+      box-shadow: 0 0 0 3px rgba(95, 191, 122, 0.2);
+    }
+    .working { color: var(--muted); font-size: 0.85rem; }
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
     .btn {
-      border: none;
-      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--ink);
+      border-radius: 10px;
       padding: 0.55rem 0.9rem;
-      font-weight: 650;
+      font: inherit;
+      font-weight: 600;
       cursor: pointer;
       text-decoration: none;
-      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .btn-launch { background: linear-gradient(135deg, #2a9d8f, #6b8f71); color: #07120e; }
-    .btn-link { background: transparent; border: 1px solid var(--line); color: var(--ink); }
-    .green-slot {
-      margin-top: 1.25rem;
-      min-height: 88px;
-      border: 2px solid rgba(107,143,113,0.9);
-      border-radius: 14px;
-      padding: 0.9rem 1rem;
-      background: rgba(15,28,22,0.55);
+    .btn-primary {
+      background: var(--cyan);
+      color: var(--cyan-ink);
+      border-color: transparent;
     }
-    .green-slot a { color: #b7e0c0; word-break: break-all; }
-    footer { margin-top: 1rem; color: var(--muted); font-size: 0.8rem; }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .toast {
+      position: fixed;
+      right: 1rem;
+      bottom: 3.5rem;
+      background: #152029;
+      border: 1px solid var(--line);
+      padding: 0.7rem 0.9rem;
+      border-radius: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: 220ms ease;
+      z-index: 20;
+      max-width: min(420px, calc(100% - 2rem));
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .footer {
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <main class="shell">
+  <div class="wrap">
     <h1 class="brand">AI Capital — App Launch Center</h1>
-    <p class="sub">INSIGHTFUL DATA TECHNOLOGIES · Local launch only</p>
-    <nav>
-      <button class="active" data-cat="all" type="button">All</button>
-      <button data-cat="agents" type="button">Agents</button>
-      <button data-cat="meetings" type="button">Meetings</button>
+    <nav class="tabs" role="tablist" aria-label="Launch categories">
+      <button class="tab" type="button" data-tab="all">All</button>
+      <button class="tab" type="button" data-tab="command">Command</button>
+      <button class="tab" type="button" data-tab="pipelines">Pipelines</button>
+      <button class="tab" type="button" data-tab="sites">Sites</button>
+      <button class="tab" type="button" data-tab="meetings" aria-selected="true">Meetings</button>
+      <button class="tab" type="button" data-tab="builders">Builders</button>
+      <button class="tab" type="button" data-tab="agents">Agents</button>
+      <button class="tab" type="button" data-tab="analytics">Analytics</button>
+      <button class="tab" type="button" data-tab="mail">Mail</button>
     </nav>
-    <section class="grid" id="apps"></section>
-    <section class="green-slot" id="greenSlot" aria-label="Opened link">
-      <strong>Opened link</strong>
-      <div id="openedUrl">Click Open Link on One on One Meeting to fill this area.</div>
-    </section>
-    <footer>Hub port: 4720 · Local launch only · Does not store passwords</footer>
-  </main>
+
+    <section class="grid" id="cards" aria-label="Meeting apps"></section>
+
+    <footer class="footer">
+      <span>Hub port: <strong id="hubPort">4720</strong></span>
+      <span>Status: Local launch only</span>
+      <span>Does not store passwords</span>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+
   <script>
     const APPS = [
       {
-        id: "one-on-one",
-        cat: "meetings",
-        name: "Ultra Agent Meeting 1:1",
-        desc: "1:1 room with Ultra Agent — voice, barge-in, screen share, summary.",
+        id: "general-dashboard",
+        tab: "all",
+        title: "General dashboard",
+        subtitle: "One on One · from dashboard",
+        description: "Yellow dashboard box — Launch Ultra Agent 1:1 or open the live room link",
         port: 3000,
-        path: "/meeting-simulation.html",
-        status: "Working",
+        path: "/dashboard",
+        launchKey: "general_dashboard",
       },
       {
-        id: "cloud-one-on-one",
-        cat: "meetings",
-        name: "Cloud One-on-One (live)",
-        desc: "Production Cloud Run room — use if local :3000 is blank.",
-        port: null,
-        url: "https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting/882a60b4-9f97-4a53-9122-405c087faf65",
-        status: "Working",
+        id: "one-on-one",
+        tab: "meetings",
+        title: "One on One Meeting",
+        subtitle: "One on One Meeting",
+        description: "One-on-one meeting room with Ultra Agent",
+        port: 3000,
+        path: "/meeting-simulation.html",
+        launchKey: "one_on_one",
+      },
+      {
+        id: "war-room",
+        tab: "meetings",
+        title: "Multi-Agent War Room",
+        subtitle: "Enterprise org meeting",
+        description: "Full AI Capital enterprise team room and morning meetings",
+        port: 3000,
+        path: "/",
+        launchKey: "war_room",
       },
     ];
 
-    function hrefFor(app) {
-      if (app.url) return app.url;
-      return `http://127.0.0.1:${app.port}${app.path}`;
+    let activeTab = "meetings";
+    const cardsEl = document.getElementById("cards");
+    const toastEl = document.getElementById("toast");
+    const statusCache = {};
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 2800);
     }
 
-    function render(cat = "all") {
-      const root = document.getElementById("apps");
-      const list = APPS.filter((a) => cat === "all" || a.cat === cat || (cat === "agents" && a.cat === "meetings"));
-      root.innerHTML = list
-        .map(
-          (app) => `<article class="card" data-id="${app.id}">
-            <div class="meta">
-              <span class="dot ${app.status === "Working" ? "on" : ""}">${app.port ? "Off - " + app.port : "Cloud"}</span>
-              <span>${app.status}</span>
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    function appUrl(app) {
+      const port = (statusCache[app.id] && statusCache[app.id].port) || app.port;
+      return `http://127.0.0.1:${port}${app.path}`;
+    }
+
+    function render() {
+      // Always show general dashboard + active tab apps (dashboard is All-tab but
+      // must stay visible when Meetings is selected — yellow 1:1 entry point).
+      const apps = APPS.filter(
+        (a) => a.id === "general-dashboard" || activeTab === "all" || a.tab === activeTab
+      );
+      cardsEl.innerHTML = apps
+        .map((app) => {
+          const st = statusCache[app.id] || { on: false, port: app.port };
+          const port = st.port || app.port;
+          return `<article class="card" data-id="${app.id}">
+            <h2>${app.title}</h2>
+            <div class="sub">${app.subtitle}</div>
+            <p>${app.description}</p>
+            <div class="status-row">
+              <div class="status">
+                <span class="dot ${st.on ? "on" : ""}" id="dot-${app.id}"></span>
+                <span id="status-${app.id}">${st.on ? "On" : "Off"} · ${port}</span>
+              </div>
+              <span class="working">${st.on ? "Ready" : "Working"}</span>
             </div>
-            <h3>${app.name}</h3>
-            <p>${app.desc}</p>
             <div class="actions">
-              <a class="btn btn-launch" href="${hrefFor(app)}" target="_blank" rel="noreferrer">Launch</a>
-              <button class="btn btn-link" type="button" data-open="${hrefFor(app)}">Open Link</button>
+              <button class="btn btn-primary" type="button" data-launch="${app.id}">Launch</button>
+              <a class="btn" id="open-${app.id}" href="${appUrl(app)}" target="_blank" rel="noopener" data-open="${app.id}">Open Link</a>
             </div>
-          </article>`
-        )
+          </article>`;
+        })
         .join("");
     }
 
-    document.querySelector("nav").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-cat]");
-      if (!btn) return;
-      document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b === btn));
-      render(btn.dataset.cat);
+    async function refreshStatus() {
+      try {
+        const data = await api("/api/apps/status");
+        for (const app of APPS) {
+          const row = (data.apps || []).find((a) => a.id === app.id) || {
+            on: false,
+            port: data.next_bind_port || app.port,
+          };
+          if (row.port) app.port = row.port;
+          statusCache[app.id] = row;
+          const statusEl = document.getElementById(`status-${app.id}`);
+          const dotEl = document.getElementById(`dot-${app.id}`);
+          const openEl = document.getElementById(`open-${app.id}`);
+          if (statusEl) statusEl.textContent = `${row.on ? "On" : "Off"} · ${row.port || app.port}`;
+          if (dotEl) dotEl.classList.toggle("on", !!row.on);
+          if (openEl) openEl.href = appUrl(app);
+        }
+      } catch (_) {
+        /* hub may still be starting */
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activeTab = tab.dataset.tab;
+        document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+        render();
+        refreshStatus();
+      });
     });
 
-    document.getElementById("apps").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-open]");
+    cardsEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-launch]");
       if (!btn) return;
-      const url = btn.dataset.open;
-      document.getElementById("openedUrl").innerHTML = `<a href="${url}" target="_blank" rel="noreferrer">${url}</a>`;
-      window.open(url, "_blank", "noopener,noreferrer");
+      const id = btn.dataset.launch;
+      const app = APPS.find((a) => a.id === id);
+      if (!app) return;
+      btn.disabled = true;
+      try {
+        const data = await api("/api/apps/launch", {
+          method: "POST",
+          body: JSON.stringify({ id: app.launchKey }),
+        });
+        toast(data.message || "Launch requested");
+        await refreshStatus();
+        if (data.url) window.open(data.url, "_blank", "noopener");
+      } catch (err) {
+        toast(String(err.message || err));
+      } finally {
+        btn.disabled = false;
+      }
     });
 
-    render("all");
+    (async () => {
+      try {
+        const info = await api("/api/hub");
+        if (info.port) document.getElementById("hubPort").textContent = info.port;
+      } catch (_) {}
+      render();
+      await refreshStatus();
+      setInterval(refreshStatus, 3000);
+    })();
   </script>
 </body>
 </html>
