@@ -66,3 +66,20 @@ def test_one_on_one_meeting_launch(client):
     home = client.get("/").text
     assert "oneOnOneLaunch" in home
     assert "Launch 1:1" in home
+
+
+def test_meeting_simulation_page_and_ensure(client):
+    page = client.get("/meeting-simulation.html")
+    assert page.status_code == 200
+    assert "AI Agent Meeting Simulation" in page.text
+    assert "Ultra Agent" in page.text
+    assert page.headers.get("content-type", "").startswith("text/html")
+
+    first = client.post("/api/meetings/one-on-one/ensure").json()
+    assert first["created"] is True
+    mid = first["meeting"]["id"]
+    assert first["meeting"]["status"] == "live"
+
+    second = client.post("/api/meetings/one-on-one/ensure").json()
+    assert second["created"] is False
+    assert second["meeting"]["id"] == mid

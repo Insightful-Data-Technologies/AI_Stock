@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -604,6 +605,41 @@ def list_meetings() -> Dict[str, Any]:
     return {"meetings": P().meetings.list_meetings()}
 
 
+def _find_live_one_on_one() -> Optional[Dict[str, Any]]:
+    for summary in P().meetings.list_meetings():
+        if summary.get("status") != "live":
+            continue
+        meeting = P().meetings.get(summary["id"]) or summary
+        title = meeting.get("title") or ""
+        events = meeting.get("events") or []
+        if any(e.get("type") == "one_on_one" for e in events) or re_search_one_on_one(title):
+            return meeting
+    return None
+
+
+def re_search_one_on_one(title: str) -> bool:
+    return bool(re.search(r"1:1|one[- ]?on[- ]?one", title, re.I))
+
+
+@app.post("/api/meetings/one-on-one/ensure")
+async def ensure_one_on_one_meeting() -> Dict[str, Any]:
+    """Find a live Ultra Agent 1:1 room or create one (used by meeting-simulation.html)."""
+    existing = _find_live_one_on_one()
+    if existing:
+        return {"meeting": existing, "created": False}
+    created = await create_meeting(
+        CreateMeetingRequest(
+            title="Ultra Agent Meeting 1:1",
+            chair_id=VP_RD_ID,
+            participant_ids=[CEO_ID, VP_RD_ID, DEV_TL_ID],
+            seed_intro=True,
+            morning=False,
+            one_on_one=True,
+        )
+    )
+    return {**created, "created": True}
+
+
 @app.post("/api/meetings")
 async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     if body.chair_id not in ROSTER:
@@ -1085,6 +1121,13 @@ async def studio_ws(websocket: WebSocket, session_id: str) -> None:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/meeting-simulation.html")
+@app.get("/meeting-simulation")
+def meeting_simulation_page() -> FileResponse:
+    """Local App Launch Center target for One on One Meeting (port 3000)."""
+    return FileResponse(STATIC_DIR / "meeting-simulation.html")
 
 
 @app.get("/meeting/{meeting_id}")

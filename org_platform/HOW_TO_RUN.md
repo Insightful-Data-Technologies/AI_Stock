@@ -1,5 +1,26 @@
 # How to run the meeting room
 
+## One on One Meeting (App Launch Center · port 3000)
+
+If **Meetings → One on One Meeting** shows **Off · 3000** or
+`http://127.0.0.1:3000/meeting-simulation.html` is blank, start the meeting service:
+
+```bash
+export PYTHONPATH=/workspace
+bash org_platform/deploy/run_meeting_3000.sh
+```
+
+Then open:
+
+- http://127.0.0.1:3000/meeting-simulation.html — boots Ultra Agent 1:1 and enters the live room
+- Or use the hub:
+
+```bash
+bash app_launch_center/run_hub.sh
+```
+
+- Hub: http://127.0.0.1:4720/ → **Meetings** → **Launch** (starts :3000 and opens the simulation page)
+
 ## Quick start (this environment)
 
 ```bash
@@ -25,7 +46,8 @@ Open:
 
 ### Local / temporary tunnel
 
-- Local: http://127.0.0.1:8080
+- Local default: http://127.0.0.1:8080
+- One-on-one / Launch Center target: http://127.0.0.1:3000/meeting-simulation.html
 - Cloudflare quick tunnel (temporary only; prefer Cloud Run URL above)
 
 ## Domain Publisher (Google Studio site → GoDaddy domain)
