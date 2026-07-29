@@ -98,6 +98,15 @@
       min-height: 210px;
       animation: rise 700ms ease both;
     }
+    .card[data-id="general-dashboard"] {
+      border-color: rgba(232, 196, 74, 0.85);
+      background:
+        linear-gradient(165deg, rgba(60, 48, 18, 0.95), rgba(24, 28, 18, 0.98));
+      box-shadow: 0 0 0 1px rgba(232, 196, 74, 0.25) inset;
+    }
+    .card[data-id="general-dashboard"] h2 { color: #fff6d4; }
+    .card[data-id="general-dashboard"] .sub,
+    .card[data-id="general-dashboard"] p { color: #e8d9a8; }
     .card h2 {
       margin: 0;
       font-family: var(--font-display);
@@ -226,6 +235,16 @@
   <script>
     const APPS = [
       {
+        id: "general-dashboard",
+        tab: "all",
+        title: "General dashboard",
+        subtitle: "One on One · from dashboard",
+        description: "Yellow dashboard box — Launch Ultra Agent 1:1 or open the live room link",
+        port: 3000,
+        path: "/dashboard",
+        launchKey: "general_dashboard",
+      },
+      {
         id: "one-on-one",
         tab: "meetings",
         title: "One on One Meeting",
@@ -272,7 +291,11 @@
     }
 
     function render() {
-      const apps = APPS.filter((a) => activeTab === "all" || a.tab === activeTab);
+      // Always show general dashboard + active tab apps (dashboard is All-tab but
+      // must stay visible when Meetings is selected — yellow 1:1 entry point).
+      const apps = APPS.filter(
+        (a) => a.id === "general-dashboard" || activeTab === "all" || a.tab === activeTab
+      );
       cardsEl.innerHTML = apps
         .map((app) => {
           const st = statusCache[app.id] || { on: false };

@@ -346,10 +346,19 @@ def audit(limit: int = 200, event_type: Optional[str] = None) -> Dict[str, Any]:
 @app.get("/api/dashboards/executive")
 def exec_dashboard() -> Dict[str, Any]:
     stats = P().tasks.stats()
+    live_one_on_one = _find_live_one_on_one()
     return {
         "company": COMPANY,
         "operational_status": "online",
         "active_projects": ["AI Capital Enterprise Team"],
+        "one_on_one": {
+            "available": True,
+            "path": "/dashboard",
+            "simulation_path": "/meeting-simulation.html",
+            "live_meeting_id": live_one_on_one["id"] if live_one_on_one else None,
+            "live_meeting_title": live_one_on_one.get("title") if live_one_on_one else None,
+            "status": "live" if live_one_on_one else "ready",
+        },
         "tasks": stats,
         "departments": {
             t: len([a for a in ROSTER.values() if a.team.value == t])

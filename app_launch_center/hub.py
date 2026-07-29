@@ -141,6 +141,14 @@ def apps_status() -> Dict[str, Any]:
     return {
         "apps": [
             {
+                "id": "general-dashboard",
+                "title": "General dashboard",
+                "port": MEETING_PORT,
+                "path": "/dashboard",
+                "on": healthy,
+                "url": f"{MEETING_URL}/dashboard",
+            },
+            {
                 "id": "one-on-one",
                 "title": "One on One Meeting",
                 "port": MEETING_PORT,
@@ -163,14 +171,17 @@ def apps_status() -> Dict[str, Any]:
 @app.post("/api/apps/launch")
 def launch_app(body: LaunchRequest) -> Dict[str, Any]:
     key = (body.id or "one_on_one").strip().lower().replace("-", "_")
-    if key not in {"one_on_one", "war_room", "one_on_one_meeting"}:
+    if key not in {"one_on_one", "war_room", "one_on_one_meeting", "general_dashboard", "dashboard"}:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     try:
         start = _start_meeting_server()
     except Exception as exc:
         raise HTTPException(500, str(exc)) from exc
 
-    if key in {"one_on_one", "one_on_one_meeting"}:
+    if key in {"general_dashboard", "dashboard"}:
+        url = f"{MEETING_URL}/dashboard"
+        message = "General dashboard opened — yellow 1:1 box on /dashboard"
+    elif key in {"one_on_one", "one_on_one_meeting"}:
         url = f"{MEETING_URL}/meeting-simulation.html"
         message = "One on One Meeting launched on port 3000"
     else:

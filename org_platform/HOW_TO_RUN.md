@@ -12,6 +12,7 @@ bash org_platform/deploy/run_meeting_3000.sh
 
 Then open:
 
+- http://127.0.0.1:3000/dashboard — **General dashboard** yellow box → **Launch 1:1** / **Open Link**
 - http://127.0.0.1:3000/meeting-simulation.html — boots Ultra Agent 1:1 and enters the live room
 - Or use the hub:
 
@@ -19,7 +20,7 @@ Then open:
 bash app_launch_center/run_hub.sh
 ```
 
-- Hub: http://127.0.0.1:4720/ → **Meetings** → **Launch** (starts :3000 and opens the simulation page)
+- Hub: http://127.0.0.1:4720/ → **General dashboard** (yellow) or **Meetings → Launch**
 
 ## Quick start (this environment)
 

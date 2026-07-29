@@ -83,3 +83,18 @@ def test_meeting_simulation_page_and_ensure(client):
     second = client.post("/api/meetings/one-on-one/ensure").json()
     assert second["created"] is False
     assert second["meeting"]["id"] == mid
+
+
+def test_dashboard_one_on_one_box(client):
+    dash = client.get("/dashboard")
+    assert dash.status_code == 200
+    assert "dashboardOneOnOne" in dash.text
+    assert "General dashboard · One on One" in dash.text
+    assert "dashLaunchOneOnOne" in dash.text
+    assert "Ultra Agent Meeting 1:1" in dash.text
+
+    created = client.post("/api/meetings/one-on-one/ensure").json()
+    exec_dash = client.get("/api/dashboards/executive").json()
+    assert exec_dash["one_on_one"]["available"] is True
+    assert exec_dash["one_on_one"]["live_meeting_id"] == created["meeting"]["id"]
+    assert exec_dash["one_on_one"]["status"] == "live"

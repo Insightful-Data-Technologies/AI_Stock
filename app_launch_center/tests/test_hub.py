@@ -25,6 +25,7 @@ def test_hub_home_and_status(hub_client):
     assert home.status_code == 200
     assert "App Launch Center" in home.text
     assert "One on One Meeting" in home.text
+    assert "General dashboard" in home.text
     assert "Off" in home.text or "Launch" in home.text
 
     info = hub_client.get("/api/hub").json()
@@ -36,3 +37,6 @@ def test_hub_home_and_status(hub_client):
     ids = {a["id"] for a in status["apps"]}
     assert "one-on-one" in ids
     assert "war-room" in ids
+    assert "general-dashboard" in ids
+    dash = next(a for a in status["apps"] if a["id"] == "general-dashboard")
+    assert dash["path"] == "/dashboard"
