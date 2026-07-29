@@ -58,6 +58,35 @@ async function boot() {
   renderMeetings(meetings.meetings);
   document.getElementById("health").textContent =
     `${health.company.legal_name} · ${health.agents} agents · ${health.channels} channels · email ${health.email.mode} · tasks ${health.tasks.total}`;
+
+  let oneOnOneId = null;
+  try {
+    oneOnOneId = localStorage.getItem("one_on_one_meeting_id");
+  } catch (_) {
+    oneOnOneId = null;
+  }
+  const liveOneOnOne = (meetings.meetings || []).find(
+    (m) => m.status === "live" && /1:1|one[- ]?on[- ]?one/i.test(m.title || "")
+  );
+  if (liveOneOnOne) {
+    setOneOnOneLink(liveOneOnOne.id);
+  } else if (oneOnOneId) {
+    setOneOnOneLink(oneOnOneId);
+  }
+}
+
+function setOneOnOneLink(meetingId) {
+  const path = `/meeting/${meetingId}`;
+  const absolute = `${location.origin}${path}`;
+  const openLink = document.getElementById("openOneOnOneLink");
+  const urlEl = document.getElementById("oneOnOneUrl");
+  if (openLink) openLink.href = path;
+  if (urlEl) urlEl.textContent = absolute;
+  try {
+    localStorage.setItem("one_on_one_meeting_id", meetingId);
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 document.getElementById("createForm").addEventListener("submit", async (e) => {
@@ -74,6 +103,30 @@ document.getElementById("createForm").addEventListener("submit", async (e) => {
         morning: document.getElementById("morning").checked,
       }),
     });
+    location.href = `/meeting/${data.meeting.id}`;
+  } catch (err) {
+    toast(String(err.message || err));
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("launchOneOnOne").addEventListener("click", async () => {
+  const btn = document.getElementById("launchOneOnOne");
+  btn.disabled = true;
+  try {
+    const data = await api("/api/meetings", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "Ultra Agent Meeting 1:1",
+        chair_id: "vp-rd",
+        participant_ids: ["ceo-chanan", "vp-rd", "dev-tl-cursor"],
+        seed_intro: true,
+        morning: false,
+        one_on_one: true,
+      }),
+    });
+    setOneOnOneLink(data.meeting.id);
+    toast("1:1 room ready");
     location.href = `/meeting/${data.meeting.id}`;
   } catch (err) {
     toast(String(err.message || err));

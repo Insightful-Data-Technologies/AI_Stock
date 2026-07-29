@@ -45,3 +45,24 @@ def test_health_and_meeting_flow(client):
     assert any(r["sender_id"] == "ceo-chanan" for r in esc["replies"]) or any(
         "Chanan" in r["sender_name"] for r in esc["replies"]
     )
+
+
+def test_one_on_one_meeting_launch(client):
+    created = client.post(
+        "/api/meetings",
+        json={
+            "title": "Ultra Agent Meeting 1:1",
+            "chair_id": "vp-rd",
+            "one_on_one": True,
+            "seed_intro": True,
+            "morning": False,
+        },
+    ).json()
+    meeting = created["meeting"]
+    assert meeting["title"] == "Ultra Agent Meeting 1:1"
+    assert meeting["status"] == "live"
+    assert set(meeting["participant_ids"]) == {"ceo-chanan", "vp-rd", "dev-tl-cursor"}
+    assert any(e.get("type") == "one_on_one" for e in meeting.get("events", []))
+    home = client.get("/").text
+    assert "oneOnOneLaunch" in home
+    assert "Launch 1:1" in home

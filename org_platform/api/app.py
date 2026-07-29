@@ -54,6 +54,7 @@ class CreateMeetingRequest(BaseModel):
     participant_ids: Optional[List[str]] = None
     seed_intro: bool = True
     morning: bool = False
+    one_on_one: bool = False
 
 
 class ChatRequest(BaseModel):
@@ -607,20 +608,56 @@ def list_meetings() -> Dict[str, Any]:
 async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     if body.chair_id not in ROSTER:
         raise HTTPException(400, f"Unknown chair_id {body.chair_id}")
-    participants = body.participant_ids or list(ROSTER.keys())
+    if body.one_on_one:
+        # CEO ↔ Cursor (VP R&D chair) private room — voice, barge-in, screen share, summary.
+        title = body.title if body.title and body.title != "Daily Morning Meeting" else "Ultra Agent Meeting 1:1"
+        chair_id = body.chair_id if body.chair_id in {CEO_ID, VP_RD_ID, DEV_TL_ID} else VP_RD_ID
+        participants = body.participant_ids or [CEO_ID, VP_RD_ID, DEV_TL_ID]
+        # Keep the roster tight for a true 1:1 surface.
+        participants = [pid for pid in participants if pid in ROSTER]
+        if CEO_ID not in participants:
+            participants.insert(0, CEO_ID)
+        if VP_RD_ID not in participants:
+            participants.append(VP_RD_ID)
+        if DEV_TL_ID not in participants:
+            participants.append(DEV_TL_ID)
+    else:
+        title = body.title
+        chair_id = body.chair_id
+        participants = body.participant_ids or list(ROSTER.keys())
     meeting = P().meetings.create_meeting(
-        title=body.title,
-        chair_id=body.chair_id,
+        title=title,
+        chair_id=chair_id,
         participant_ids=participants,
         created_by="human-operator",
     )
+    if body.one_on_one:
+        P().meetings.append_events(
+            meeting["id"],
+            [
+                {
+                    "type": "one_on_one",
+                    "payload": {
+                        "mode": "ultra-agent-1-1",
+                        "features": ["voice", "barge-in", "screen-share", "summary"],
+                        "participants": participants,
+                    },
+                    "ts": meeting["created_at"],
+                }
+            ],
+        )
     if body.morning:
         P().meetings.append_events(
             meeting["id"],
             [{"type": "morning_agenda", "payload": {"agenda": morning_meeting_script()}, "ts": meeting["created_at"]}],
         )
     if body.seed_intro:
-        text = "Open the morning meeting and confirm attendance." if body.morning else "Open the meeting and confirm all teams are present."
+        if body.one_on_one:
+            text = "Open the one-on-one room. Confirm voice, barge-in, screen share, and summary are ready."
+        elif body.morning:
+            text = "Open the morning meeting and confirm attendance."
+        else:
+            text = "Open the meeting and confirm all teams are present."
         replies, events = generate_live_responses(text, meeting["title"], chair_id=meeting["chair_id"])
         P().meetings.append_message(
             meeting["id"],
@@ -639,7 +676,11 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             )
         P().meetings.append_events(meeting["id"], events)
         meeting = P().meetings.get(meeting["id"])
-    P().audit.append("meeting_created", body.chair_id, {"meeting_id": meeting["id"], "morning": body.morning})
+    P().audit.append(
+        "meeting_created",
+        chair_id,
+        {"meeting_id": meeting["id"], "morning": body.morning, "one_on_one": body.one_on_one},
+    )
     return {"meeting": meeting}
 
 

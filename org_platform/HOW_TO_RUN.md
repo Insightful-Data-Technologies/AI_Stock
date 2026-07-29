@@ -14,6 +14,8 @@ Open:
 ### Google Cloud Enterprise (Cloud Run — production)
 
 - **Org home / Agents:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/
+- **One-on-one (green launch box on home):** click **Launch 1:1** or open a live room under `/meeting/{id}`
+- **Live 1:1 room (created 2026-07-29):** https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting/882a60b4-9f97-4a53-9122-405c087faf65
 - **Meeting room:** create from home, or open `/meeting/{id}`
 - **VP Delivery Studio:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/studio
 - **Slack `#devops`:** https://enterprise-org-meeting-184723980511.europe-west2.run.app/slack
