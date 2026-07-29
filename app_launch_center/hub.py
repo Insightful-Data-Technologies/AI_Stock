@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -19,13 +19,20 @@ from pydantic import BaseModel
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HUB_PORT = int(os.environ.get("HUB_PORT", "4720"))
-MEETING_PORT = int(os.environ.get("MEETING_PORT", "3000"))
-MEETING_URL = f"http://127.0.0.1:{MEETING_PORT}"
-PID_FILE = Path(os.environ.get("MEETING_PID_FILE", "/tmp/ai_capital_meeting_3000.pid"))
+# Prefer 3000; if taken by something else, fall back to 4050 (then nearby ports).
+PREFERRED_PORTS: List[int] = [
+    int(p.strip())
+    for p in os.environ.get("MEETING_PORTS", "3000,4050,4051,4052,4060").split(",")
+    if p.strip()
+]
+PID_FILE = Path(os.environ.get("MEETING_PID_FILE", "/tmp/ai_capital_meeting.pid"))
+PORT_FILE = Path(os.environ.get("MEETING_PORT_FILE", "/tmp/ai_capital_meeting.port"))
+LOG_PATH = Path(os.environ.get("MEETING_LOG_FILE", "/tmp/ai_capital_meeting.log"))
 
-app = FastAPI(title="AI Capital App Launch Center", version="1.0.0")
+app = FastAPI(title="AI Capital App Launch Center", version="1.1.0")
 
 _meeting_proc: Optional[subprocess.Popen] = None
+_active_port: Optional[int] = None
 
 
 class LaunchRequest(BaseModel):
@@ -34,21 +41,82 @@ class LaunchRequest(BaseModel):
 
 def _port_open(port: int, host: str = "127.0.0.1") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(0.4)
+        sock.settimeout(0.35)
         return sock.connect_ex((host, port)) == 0
 
 
-def _meeting_healthy() -> bool:
-    if not _port_open(MEETING_PORT):
+def _meeting_healthy_on(port: int) -> bool:
+    if not _port_open(port):
         return False
     try:
         with httpx.Client(timeout=1.5) as client:
-            res = client.get(f"{MEETING_URL}/api/health")
+            res = client.get(f"http://127.0.0.1:{port}/api/health")
             if res.status_code != 200:
                 return False
-            return bool(res.json().get("ok"))
+            data = res.json()
+            return bool(data.get("ok")) and data.get("service") == "ai-capital-enterprise-team"
     except Exception:
         return False
+
+
+def _read_saved_port() -> Optional[int]:
+    try:
+        if PORT_FILE.exists():
+            return int(PORT_FILE.read_text(encoding="utf-8").strip())
+    except Exception:
+        return None
+    return None
+
+
+def _write_active_port(port: int) -> None:
+    global _active_port
+    _active_port = port
+    PORT_FILE.write_text(str(port), encoding="utf-8")
+
+
+def _clear_port_file() -> None:
+    global _active_port
+    _active_port = None
+    try:
+        PORT_FILE.unlink(missing_ok=True)
+    except Exception:
+        pass
+
+
+def _current_meeting_port() -> Optional[int]:
+    """Return port where our meeting service is healthy, if any."""
+    candidates: List[int] = []
+    if _active_port:
+        candidates.append(_active_port)
+    saved = _read_saved_port()
+    if saved and saved not in candidates:
+        candidates.append(saved)
+    for port in PREFERRED_PORTS:
+        if port not in candidates:
+            candidates.append(port)
+    for port in candidates:
+        if _meeting_healthy_on(port):
+            _write_active_port(port)
+            return port
+    return None
+
+
+def _pick_bind_port() -> int:
+    """
+    Choose a free port for binding.
+    If preferred port is occupied by a non-meeting process, skip to fallback (4050…).
+    """
+    existing = _current_meeting_port()
+    if existing is not None:
+        return existing
+    for port in PREFERRED_PORTS:
+        if not _port_open(port):
+            return port
+        # Port is open but not our meeting → occupied (e.g. Next.js on 3000).
+        continue
+    raise RuntimeError(
+        f"No free meeting port among {PREFERRED_PORTS}. Free one of them or set MEETING_PORTS."
+    )
 
 
 def _read_pid() -> Optional[int]:
@@ -73,13 +141,21 @@ def _clear_pid() -> None:
 
 def _start_meeting_server() -> Dict[str, Any]:
     global _meeting_proc
-    if _meeting_healthy():
-        return {"started": False, "already_running": True, "port": MEETING_PORT}
+    existing = _current_meeting_port()
+    if existing is not None:
+        return {
+            "started": False,
+            "already_running": True,
+            "port": existing,
+            "fallback_used": existing != PREFERRED_PORTS[0],
+            "preferred_ports": PREFERRED_PORTS,
+        }
 
+    port = _pick_bind_port()
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     env["ORG_DATA_DIR"] = env.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch")
-    env["PORT"] = str(MEETING_PORT)
+    env["PORT"] = str(port)
     Path(env["ORG_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
 
     cmd = [
@@ -90,10 +166,9 @@ def _start_meeting_server() -> Dict[str, Any]:
         "--host",
         "0.0.0.0",
         "--port",
-        str(MEETING_PORT),
+        str(port),
     ]
-    log_path = Path("/tmp/ai_capital_meeting_3000.log")
-    log_f = open(log_path, "ab", buffering=0)
+    log_f = open(LOG_PATH, "ab", buffering=0)
     _meeting_proc = subprocess.Popen(
         cmd,
         cwd=str(ROOT),
@@ -103,33 +178,72 @@ def _start_meeting_server() -> Dict[str, Any]:
         start_new_session=True,
     )
     _write_pid(_meeting_proc.pid)
+    _write_active_port(port)
 
     deadline = time.time() + 20
     while time.time() < deadline:
         if _meeting_proc.poll() is not None:
+            _clear_port_file()
             raise RuntimeError(
-                f"Meeting server exited early (code {_meeting_proc.returncode}). See {log_path}"
+                f"Meeting server exited early (code {_meeting_proc.returncode}) on :{port}. See {LOG_PATH}"
             )
-        if _meeting_healthy():
+        if _meeting_healthy_on(port):
             return {
                 "started": True,
                 "already_running": False,
-                "port": MEETING_PORT,
+                "port": port,
+                "fallback_used": port != PREFERRED_PORTS[0],
+                "preferred_ports": PREFERRED_PORTS,
                 "pid": _meeting_proc.pid,
-                "log": str(log_path),
+                "log": str(LOG_PATH),
+                "skipped_busy": [p for p in PREFERRED_PORTS if p < port and _port_open(p)],
             }
         time.sleep(0.35)
 
-    raise RuntimeError(f"Meeting server did not become healthy on :{MEETING_PORT}. See {log_path}")
+    raise RuntimeError(f"Meeting server did not become healthy on :{port}. See {LOG_PATH}")
+
+
+def _app_rows(port: Optional[int], healthy: bool) -> List[Dict[str, Any]]:
+    display_port = port or PREFERRED_PORTS[0]
+    base = f"http://127.0.0.1:{display_port}"
+    return [
+        {
+            "id": "general-dashboard",
+            "title": "General dashboard",
+            "port": display_port,
+            "path": "/dashboard",
+            "on": healthy,
+            "url": f"{base}/dashboard",
+        },
+        {
+            "id": "one-on-one",
+            "title": "One on One Meeting",
+            "port": display_port,
+            "path": "/meeting-simulation.html",
+            "on": healthy,
+            "url": f"{base}/meeting-simulation.html",
+        },
+        {
+            "id": "war-room",
+            "title": "Multi-Agent War Room",
+            "port": display_port,
+            "path": "/",
+            "on": healthy,
+            "url": f"{base}/",
+        },
+    ]
 
 
 @app.get("/api/hub")
 def hub_info() -> Dict[str, Any]:
+    active = _current_meeting_port()
     return {
         "ok": True,
         "name": "AI Capital — App Launch Center",
         "port": HUB_PORT,
-        "meeting_port": MEETING_PORT,
+        "meeting_port": active or PREFERRED_PORTS[0],
+        "preferred_ports": PREFERRED_PORTS,
+        "fallback_port": PREFERRED_PORTS[1] if len(PREFERRED_PORTS) > 1 else None,
         "mode": "local_launch_only",
         "stores_passwords": False,
     }
@@ -137,34 +251,20 @@ def hub_info() -> Dict[str, Any]:
 
 @app.get("/api/apps/status")
 def apps_status() -> Dict[str, Any]:
-    healthy = _meeting_healthy()
+    port = _current_meeting_port()
+    healthy = port is not None
+    # When Off, show the next port we would try (skip busy non-meeting listeners).
+    display_port = port
+    if display_port is None:
+        try:
+            display_port = _pick_bind_port()
+        except RuntimeError:
+            display_port = PREFERRED_PORTS[0]
     return {
-        "apps": [
-            {
-                "id": "general-dashboard",
-                "title": "General dashboard",
-                "port": MEETING_PORT,
-                "path": "/dashboard",
-                "on": healthy,
-                "url": f"{MEETING_URL}/dashboard",
-            },
-            {
-                "id": "one-on-one",
-                "title": "One on One Meeting",
-                "port": MEETING_PORT,
-                "path": "/meeting-simulation.html",
-                "on": healthy,
-                "url": f"{MEETING_URL}/meeting-simulation.html",
-            },
-            {
-                "id": "war-room",
-                "title": "Multi-Agent War Room",
-                "port": MEETING_PORT,
-                "path": "/",
-                "on": healthy,
-                "url": f"{MEETING_URL}/",
-            },
-        ]
+        "apps": _app_rows(display_port, healthy),
+        "preferred_ports": PREFERRED_PORTS,
+        "active_port": port,
+        "next_bind_port": display_port,
     }
 
 
@@ -178,22 +278,29 @@ def launch_app(body: LaunchRequest) -> Dict[str, Any]:
     except Exception as exc:
         raise HTTPException(500, str(exc)) from exc
 
+    port = int(start["port"])
+    base = f"http://127.0.0.1:{port}"
     if key in {"general_dashboard", "dashboard"}:
-        url = f"{MEETING_URL}/dashboard"
-        message = "General dashboard opened — yellow 1:1 box on /dashboard"
+        url = f"{base}/dashboard"
+        message = f"General dashboard on :{port}"
     elif key in {"one_on_one", "one_on_one_meeting"}:
-        url = f"{MEETING_URL}/meeting-simulation.html"
-        message = "One on One Meeting launched on port 3000"
+        url = f"{base}/meeting-simulation.html"
+        message = f"One on One Meeting launched on :{port}"
     else:
-        url = f"{MEETING_URL}/"
-        message = "Multi-Agent War Room launched on port 3000"
+        url = f"{base}/"
+        message = f"Multi-Agent War Room launched on :{port}"
+
+    if start.get("fallback_used"):
+        skipped = start.get("skipped_busy") or [PREFERRED_PORTS[0]]
+        message += f" (preferred {skipped} busy → fallback)"
 
     return {
         "ok": True,
         "message": message,
         "url": url,
+        "port": port,
         "start": start,
-        "status": "On" if _meeting_healthy() else "Starting",
+        "status": "On" if _meeting_healthy_on(port) else "Starting",
     }
 
 
@@ -219,6 +326,7 @@ def stop_meeting() -> Dict[str, Any]:
         except Exception as exc:
             raise HTTPException(500, str(exc)) from exc
     _clear_pid()
+    _clear_port_file()
     return {"ok": True, "stopped": stopped}
 
 

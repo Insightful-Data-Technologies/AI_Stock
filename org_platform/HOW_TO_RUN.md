@@ -21,6 +21,7 @@ bash app_launch_center/run_hub.sh
 ```
 
 - Hub: http://127.0.0.1:4720/ → **General dashboard** (yellow) or **Meetings → Launch**
+- If **3000** is already taken (Next.js, etc.), Launch automatically uses **4050** (then 4051…)
 
 ## Quick start (this environment)
 

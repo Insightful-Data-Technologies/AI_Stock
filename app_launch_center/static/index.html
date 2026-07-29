@@ -287,7 +287,8 @@
     }
 
     function appUrl(app) {
-      return `http://127.0.0.1:${app.port}${app.path}`;
+      const port = (statusCache[app.id] && statusCache[app.id].port) || app.port;
+      return `http://127.0.0.1:${port}${app.path}`;
     }
 
     function render() {
@@ -298,7 +299,8 @@
       );
       cardsEl.innerHTML = apps
         .map((app) => {
-          const st = statusCache[app.id] || { on: false };
+          const st = statusCache[app.id] || { on: false, port: app.port };
+          const port = st.port || app.port;
           return `<article class="card" data-id="${app.id}">
             <h2>${app.title}</h2>
             <div class="sub">${app.subtitle}</div>
@@ -306,13 +308,13 @@
             <div class="status-row">
               <div class="status">
                 <span class="dot ${st.on ? "on" : ""}" id="dot-${app.id}"></span>
-                <span id="status-${app.id}">${st.on ? "On" : "Off"} · ${app.port}</span>
+                <span id="status-${app.id}">${st.on ? "On" : "Off"} · ${port}</span>
               </div>
               <span class="working">${st.on ? "Ready" : "Working"}</span>
             </div>
             <div class="actions">
               <button class="btn btn-primary" type="button" data-launch="${app.id}">Launch</button>
-              <a class="btn" href="${appUrl(app)}" target="_blank" rel="noopener" data-open="${app.id}">Open Link</a>
+              <a class="btn" id="open-${app.id}" href="${appUrl(app)}" target="_blank" rel="noopener" data-open="${app.id}">Open Link</a>
             </div>
           </article>`;
         })
@@ -323,12 +325,18 @@
       try {
         const data = await api("/api/apps/status");
         for (const app of APPS) {
-          const row = (data.apps || []).find((a) => a.id === app.id) || { on: false };
+          const row = (data.apps || []).find((a) => a.id === app.id) || {
+            on: false,
+            port: data.next_bind_port || app.port,
+          };
+          if (row.port) app.port = row.port;
           statusCache[app.id] = row;
           const statusEl = document.getElementById(`status-${app.id}`);
           const dotEl = document.getElementById(`dot-${app.id}`);
-          if (statusEl) statusEl.textContent = `${row.on ? "On" : "Off"} · ${app.port}`;
+          const openEl = document.getElementById(`open-${app.id}`);
+          if (statusEl) statusEl.textContent = `${row.on ? "On" : "Off"} · ${row.port || app.port}`;
           if (dotEl) dotEl.classList.toggle("on", !!row.on);
+          if (openEl) openEl.href = appUrl(app);
         }
       } catch (_) {
         /* hub may still be starting */
