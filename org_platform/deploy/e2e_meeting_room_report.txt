@@ -1,0 +1,29 @@
+=== E2E Fri Jul 24 01:41:11 PM UTC 2026 ===
+--- health ---
+{"ok":true,"service":"org-platform","super_admin":"vp-rd-super","ceo":"ceo-chanan","agents":13,"store":{"primary":"memory+disk","disk_path":"/tmp/org_platform_data/meetings.json","redis_connected":false,"firestore":"adapter_ready_requires_adc"},"project_target":"gen-lang-client-0386540117"}
+--- org roster ---
+ceo Chanan Zevin
+agents 13
+teams ['devops', 'engineering', 'executive', 'it', 'pmo', 'qa']
+--- create meeting ---
+id 54d8fe77-d03f-4fac-9864-d31032d28839
+msgs 3
+participants 13
+MID=54d8fe77-d03f-4fac-9864-d31032d28839
+--- chat approve ---
+replies 6
+events [{'type': 'approval', 'payload': {'status': 'approved', 'by': 'vp-rd-super', 'scope': 'org-wide (super admin)', 'note': 'VP R&D Super Admin blanket approval granted.'}, 'ts': '2026-07-24T13:41:11.589897+00:00'}, {'type': 'escalation', 'payload': {'from': 'devops-lee', 'to': 'devops-lead-kai', 'to_name': 'Kai Nakamura'}, 'ts': '2026-07-24T13:41:11.589915+00:00'}, {'type': 'escalation', 'payload': {'from': 'qa-tess', 'to': 'qa-lead-sam', 'to_name': 'Sam Ortiz'}, 'ts': '2026-07-24T13:41:11.589929+00:00'}]
+speakers ['Nova Hale', 'VP R&D (Super Admin)', 'Kai Nakamura', 'Lee Vargas', 'Sam Ortiz', 'Tess Okonkwo']
+--- escalate ---
+speakers ['VP R&D (Super Admin)', 'Chanan Zevin']
+has_ceo True
+--- history ---
+status live
+messages 13
+events 5
+--- pages ---
+home 200
+meeting 200
+--- websocket ping ---
+websocket_ok True replies 2
+E2E_PASSED

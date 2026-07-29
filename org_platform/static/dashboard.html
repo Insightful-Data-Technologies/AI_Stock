@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboards — Insightful Data Technologies – 2.o AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/room.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="brand-lockup">
+      <div class="company">Insightful Data Technologies – 2.o AI</div>
+      <div class="tag"><strong>Chanan Zevin – CEO</strong> · Executive · Management · Communication dashboards</div>
+      <div class="actions" style="margin-top:0.8rem;">
+        <a class="btn btn-ghost" href="/">Org home</a>
+        <button class="btn btn-steel" id="refresh" type="button">Refresh</button>
+      </div>
+    </header>
+    <section class="grid" style="grid-template-columns:1fr;">
+      <div class="panel"><h2>Executive</h2><pre id="exec" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
+      <div class="panel"><h2>Management</h2><pre id="mgmt" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
+      <div class="panel"><h2>Communication</h2><pre id="comm" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
+    </section>
+  </main>
+  <script>
+    async function load() {
+      const [e, m, c] = await Promise.all([
+        fetch('/api/dashboards/executive').then(r => r.json()),
+        fetch('/api/dashboards/management').then(r => r.json()),
+        fetch('/api/dashboards/communication').then(r => r.json()),
+      ]);
+      exec.textContent = JSON.stringify(e, null, 2);
+      mgmt.textContent = JSON.stringify(m, null, 2);
+      comm.textContent = JSON.stringify(c, null, 2);
+    }
+    refresh.onclick = load;
+    load();
+  </script>
+</body>
+</html>

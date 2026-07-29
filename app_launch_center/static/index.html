@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Capital — App Launch Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #10161c;
+      --ink: #eef3f6;
+      --muted: #9bb0bc;
+      --ok: #6b8f71;
+      --line: rgba(238,243,246,0.12);
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Outfit", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(900px 500px at 10% -20%, rgba(107,143,113,0.25), transparent 55%),
+        linear-gradient(165deg, #0d1217, #182028);
+    }
+    .shell { width: min(980px, calc(100% - 2rem)); margin: 0 auto; padding: 1.5rem 0 3rem; }
+    .brand { font-family: var(--font-display); font-size: 1.8rem; margin: 0 0 0.35rem; }
+    .sub { color: var(--muted); margin: 0 0 1.25rem; }
+    nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem; }
+    nav button {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+    }
+    nav button.active { border-color: rgba(107,143,113,0.9); background: rgba(107,143,113,0.18); }
+    .grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      background: rgba(0,0,0,0.18);
+    }
+    .card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+    .card p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.9rem; }
+    .meta { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; margin-bottom: 0.75rem; }
+    .dot { color: #c07070; }
+    .dot.on { color: #8fbf97; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.55rem 0.9rem;
+      font-weight: 650;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .btn-launch { background: linear-gradient(135deg, #2a9d8f, #6b8f71); color: #07120e; }
+    .btn-link { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+    .green-slot {
+      margin-top: 1.25rem;
+      min-height: 88px;
+      border: 2px solid rgba(107,143,113,0.9);
+      border-radius: 14px;
+      padding: 0.9rem 1rem;
+      background: rgba(15,28,22,0.55);
+    }
+    .green-slot a { color: #b7e0c0; word-break: break-all; }
+    footer { margin-top: 1rem; color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <h1 class="brand">AI Capital — App Launch Center</h1>
+    <p class="sub">INSIGHTFUL DATA TECHNOLOGIES · Local launch only</p>
+    <nav>
+      <button class="active" data-cat="all" type="button">All</button>
+      <button data-cat="agents" type="button">Agents</button>
+      <button data-cat="meetings" type="button">Meetings</button>
+    </nav>
+    <section class="grid" id="apps"></section>
+    <section class="green-slot" id="greenSlot" aria-label="Opened link">
+      <strong>Opened link</strong>
+      <div id="openedUrl">Click Open Link on One on One Meeting to fill this area.</div>
+    </section>
+    <footer>Hub port: 4720 · Local launch only · Does not store passwords</footer>
+  </main>
+  <script>
+    const APPS = [
+      {
+        id: "one-on-one",
+        cat: "meetings",
+        name: "Ultra Agent Meeting 1:1",
+        desc: "1:1 room with Ultra Agent — voice, barge-in, screen share, summary.",
+        port: 3000,
+        path: "/meeting-simulation.html",
+        status: "Working",
+      },
+      {
+        id: "cloud-one-on-one",
+        cat: "meetings",
+        name: "Cloud One-on-One (live)",
+        desc: "Production Cloud Run room — use if local :3000 is blank.",
+        port: null,
+        url: "https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting/882a60b4-9f97-4a53-9122-405c087faf65",
+        status: "Working",
+      },
+    ];
+
+    function hrefFor(app) {
+      if (app.url) return app.url;
+      return `http://127.0.0.1:${app.port}${app.path}`;
+    }
+
+    function render(cat = "all") {
+      const root = document.getElementById("apps");
+      const list = APPS.filter((a) => cat === "all" || a.cat === cat || (cat === "agents" && a.cat === "meetings"));
+      root.innerHTML = list
+        .map(
+          (app) => `<article class="card" data-id="${app.id}">
+            <div class="meta">
+              <span class="dot ${app.status === "Working" ? "on" : ""}">${app.port ? "Off - " + app.port : "Cloud"}</span>
+              <span>${app.status}</span>
+            </div>
+            <h3>${app.name}</h3>
+            <p>${app.desc}</p>
+            <div class="actions">
+              <a class="btn btn-launch" href="${hrefFor(app)}" target="_blank" rel="noreferrer">Launch</a>
+              <button class="btn btn-link" type="button" data-open="${hrefFor(app)}">Open Link</button>
+            </div>
+          </article>`
+        )
+        .join("");
+    }
+
+    document.querySelector("nav").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-cat]");
+      if (!btn) return;
+      document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b === btn));
+      render(btn.dataset.cat);
+    });
+
+    document.getElementById("apps").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-open]");
+      if (!btn) return;
+      const url = btn.dataset.open;
+      document.getElementById("openedUrl").innerHTML = `<a href="${url}" target="_blank" rel="noreferrer">${url}</a>`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    });
+
+    render("all");
+  </script>
+</body>
+</html>
