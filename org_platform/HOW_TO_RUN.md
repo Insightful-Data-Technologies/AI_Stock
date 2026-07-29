@@ -26,6 +26,14 @@ Open:
 ### Local / temporary tunnel
 
 - Local: http://127.0.0.1:8080
+- **Meeting simulation (fixes blank :3000 page):**
+  ```bash
+  bash org_platform/deploy/run_meeting_hub.sh
+  ```
+  Then open http://127.0.0.1:3000/meeting-simulation.html
+  and App Launch Center at http://127.0.0.1:4720/
+- If Next.js on Windows still serves an empty `meeting-simulation.html`, copy
+  `website/meeting-simulation.html` into that app's `public/` folder (instant redirect to Cloud 1:1).
 - Cloudflare quick tunnel (temporary only; prefer Cloud Run URL above)
 
 ## Domain Publisher (Google Studio site → GoDaddy domain)
