@@ -604,6 +604,29 @@ def list_meetings() -> Dict[str, Any]:
     return {"meetings": P().meetings.list_meetings()}
 
 
+@app.post("/api/meetings/one-on-one/ensure")
+async def ensure_one_on_one_meeting() -> Dict[str, Any]:
+    """Return a live Ultra Agent 1:1 room, creating one if needed."""
+    existing = [
+        m
+        for m in P().meetings.list_meetings()
+        if m.get("status") == "live" and ("1:1" in (m.get("title") or "") or "one-on-one" in (m.get("title") or "").lower())
+    ]
+    if existing:
+        meeting = P().meetings.get(existing[0]["id"])
+        return {"meeting": meeting, "created": False}
+    body = CreateMeetingRequest(
+        title="Ultra Agent Meeting 1:1",
+        chair_id=VP_RD_ID,
+        participant_ids=[CEO_ID, VP_RD_ID, DEV_TL_ID],
+        seed_intro=True,
+        morning=False,
+        one_on_one=True,
+    )
+    created = await create_meeting(body)
+    return {"meeting": created["meeting"], "created": True}
+
+
 @app.post("/api/meetings")
 async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     if body.chair_id not in ROSTER:
@@ -1085,6 +1108,11 @@ async def studio_ws(websocket: WebSocket, session_id: str) -> None:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/meeting-simulation.html")
+def meeting_simulation_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "meeting-simulation.html")
 
 
 @app.get("/meeting/{meeting_id}")

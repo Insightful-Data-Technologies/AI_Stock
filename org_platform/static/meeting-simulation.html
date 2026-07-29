@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Agent Meeting Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0f1419;
+      --bg1: #182028;
+      --ink: #e8eef2;
+      --muted: #9bb0bc;
+      --ok: #6b8f71;
+      --gold: #c4a35a;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Outfit", "Avenir Next", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(107, 143, 113, 0.28), transparent 55%),
+        linear-gradient(165deg, var(--bg0), var(--bg1));
+    }
+    .wrap {
+      width: min(720px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 3rem 0;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      margin: 0 0 0.75rem;
+    }
+    p { color: var(--muted); line-height: 1.5; }
+    .box {
+      margin-top: 1.5rem;
+      padding: 1.2rem 1.25rem;
+      border-radius: 16px;
+      border: 2px solid rgba(107, 143, 113, 0.85);
+      background: rgba(15, 28, 22, 0.55);
+    }
+    .status { font-size: 0.95rem; margin: 0.4rem 0 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      color: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .btn-ok { background: linear-gradient(135deg, #6b8f71, #8fbf97); color: #0c1410; }
+    .btn-ghost { background: transparent; border-color: rgba(232,238,242,0.2); }
+    .err { color: #e2a0a0; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="brand">AI Capital · One on One Meeting</div>
+    <h1>AI Agent Meeting Simulation</h1>
+    <p>Opening a private Ultra Agent 1:1 room with voice, barge-in, and screen share.</p>
+    <section class="box" id="panel">
+      <div class="status" id="status">Connecting to meeting service…</div>
+      <div class="actions">
+        <button class="btn btn-ok" id="retryBtn" type="button">Launch 1:1</button>
+        <a class="btn btn-ghost" id="cloudLink" href="https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting/882a60b4-9f97-4a53-9122-405c087faf65">Open Cloud 1:1</a>
+      </div>
+      <pre class="err" id="err"></pre>
+    </section>
+  </main>
+  <script>
+    const CLOUD_BASE = "https://enterprise-org-meeting-184723980511.europe-west2.run.app";
+    const CLOUD_FALLBACK = CLOUD_BASE + "/meeting/882a60b4-9f97-4a53-9122-405c087faf65";
+    const statusEl = document.getElementById("status");
+    const errEl = document.getElementById("err");
+
+    async function api(base, path, opts = {}) {
+      const res = await fetch(base + path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function ensureLocal() {
+      await api("", "/api/health");
+      try {
+        return await api("", "/api/meetings/one-on-one/ensure", { method: "POST", body: "{}" });
+      } catch (_) {
+        return api("", "/api/meetings", {
+          method: "POST",
+          body: JSON.stringify({
+            title: "Ultra Agent Meeting 1:1",
+            chair_id: "vp-rd",
+            participant_ids: ["ceo-chanan", "vp-rd", "dev-tl-cursor"],
+            seed_intro: true,
+            morning: false,
+            one_on_one: true,
+          }),
+        });
+      }
+    }
+
+    async function ensureCloud() {
+      return api(CLOUD_BASE, "/api/meetings", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Ultra Agent Meeting 1:1",
+          chair_id: "vp-rd",
+          participant_ids: ["ceo-chanan", "vp-rd", "dev-tl-cursor"],
+          seed_intro: true,
+          morning: false,
+        }),
+      });
+    }
+
+    async function launch() {
+      statusEl.textContent = "Creating Ultra Agent Meeting 1:1…";
+      errEl.textContent = "";
+      try {
+        let data;
+        try {
+          data = await ensureLocal();
+          const id = data.meeting?.id;
+          if (!id) throw new Error("Local meeting create returned no id");
+          statusEl.textContent = "Room ready — entering…";
+          location.replace("/meeting/" + id);
+          return;
+        } catch (localErr) {
+          statusEl.textContent = "Local service unavailable — trying Cloud Run…";
+          try {
+            data = await ensureCloud();
+            const id = data.meeting?.id;
+            if (!id) throw new Error("Cloud meeting create returned no id");
+            statusEl.textContent = "Cloud room ready — entering…";
+            location.replace(CLOUD_BASE + "/meeting/" + id);
+            return;
+          } catch (cloudErr) {
+            throw new Error(
+              "Local: " + (localErr.message || localErr) + "\nCloud: " + (cloudErr.message || cloudErr)
+            );
+          }
+        }
+      } catch (err) {
+        statusEl.textContent = "Could not auto-create room. Use Open Cloud 1:1 below.";
+        errEl.textContent = String(err.message || err);
+        document.getElementById("cloudLink").href = CLOUD_FALLBACK;
+      }
+    }
+
+    document.getElementById("retryBtn").addEventListener("click", launch);
+    launch();
+  </script>
+</body>
+</html>
