@@ -224,6 +224,14 @@ def _app_rows(port: Optional[int], healthy: bool) -> List[Dict[str, Any]]:
             "url": f"{base}/meeting-simulation.html",
         },
         {
+            "id": "meeting-41b",
+            "title": "Meeting 41 B · Visuals",
+            "port": display_port,
+            "path": "/meeting-41b.html",
+            "on": healthy,
+            "url": f"{base}/meeting-41b.html",
+        },
+        {
             "id": "war-room",
             "title": "Multi-Agent War Room",
             "port": display_port,
@@ -271,7 +279,15 @@ def apps_status() -> Dict[str, Any]:
 @app.post("/api/apps/launch")
 def launch_app(body: LaunchRequest) -> Dict[str, Any]:
     key = (body.id or "one_on_one").strip().lower().replace("-", "_")
-    if key not in {"one_on_one", "war_room", "one_on_one_meeting", "general_dashboard", "dashboard"}:
+    if key not in {
+        "one_on_one",
+        "war_room",
+        "one_on_one_meeting",
+        "general_dashboard",
+        "dashboard",
+        "meeting_41b",
+        "meeting41b",
+    }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     try:
         start = _start_meeting_server()
@@ -286,6 +302,9 @@ def launch_app(body: LaunchRequest) -> Dict[str, Any]:
     elif key in {"one_on_one", "one_on_one_meeting"}:
         url = f"{base}/meeting-simulation.html"
         message = f"One on One Meeting launched on :{port}"
+    elif key in {"meeting_41b", "meeting41b"}:
+        url = f"{base}/meeting-41b.html"
+        message = f"Meeting 41 B · Visuals launched on :{port}"
     else:
         url = f"{base}/"
         message = f"Multi-Agent War Room launched on :{port}"

@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -56,6 +56,13 @@ class CreateMeetingRequest(BaseModel):
     seed_intro: bool = True
     morning: bool = False
     one_on_one: bool = False
+    meeting_41b: bool = False
+
+
+AVATAR_DIR = STATIC_DIR / "assets" / "avatar"
+AVATAR_VIDEO = AVATAR_DIR / "agent-girl.mp4"
+AVATAR_POSTER = AVATAR_DIR / "agent-girl.png"
+MEETING_41B_TITLE = "Meeting 41 B · Visuals"
 
 
 class ChatRequest(BaseModel):
@@ -347,6 +354,7 @@ def audit(limit: int = 200, event_type: Optional[str] = None) -> Dict[str, Any]:
 def exec_dashboard() -> Dict[str, Any]:
     stats = P().tasks.stats()
     live_one_on_one = _find_live_one_on_one()
+    live_41b = _find_live_41b()
     return {
         "company": COMPANY,
         "operational_status": "online",
@@ -358,6 +366,15 @@ def exec_dashboard() -> Dict[str, Any]:
             "live_meeting_id": live_one_on_one["id"] if live_one_on_one else None,
             "live_meeting_title": live_one_on_one.get("title") if live_one_on_one else None,
             "status": "live" if live_one_on_one else "ready",
+        },
+        "meeting_41b": {
+            "available": True,
+            "path": "/meeting-41b.html",
+            "live_meeting_id": live_41b["id"] if live_41b else None,
+            "live_meeting_title": live_41b.get("title") if live_41b else None,
+            "status": "live" if live_41b else "ready",
+            "features": ["camera", "screen-share", "human-avatar", "human-voice"],
+            "avatar": _avatar_status(),
         },
         "tasks": stats,
         "departments": {
@@ -630,6 +647,34 @@ def re_search_one_on_one(title: str) -> bool:
     return bool(re.search(r"1:1|one[- ]?on[- ]?one", title, re.I))
 
 
+def re_search_41b(title: str) -> bool:
+    return bool(re.search(r"41\s*b|meeting\s*41", title, re.I))
+
+
+def _avatar_status() -> Dict[str, Any]:
+    video_ok = AVATAR_VIDEO.exists() and AVATAR_VIDEO.stat().st_size > 0
+    poster_ok = AVATAR_POSTER.exists() and AVATAR_POSTER.stat().st_size > 0
+    return {
+        "video_path": "/static/assets/avatar/agent-girl.mp4" if video_ok else None,
+        "poster_path": "/static/assets/avatar/agent-girl.png" if poster_ok else "/static/assets/portraits/ea-sofia.png",
+        "video_bytes": AVATAR_VIDEO.stat().st_size if video_ok else 0,
+        "ready": video_ok or poster_ok,
+        "source_hint": r"C:\Users\azureuser\Desktop\2026-08-03_01-01-17.mp4",
+    }
+
+
+def _find_live_41b() -> Optional[Dict[str, Any]]:
+    for summary in P().meetings.list_meetings():
+        if summary.get("status") != "live":
+            continue
+        meeting = P().meetings.get(summary["id"]) or summary
+        title = meeting.get("title") or ""
+        events = meeting.get("events") or []
+        if any(e.get("type") == "meeting_41b" for e in events) or re_search_41b(title):
+            return meeting
+    return None
+
+
 @app.post("/api/meetings/one-on-one/ensure")
 async def ensure_one_on_one_meeting() -> Dict[str, Any]:
     """Find a live Ultra Agent 1:1 room or create one (used by meeting-simulation.html)."""
@@ -649,11 +694,70 @@ async def ensure_one_on_one_meeting() -> Dict[str, Any]:
     return {**created, "created": True}
 
 
+@app.post("/api/meetings/41b/ensure")
+async def ensure_meeting_41b() -> Dict[str, Any]:
+    """Find or create tomorrow's Meeting 41 B visual room (camera + share + girl avatar + voice)."""
+    existing = _find_live_41b()
+    if existing:
+        return {"meeting": existing, "created": False, "avatar": _avatar_status()}
+    created = await create_meeting(
+        CreateMeetingRequest(
+            title=MEETING_41B_TITLE,
+            chair_id=EA_ID,
+            participant_ids=[CEO_ID, EA_ID, VP_RD_ID],
+            seed_intro=True,
+            morning=False,
+            meeting_41b=True,
+        )
+    )
+    return {**created, "created": True, "avatar": _avatar_status()}
+
+
+@app.get("/api/meetings/41b/avatar")
+def meeting_41b_avatar() -> Dict[str, Any]:
+    return _avatar_status()
+
+
+@app.post("/api/meetings/41b/avatar")
+async def upload_meeting_41b_avatar(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """Replace the AI girl avatar video (e.g. Desktop 2026-08-03_01-01-17.mp4)."""
+    name = (file.filename or "").lower()
+    if not name.endswith((".mp4", ".webm", ".mov")):
+        raise HTTPException(400, "Upload an .mp4 / .webm / .mov video of the girl appearance")
+    data = await file.read()
+    if len(data) < 1000:
+        raise HTTPException(400, "Video file looks empty")
+    if len(data) > 120 * 1024 * 1024:
+        raise HTTPException(400, "Video too large (max 120MB)")
+    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    suffix = ".webm" if name.endswith(".webm") else ".mp4"
+    target = AVATAR_DIR / f"agent-girl{suffix}"
+    target.write_bytes(data)
+    if suffix == ".webm" and AVATAR_VIDEO.exists():
+        # Keep mp4 slot in sync when browsers prefer mp4 path.
+        pass
+    if suffix == ".mp4":
+        pass
+    # Normalize to agent-girl.mp4 for the stage player when possible.
+    if target != AVATAR_VIDEO:
+        AVATAR_VIDEO.write_bytes(data)
+    return {"ok": True, "avatar": _avatar_status()}
+
+
 @app.post("/api/meetings")
 async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     if body.chair_id not in ROSTER:
         raise HTTPException(400, f"Unknown chair_id {body.chair_id}")
-    if body.one_on_one:
+    if body.meeting_41b:
+        title = body.title if body.title and body.title != "Daily Morning Meeting" else MEETING_41B_TITLE
+        chair_id = EA_ID if EA_ID in ROSTER else VP_RD_ID
+        participants = body.participant_ids or [CEO_ID, EA_ID, VP_RD_ID]
+        participants = [pid for pid in participants if pid in ROSTER]
+        if CEO_ID not in participants:
+            participants.insert(0, CEO_ID)
+        if EA_ID not in participants:
+            participants.append(EA_ID)
+    elif body.one_on_one:
         # CEO ↔ Cursor (VP R&D chair) private room — voice, barge-in, screen share, summary.
         title = body.title if body.title and body.title != "Daily Morning Meeting" else "Ultra Agent Meeting 1:1"
         chair_id = body.chair_id if body.chair_id in {CEO_ID, VP_RD_ID, DEV_TL_ID} else VP_RD_ID
@@ -676,6 +780,23 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
         participant_ids=participants,
         created_by="human-operator",
     )
+    if body.meeting_41b:
+        P().meetings.append_events(
+            meeting["id"],
+            [
+                {
+                    "type": "meeting_41b",
+                    "payload": {
+                        "mode": "visuals-41b",
+                        "scheduled_for": "2026-08-03",
+                        "features": ["camera", "screen-share", "human-avatar", "human-voice"],
+                        "avatar": _avatar_status(),
+                        "participants": participants,
+                    },
+                    "ts": meeting["created_at"],
+                }
+            ],
+        )
     if body.one_on_one:
         P().meetings.append_events(
             meeting["id"],
@@ -697,7 +818,12 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             [{"type": "morning_agenda", "payload": {"agenda": morning_meeting_script()}, "ts": meeting["created_at"]}],
         )
     if body.seed_intro:
-        if body.one_on_one:
+        if body.meeting_41b:
+            text = (
+                "Open Meeting 41 B for tomorrow. Confirm my camera is on me, screen share is ready, "
+                "and your human avatar (girl appearance) speaks with a human voice."
+            )
+        elif body.one_on_one:
             text = "Open the one-on-one room. Confirm voice, barge-in, screen share, and summary are ready."
         elif body.morning:
             text = "Open the morning meeting and confirm attendance."
@@ -724,7 +850,12 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
     P().audit.append(
         "meeting_created",
         chair_id,
-        {"meeting_id": meeting["id"], "morning": body.morning, "one_on_one": body.one_on_one},
+        {
+            "meeting_id": meeting["id"],
+            "morning": body.morning,
+            "one_on_one": body.one_on_one,
+            "meeting_41b": body.meeting_41b,
+        },
     )
     return {"meeting": meeting}
 
@@ -1137,6 +1268,13 @@ def index() -> FileResponse:
 def meeting_simulation_page() -> FileResponse:
     """Local App Launch Center target for One on One Meeting (port 3000)."""
     return FileResponse(STATIC_DIR / "meeting-simulation.html")
+
+
+@app.get("/meeting-41b.html")
+@app.get("/meeting-41b")
+def meeting_41b_boot_page() -> FileResponse:
+    """Boot page for Meeting 41 B visuals (camera + screen share + human avatar)."""
+    return FileResponse(STATIC_DIR / "meeting-41b.html")
 
 
 @app.get("/meeting/{meeting_id}")

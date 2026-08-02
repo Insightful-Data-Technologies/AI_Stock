@@ -98,3 +98,70 @@ def test_dashboard_one_on_one_box(client):
     assert exec_dash["one_on_one"]["available"] is True
     assert exec_dash["one_on_one"]["live_meeting_id"] == created["meeting"]["id"]
     assert exec_dash["one_on_one"]["status"] == "live"
+
+
+def test_meeting_41b_visuals_ensure_and_avatar(client):
+    page = client.get("/meeting-41b.html")
+    assert page.status_code == 200
+    assert "Meeting 41 B" in page.text
+
+    home = client.get("/").text
+    assert "meeting41bLaunch" in home
+    assert "Launch 41 B" in home
+
+    dash = client.get("/dashboard").text
+    assert "dashboard41b" in dash
+    assert "dashLaunch41b" in dash
+
+    first = client.post("/api/meetings/41b/ensure").json()
+    assert first["created"] is True
+    meeting = first["meeting"]
+    assert meeting["title"] == "Meeting 41 B · Visuals"
+    assert meeting["status"] == "live"
+    assert "ceo-chanan" in meeting["participant_ids"]
+    assert "ea-sofia" in meeting["participant_ids"]
+    assert any(e.get("type") == "meeting_41b" for e in meeting.get("events", []))
+    assert first["avatar"]["ready"] is True
+
+    second = client.post("/api/meetings/41b/ensure").json()
+    assert second["created"] is False
+    assert second["meeting"]["id"] == meeting["id"]
+
+    room = client.get(f"/meeting/{meeting['id']}")
+    assert room.status_code == 200
+    assert "visualStage" in room.text
+    assert "meCamera" in room.text
+    assert "agentAvatar" in room.text
+    assert "shareBtn" in room.text
+
+    avatar = client.get("/api/meetings/41b/avatar").json()
+    assert avatar["video_path"] == "/static/assets/avatar/agent-girl.mp4"
+    assert avatar["poster_path"] == "/static/assets/avatar/agent-girl.png"
+    assert avatar["video_bytes"] > 10000
+
+    exec_dash = client.get("/api/dashboards/executive").json()
+    assert exec_dash["meeting_41b"]["live_meeting_id"] == meeting["id"]
+    assert "human-avatar" in exec_dash["meeting_41b"]["features"]
+
+
+def test_meeting_41b_avatar_upload_isolated(client, tmp_path, monkeypatch):
+    from org_platform.api import app as app_mod
+
+    avatar_dir = tmp_path / "avatar"
+    avatar_dir.mkdir()
+    poster = avatar_dir / "agent-girl.png"
+    video = avatar_dir / "agent-girl.mp4"
+    poster.write_bytes(b"png")
+    video.write_bytes(b"seed-video-bytes-xxxxxxxxxxxx")
+    monkeypatch.setattr(app_mod, "AVATAR_DIR", avatar_dir)
+    monkeypatch.setattr(app_mod, "AVATAR_VIDEO", video)
+    monkeypatch.setattr(app_mod, "AVATAR_POSTER", poster)
+
+    tiny = b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 2000
+    uploaded = client.post(
+        "/api/meetings/41b/avatar",
+        files={"file": ("2026-08-03_01-01-17.mp4", tiny, "video/mp4")},
+    )
+    assert uploaded.status_code == 200
+    assert uploaded.json()["ok"] is True
+    assert video.read_bytes() == tiny

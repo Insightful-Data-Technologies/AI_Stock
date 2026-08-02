@@ -49,6 +49,9 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin: 0.8rem 0 1rem;
     }
     .gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
+    .visual-stage { display: none; }
+    body.mode-41b .visual-stage { display: block; }
+    body.mode-41b .room-layout { grid-template-rows: auto 1fr; }
   </style>
 </head>
 <body>
@@ -59,7 +62,7 @@
       <div class="gallery">
         <img src="/static/assets/portraits/ceo-chanan.png" alt="CEO" />
         <img src="/static/assets/portraits/ea-sofia.png" alt="Sofia" />
-        <img src="/static/assets/portraits/vp-rd.png" alt="VP R&D" />
+        <img src="/static/assets/avatar/agent-girl.png" alt="AI girl avatar" />
       </div>
       <button class="btn btn-primary" id="enableVoiceBtn" type="button">Start meeting with voice</button>
     </div>
@@ -73,10 +76,42 @@
       </div>
       <div class="actions">
         <a class="btn btn-ghost" href="/">Org home</a>
+        <a class="btn btn-ghost" href="/meeting-41b.html">Meeting 41 B</a>
         <button class="btn btn-steel" id="escalateBtn" type="button">Escalate to CEO</button>
         <button class="btn btn-ghost" id="endBtn" type="button">End meeting</button>
       </div>
     </header>
+
+    <section class="visual-stage" id="visualStage" aria-label="Meeting 41 B visual stage">
+      <div class="visual-grid">
+        <article class="visual-tile" id="meTile">
+          <div class="visual-label">אני · המצלמה עלי</div>
+          <video id="meCamera" playsinline autoplay muted></video>
+          <div class="visual-empty" id="meCameraEmpty">המצלמה תיפתח אוטומטית</div>
+        </article>
+        <article class="visual-tile agent-tile" id="agentTile">
+          <div class="visual-label">את · אווטאר אנושי · קול אנושי</div>
+          <video id="agentAvatar" playsinline muted loop poster="/static/assets/avatar/agent-girl.png"></video>
+          <img id="agentPoster" src="/static/assets/avatar/agent-girl.png" alt="AI human avatar" />
+          <div class="visual-empty" id="agentEmpty">מראה אנושי כמו הבחורה</div>
+        </article>
+        <article class="visual-tile" id="shareTile">
+          <div class="visual-label">שיתוף מסך</div>
+          <video id="screenShare" playsinline autoplay muted></video>
+          <div class="visual-empty" id="screenEmpty">לחץ Share screen כדי לשתף</div>
+        </article>
+      </div>
+      <div class="visual-controls">
+        <button class="btn btn-steel" id="cameraBtn" type="button">Camera on</button>
+        <button class="btn btn-primary" id="shareBtn" type="button">Share screen</button>
+        <button class="btn btn-ghost" id="stopShareBtn" type="button" disabled>Stop share</button>
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          Upload avatar video
+          <input id="avatarUpload" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+        </label>
+        <span id="visualStatus" style="color:var(--muted);font-size:0.82rem;">41 B · camera · share · human avatar</span>
+      </div>
+    </section>
 
     <section class="room-layout">
       <aside class="side">
@@ -91,7 +126,7 @@
           <label style="color:var(--muted);font-size:0.82rem;">Speak as
             <select id="speakAs">
               <option value="me">Me (CEO Chanan)</option>
-              <option value="you">You (VP R&D)</option>
+              <option value="you">You (AI · girl avatar)</option>
               <option value="human-operator">Observer</option>
             </select>
           </label>

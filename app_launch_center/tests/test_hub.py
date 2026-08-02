@@ -36,6 +36,7 @@ def test_hub_home_and_status(hub_client):
     assert home.status_code == 200
     assert "App Launch Center" in home.text
     assert "One on One Meeting" in home.text
+    assert "Meeting 41 B" in home.text
     assert "General dashboard" in home.text
     assert "Off" in home.text or "Launch" in home.text
 

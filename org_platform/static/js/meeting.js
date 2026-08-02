@@ -7,6 +7,11 @@ const state = {
   speakingId: null,
   speakQueue: Promise.resolve(),
   speakAs: localStorage.getItem("meetingSpeakAs") || "me",
+  mode41b: false,
+  cameraStream: null,
+  screenStream: null,
+  avatarUrl: "/static/assets/avatar/agent-girl.mp4",
+  avatarPoster: "/static/assets/avatar/agent-girl.png",
 };
 
 function toast(msg) {
@@ -80,11 +85,13 @@ function enqueueSpeak(text, agentId) {
         u.onstart = () => {
           state.speakingId = agentId;
           paintParticipants();
+          setAgentSpeaking(true);
           document.getElementById("voiceStatus").textContent = `Speaking: ${agent?.name || "agent"}`;
         };
         u.onend = () => {
           if (state.speakingId === agentId) state.speakingId = null;
           paintParticipants();
+          setAgentSpeaking(false);
           resolve();
         };
         u.onerror = () => resolve();
@@ -100,16 +107,149 @@ function avatarHtml(a, sizeClass = "avatar-img") {
 
 function paintSeats() {
   const me = bySeat("me") || agentById("ceo-chanan");
-  const you = bySeat("you") || agentById("vp-rd");
+  const you = state.mode41b
+    ? agentById("ea-sofia") || bySeat("you") || agentById("vp-rd")
+    : bySeat("you") || agentById("vp-rd");
   if (me) {
     document.getElementById("mePhoto").src = me.photo;
     document.getElementById("meLabel").textContent = `Me: ${me.name}`;
   }
   if (you) {
-    document.getElementById("youPhoto").src = you.photo;
-    document.getElementById("youLabel").textContent = `You: ${you.name}`;
+    document.getElementById("youPhoto").src = state.mode41b ? state.avatarPoster : you.photo;
+    document.getElementById("youLabel").textContent = state.mode41b
+      ? `You: ${you.name} · human avatar`
+      : `You: ${you.name}`;
   }
   document.getElementById("speakAs").value = state.speakAs;
+}
+
+function is41bMeeting(meeting) {
+  if (!meeting) return false;
+  if (reSearch41b(meeting.title || "")) return true;
+  return (meeting.events || []).some((e) => e.type === "meeting_41b");
+}
+
+function reSearch41b(title) {
+  return /41\s*b|meeting\s*41/i.test(title || "");
+}
+
+function setAgentSpeaking(on) {
+  const tile = document.getElementById("agentTile");
+  const video = document.getElementById("agentAvatar");
+  if (!tile || !video) return;
+  tile.classList.toggle("speaking", Boolean(on));
+  if (on) {
+    video.play().catch(() => {});
+  } else if (!state.mode41b) {
+    video.pause();
+  }
+}
+
+async function enable41bVisuals() {
+  state.mode41b = true;
+  document.body.classList.add("mode-41b");
+  const avatar = await api("/api/meetings/41b/avatar").catch(() => null);
+  if (avatar?.poster_path) state.avatarPoster = avatar.poster_path;
+  if (avatar?.video_path) state.avatarUrl = avatar.video_path;
+  const poster = document.getElementById("agentPoster");
+  const video = document.getElementById("agentAvatar");
+  if (poster) poster.src = state.avatarPoster;
+  if (video) {
+    video.poster = state.avatarPoster;
+    video.src = state.avatarUrl;
+    video.classList.add("has-media");
+    document.getElementById("agentTile")?.classList.add("has-media");
+    video.play().catch(() => {});
+  }
+  document.getElementById("visualStatus").textContent =
+    "41 B ready · turn on camera · share screen · human avatar voice";
+  await startCamera();
+  paintSeats();
+}
+
+async function startCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    document.getElementById("visualStatus").textContent = "Camera API unavailable";
+    return;
+  }
+  try {
+    if (state.cameraStream) return;
+    state.cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false,
+    });
+    const el = document.getElementById("meCamera");
+    el.srcObject = state.cameraStream;
+    document.getElementById("meTile")?.classList.add("has-media");
+    document.getElementById("cameraBtn").textContent = "Camera on";
+    document.getElementById("visualStatus").textContent = "Camera on you · avatar ready";
+  } catch (err) {
+    document.getElementById("visualStatus").textContent = "Camera blocked — allow webcam for 41 B";
+    console.error(err);
+  }
+}
+
+function stopCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach((t) => t.stop());
+    state.cameraStream = null;
+  }
+  const el = document.getElementById("meCamera");
+  if (el) el.srcObject = null;
+  document.getElementById("meTile")?.classList.remove("has-media");
+  document.getElementById("cameraBtn").textContent = "Camera off";
+}
+
+async function startScreenShare() {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    toast("Screen share unavailable");
+    return;
+  }
+  try {
+    state.screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 8 },
+      audio: false,
+    });
+    const el = document.getElementById("screenShare");
+    el.srcObject = state.screenStream;
+    document.getElementById("shareTile")?.classList.add("has-media");
+    document.getElementById("stopShareBtn").disabled = false;
+    document.getElementById("visualStatus").textContent = "Screen share live";
+    state.screenStream.getVideoTracks()[0].addEventListener("ended", () => stopScreenShare());
+    toast("Screen shared");
+  } catch (err) {
+    toast("Screen share blocked or cancelled");
+    console.error(err);
+  }
+}
+
+function stopScreenShare() {
+  if (state.screenStream) {
+    state.screenStream.getTracks().forEach((t) => t.stop());
+    state.screenStream = null;
+  }
+  const el = document.getElementById("screenShare");
+  if (el) el.srcObject = null;
+  document.getElementById("shareTile")?.classList.remove("has-media");
+  document.getElementById("stopShareBtn").disabled = true;
+  document.getElementById("visualStatus").textContent = "Screen share off";
+}
+
+async function uploadAvatarFile(file) {
+  if (!file) return;
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch("/api/meetings/41b/avatar", { method: "POST", body });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  if (data.avatar?.video_path) {
+    state.avatarUrl = `${data.avatar.video_path}?t=${Date.now()}`;
+    const video = document.getElementById("agentAvatar");
+    video.src = state.avatarUrl;
+    document.getElementById("agentTile")?.classList.add("has-media");
+    video.play().catch(() => {});
+  }
+  toast("Avatar video updated — human appearance ready");
 }
 
 function paintParticipants() {
@@ -252,9 +392,25 @@ document.getElementById("testVoiceBtn").addEventListener("click", () => {
   if (!state.voiceUnlocked) unlockVoice();
   const sofia = agentById("ea-sofia");
   enqueueSpeak(
-    "Hello, this is Sofia Marchetti, Executive Assistant to CEO Chanan Zevin. Human voice check successful.",
+    state.mode41b
+      ? "Hello Chanan. This is Meeting 41 B. My human avatar and voice are ready for our session tomorrow."
+      : "Hello, this is Sofia Marchetti, Executive Assistant to CEO Chanan Zevin. Human voice check successful.",
     sofia?.id || "ea-sofia"
   );
+});
+
+document.getElementById("cameraBtn")?.addEventListener("click", async () => {
+  if (state.cameraStream) stopCamera();
+  else await startCamera();
+});
+document.getElementById("shareBtn")?.addEventListener("click", () => startScreenShare());
+document.getElementById("stopShareBtn")?.addEventListener("click", () => stopScreenShare());
+document.getElementById("avatarUpload")?.addEventListener("change", async (e) => {
+  try {
+    await uploadAvatarFile(e.target.files?.[0]);
+  } catch (err) {
+    toast(String(err.message || err));
+  }
 });
 
 document.getElementById("composer").addEventListener("submit", async (e) => {
@@ -345,12 +501,27 @@ if (window.speechSynthesis) {
 }
 
 api(`/api/meetings/${meetingId}`)
-  .then((data) => {
+  .then(async (data) => {
     applySnapshot(data.meeting, state.roster);
+    if (is41bMeeting(data.meeting)) {
+      await enable41bVisuals();
+    }
     return api("/api/org");
   })
   .then((org) => {
     state.roster = org.roster;
+    // For 41 B, present the AI seat with Sofia's human girl appearance + female voice.
+    if (state.mode41b) {
+      state.roster = state.roster.map((a) => {
+        if (a.id === "ea-sofia") {
+          return { ...a, photo: state.avatarPoster, voice_gender: "female", join_seat: "you" };
+        }
+        if (a.id === "vp-rd") {
+          return { ...a, join_seat: a.join_seat === "you" ? "" : a.join_seat };
+        }
+        return a;
+      });
+    }
     paintSeats();
     paintParticipants();
     paintMessages();

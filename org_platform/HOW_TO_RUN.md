@@ -1,5 +1,29 @@
 # How to run the meeting room
 
+## Meeting 41 B · Visuals (tomorrow · camera + screen share + human avatar)
+
+Prepare the Chanan ↔ AI visual room for **2026-08-03**:
+
+```bash
+export PYTHONPATH=/workspace
+bash org_platform/deploy/run_meeting_3000.sh
+```
+
+Then open:
+
+- http://127.0.0.1:3000/meeting-41b.html — boots **Meeting 41 B · Visuals**
+- Or from home / dashboard → **Launch 41 B**
+
+In the room:
+
+1. Click **Start meeting with voice** (human female voice for the AI seat).
+2. **Camera on** turns your webcam on you.
+3. **Share screen** starts screen share.
+4. The AI tile uses the girl human avatar (`/static/assets/avatar/agent-girl.mp4`).
+5. Optional: **Upload avatar video** and choose  
+   `C:\Users\azureuser\Desktop\2026-08-03_01-01-17.mp4`  
+   or run `python tools/ingest_41b_avatar.py "C:/Users/azureuser/Desktop/2026-08-03_01-01-17.mp4"`.
+
 ## One on One Meeting (App Launch Center · port 3000)
 
 If **Meetings → One on One Meeting** shows **Off · 3000** or

@@ -39,6 +39,24 @@
       </div>
     </section>
 
+    <section class="meeting-41b-launch" id="dashboard41b" aria-label="Meeting 41 B on general dashboard">
+      <div class="dashboard-meeting-copy">
+        <div class="eyebrow">General dashboard · Meeting 41 B</div>
+        <div class="company">Meeting 41 B · Visuals</div>
+        <p>מחר · מצלמה שלך עליך · שיתוף מסך · אווטאר אנושי (כמו הבחורה) עם קול אנושי.</p>
+        <div class="pillrow">
+          <span class="pill">Camera</span>
+          <span class="pill">Screen share</span>
+          <span class="pill" id="dash41bStatus">Checking…</span>
+        </div>
+      </div>
+      <div class="one-on-one-actions">
+        <button class="btn btn-primary" type="button" id="dashLaunch41b">Launch 41 B</button>
+        <a class="btn btn-ghost" id="dashOpen41bLink" href="/meeting-41b.html">Open Link</a>
+        <div class="one-on-one-url" id="dash41bUrl">/meeting-41b.html</div>
+      </div>
+    </section>
+
     <section class="grid" style="grid-template-columns:1fr;">
       <div class="panel"><h2>Executive</h2><pre id="exec" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
       <div class="panel"><h2>Management</h2><pre id="mgmt" style="white-space:pre-wrap;font-size:0.85rem;"></pre></div>
@@ -125,6 +143,64 @@
       }
     });
 
+    function setDash41bLink(meetingId) {
+      const path = `/meeting/${meetingId}`;
+      const absolute = `${location.origin}${path}`;
+      const openLink = document.getElementById("dashOpen41bLink");
+      const urlEl = document.getElementById("dash41bUrl");
+      const statusEl = document.getElementById("dash41bStatus");
+      if (openLink) openLink.href = path;
+      if (urlEl) urlEl.textContent = absolute;
+      if (statusEl) statusEl.textContent = "Live room";
+      try {
+        localStorage.setItem("meeting_41b_id", meetingId);
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    async function hydrateDash41b() {
+      const statusEl = document.getElementById("dash41bStatus");
+      try {
+        const exec = await api("/api/dashboards/executive");
+        const info = exec.meeting_41b || {};
+        if (info.live_meeting_id) {
+          setDash41bLink(info.live_meeting_id);
+          return;
+        }
+        let saved = null;
+        try {
+          saved = localStorage.getItem("meeting_41b_id");
+        } catch (_) {
+          saved = null;
+        }
+        if (saved) {
+          setDash41bLink(saved);
+          if (statusEl) statusEl.textContent = "Saved room";
+          return;
+        }
+        if (statusEl) statusEl.textContent = "Ready for tomorrow";
+        document.getElementById("dash41bUrl").textContent = `${location.origin}/meeting-41b.html`;
+        document.getElementById("dashOpen41bLink").href = "/meeting-41b.html";
+      } catch (err) {
+        if (statusEl) statusEl.textContent = "Offline";
+      }
+    }
+
+    document.getElementById("dashLaunch41b").addEventListener("click", async () => {
+      const btn = document.getElementById("dashLaunch41b");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/meetings/41b/ensure", { method: "POST" });
+        setDash41bLink(data.meeting.id);
+        toast(data.created ? "Meeting 41 B created" : "Meeting 41 B ready");
+        location.href = `/meeting/${data.meeting.id}`;
+      } catch (err) {
+        toast(String(err.message || err));
+        btn.disabled = false;
+      }
+    });
+
     async function load() {
       const [e, m, c] = await Promise.all([
         fetch("/api/dashboards/executive").then((r) => r.json()),
@@ -135,6 +211,7 @@
       mgmt.textContent = JSON.stringify(m, null, 2);
       comm.textContent = JSON.stringify(c, null, 2);
       await hydrateDashMeeting();
+      await hydrateDash41b();
     }
     refresh.onclick = load;
     load().catch((err) => toast(String(err.message || err)));
