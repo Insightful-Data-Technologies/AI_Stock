@@ -240,7 +240,7 @@
         title: "General dashboard",
         subtitle: "One on One · from dashboard",
         description: "Yellow dashboard box — Launch Ultra Agent 1:1 or open the live room link",
-        port: 3000,
+        port: 4720,
         path: "/dashboard",
         launchKey: "general_dashboard",
       },
@@ -250,7 +250,7 @@
         title: "One on One Meeting",
         subtitle: "One on One Meeting",
         description: "One-on-one meeting room with Ultra Agent",
-        port: 3000,
+        port: 4720,
         path: "/meeting-simulation.html",
         launchKey: "one_on_one",
       },
@@ -258,9 +258,9 @@
         id: "meeting-41b",
         tab: "meetings",
         title: "Meeting 41 B · Visuals",
-        subtitle: "Tomorrow · camera · share · human avatar",
-        description: "Your camera on you, screen share, AI girl avatar with human voice",
-        port: 3000,
+        subtitle: "Camera · share · human avatar · :4720",
+        description: "Your camera on you, screen share, AI girl avatar with human voice — all on port 4720",
+        port: 4720,
         path: "/meeting-41b.html",
         launchKey: "meeting_41b",
       },
@@ -270,7 +270,7 @@
         title: "Multi-Agent War Room",
         subtitle: "Enterprise org meeting",
         description: "Full AI Capital enterprise team room and morning meetings",
-        port: 3000,
+        port: 4720,
         path: "/",
         launchKey: "war_room",
       },
@@ -298,6 +298,10 @@
 
     function appUrl(app) {
       const port = (statusCache[app.id] && statusCache[app.id].port) || app.port;
+      // Same-origin when hub + meetings are embedded on 4720.
+      if (String(location.port || "") === String(port) || port === 4720 && !location.port) {
+        return app.path;
+      }
       return `http://127.0.0.1:${port}${app.path}`;
     }
 
