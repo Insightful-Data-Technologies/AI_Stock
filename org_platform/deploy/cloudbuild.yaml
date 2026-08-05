@@ -1,0 +1,14 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE}
+      - -f
+      - org_platform/deploy/Dockerfile
+      - .
+images:
+  - ${_IMAGE}
+timeout: 1200s
+options:
+  logging: CLOUD_LOGGING_ONLY

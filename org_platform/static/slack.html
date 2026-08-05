@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Slack Channels — Insightful Data Technologies – 2.o AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/room.css" />
+  <style>
+    .slack-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 0.85rem;
+      min-height: 70vh;
+    }
+    @media (max-width: 800px) { .slack-layout { grid-template-columns: 1fr; } }
+    .chan-list { display: grid; gap: 0.35rem; padding: 0.7rem; }
+    .chan {
+      text-align: left; border: 1px solid var(--line); background: rgba(0,0,0,0.18);
+      color: var(--ink); border-radius: 10px; padding: 0.55rem 0.7rem; cursor: pointer;
+    }
+    .chan.active { border-color: rgba(196,163,90,0.55); background: rgba(196,163,90,0.12); }
+    .msg-pane { display: flex; flex-direction: column; min-height: 60vh; }
+    .msg-list { flex: 1; overflow: auto; padding: 0.9rem; display: grid; gap: 0.55rem; align-content: start; }
+    .msg {
+      border: 1px solid var(--line); border-radius: 12px; padding: 0.65rem 0.8rem;
+      background: rgba(0,0,0,0.2);
+    }
+    .msg .who { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.2rem; }
+    .composer-box { border-top: 1px solid var(--line); padding: 0.75rem; display: grid; gap: 0.55rem; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="brand-lockup">
+      <div class="company">Slack-compatible channels</div>
+      <div class="tag"><strong>Chanan Zevin – CEO</strong> · Send tasks to #devops from here</div>
+      <div class="actions" style="margin-top:0.8rem;">
+        <a class="btn btn-ghost" href="/">Org home</a>
+        <a class="btn btn-ghost" href="/dashboard">Dashboards</a>
+      </div>
+    </header>
+
+    <section class="slack-layout">
+      <aside class="side">
+        <div class="side-head">Channels</div>
+        <div id="channels" class="chan-list"></div>
+      </aside>
+      <section class="stage msg-pane">
+        <div class="stage-head">#<span id="chanTitle">devops</span></div>
+        <div id="messages" class="msg-list"></div>
+        <div class="composer-box">
+          <label>Post as
+            <select id="sender">
+              <option value="vp-rd" selected>You — VP R&D</option>
+              <option value="ceo-chanan">Me — CEO Chanan Zevin</option>
+              <option value="pm-main">Alex Rivera — Main PM</option>
+              <option value="pm-devops">Morgan Blake — DevOps PM</option>
+            </select>
+          </label>
+          <label>Message / task text
+            <textarea id="text" rows="3" placeholder="Example: Deploy the meeting platform to Cloud Run and report public URL + health evidence."></textarea>
+          </label>
+          <label>Assign DevOps owner
+            <select id="owner">
+              <option value="devops-tl">Kai Nakamura — DevOps Team Leader</option>
+              <option value="devops-1" selected>Lee Vargas — Cloud Run/CI</option>
+              <option value="devops-2">Riley Cho — Domains/TLS</option>
+              <option value="devops-3">Casey Brooks — Observability</option>
+              <option value="pm-devops">Morgan Blake — DevOps PM</option>
+            </select>
+          </label>
+          <div class="actions">
+            <button class="btn btn-steel" id="postOnly" type="button">Post to #channel</button>
+            <button class="btn btn-primary" id="postTask" type="button">Send task to DevOps</button>
+          </div>
+          <pre id="out" style="color:var(--muted);font-size:0.78rem;white-space:pre-wrap;"></pre>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="/static/js/slack.js"></script>
+</body>
+</html>

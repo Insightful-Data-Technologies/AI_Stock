@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meeting Room — Insightful Data Technologies – 2.o AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/room.css" />
+  <style>
+    .avatar-img {
+      width: 46px; height: 46px; border-radius: 50%;
+      object-fit: cover; box-shadow: 0 0 0 2px rgba(255,255,255,0.12);
+    }
+    .participant.speaking .avatar-img {
+      box-shadow: 0 0 0 3px #3d7ea6, 0 0 18px rgba(61,126,166,0.55);
+    }
+    .seat-bar {
+      display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center;
+      padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.22);
+    }
+    .seat-bar select, .seat-bar button { font: inherit; }
+    .seat-chip {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.25rem 0.55rem; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.04);
+      font-size: 0.82rem;
+    }
+    .seat-chip img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+    .voice-unlock {
+      position: fixed; inset: 0; z-index: 40;
+      display: grid; place-items: center;
+      background: rgba(8,12,16,0.78); backdrop-filter: blur(8px);
+    }
+    .voice-unlock.hidden { display: none; }
+    .voice-card {
+      width: min(420px, calc(100% - 2rem));
+      padding: 1.4rem 1.3rem;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #1a242c, #121920);
+      text-align: center;
+    }
+    .voice-card h2 { font-family: var(--font-display); margin: 0 0 0.5rem; }
+    .voice-card p { color: var(--muted); margin: 0 0 1rem; }
+    .gallery {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin: 0.8rem 0 1rem;
+    }
+    .gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
+    .visual-stage { display: none; }
+    body.mode-41b .visual-stage { display: block; }
+    body.mode-41b .room-layout { grid-template-rows: auto 1fr; }
+  </style>
+</head>
+<body>
+  <div id="voiceUnlock" class="voice-unlock">
+    <div class="voice-card">
+      <h2>Enable human voices</h2>
+      <p>Browsers require one click before agents can speak with natural voices.</p>
+      <div class="gallery">
+        <img src="/static/assets/portraits/ceo-chanan.png" alt="CEO" />
+        <img src="/static/assets/portraits/ea-sofia.png" alt="Sofia" />
+        <img src="/static/assets/avatar/agent-girl.png" alt="AI girl avatar" />
+      </div>
+      <button class="btn btn-primary" id="enableVoiceBtn" type="button">Start meeting with voice</button>
+    </div>
+  </div>
+
+  <div class="room-shell">
+    <header class="room-top">
+      <div>
+        <div style="color:var(--muted);font-size:0.82rem;margin-bottom:0.2rem;">Insightful Data Technologies – 2.o AI · Chanan Zevin – CEO · Live meeting room</div>
+        <h1 id="meetingTitle">Connecting…</h1>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/">Org home</a>
+        <a class="btn btn-ghost" href="/meeting-41b.html">Meeting 41 B</a>
+        <button class="btn btn-steel" id="escalateBtn" type="button">Escalate to CEO</button>
+        <button class="btn btn-ghost" id="endBtn" type="button">End meeting</button>
+      </div>
+    </header>
+
+    <section class="visual-stage" id="visualStage" aria-label="Meeting 41 B visual stage">
+      <div class="visual-grid">
+        <article class="visual-tile" id="meTile">
+          <div class="visual-label">אני · המצלמה עלי</div>
+          <video id="meCamera" playsinline autoplay muted></video>
+          <div class="visual-empty" id="meCameraEmpty">המצלמה תיפתח אוטומטית</div>
+        </article>
+        <article class="visual-tile agent-tile" id="agentTile">
+          <div class="visual-label">את · אווטאר אנושי · קול אנושי</div>
+          <video id="agentAvatar" playsinline muted loop poster="/static/assets/avatar/agent-girl.png"></video>
+          <img id="agentPoster" src="/static/assets/avatar/agent-girl.png" alt="AI human avatar" />
+          <div class="visual-empty" id="agentEmpty">מראה אנושי כמו הבחורה</div>
+        </article>
+        <article class="visual-tile" id="shareTile">
+          <div class="visual-label">שיתוף מסך</div>
+          <video id="screenShare" playsinline autoplay muted></video>
+          <div class="visual-empty" id="screenEmpty">לחץ Share screen כדי לשתף</div>
+        </article>
+      </div>
+      <div class="visual-controls">
+        <button class="btn btn-steel" id="cameraBtn" type="button">Camera on</button>
+        <button class="btn btn-primary" id="shareBtn" type="button">Share screen</button>
+        <button class="btn btn-ghost" id="stopShareBtn" type="button" disabled>Stop share</button>
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          Upload avatar video
+          <input id="avatarUpload" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+        </label>
+        <span id="visualStatus" style="color:var(--muted);font-size:0.82rem;">41 B · camera · share · human avatar</span>
+      </div>
+    </section>
+
+    <section class="room-layout">
+      <aside class="side">
+        <div class="side-head">Visible participants</div>
+        <div id="participants" class="participants"></div>
+      </aside>
+
+      <section class="stage chat">
+        <div class="seat-bar">
+          <span class="seat-chip" id="meChip"><img id="mePhoto" alt="" /><span id="meLabel">Me: —</span></span>
+          <span class="seat-chip" id="youChip"><img id="youPhoto" alt="" /><span id="youLabel">You: —</span></span>
+          <label style="color:var(--muted);font-size:0.82rem;">Speak as
+            <select id="speakAs">
+              <option value="me">Me (CEO Chanan)</option>
+              <option value="you">You (AI · girl avatar)</option>
+              <option value="human-operator">Observer</option>
+            </select>
+          </label>
+        </div>
+        <div class="voice-bar">
+          <button class="btn btn-steel" id="voiceToggle" type="button">Voice on</button>
+          <button class="btn btn-ghost" id="testVoiceBtn" type="button">Test voice</button>
+          <button class="btn btn-ghost" id="micBtn" type="button">Hold to talk</button>
+          <span id="voiceStatus" style="color:var(--muted);font-size:0.82rem;">Human neural voices · click Start if silent</span>
+        </div>
+        <div class="stage-head">Messages · live spoken responses · history</div>
+        <div id="messages" class="messages"></div>
+        <form id="composer" class="composer">
+          <input id="chatInput" placeholder="Talk to the room — Sofia, VP R&D, and the teams will answer live" autocomplete="off" />
+          <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+      </section>
+
+      <aside class="rail">
+        <div class="rail-head">Approvals &amp; escalations</div>
+        <div id="events" class="events"></div>
+        <div class="rail-head">Meeting meta</div>
+        <div id="meta" class="events"></div>
+      </aside>
+    </section>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="/static/js/meeting.js"></script>
+</body>
+</html>

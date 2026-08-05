@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0;url=http://127.0.0.1:4720/meeting-room" />
+  <title>Meeting Room</title>
+  <script>
+    const local = "http://127.0.0.1:4720/meeting-room";
+    const cloud = "https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting-room";
+    location.replace(location.hostname.includes("azurestaticapps") || location.hostname.includes("insightful") ? cloud : local);
+  </script>
+</head>
+<body>
+  <p>Opening meeting room… <a href="http://127.0.0.1:4720/meeting-room">continue</a></p>
+</body>
+</html>

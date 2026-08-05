@@ -1,0 +1,8 @@
+=== PUBLIC E2E Fri Jul 24 01:41:34 PM UTC 2026 ===
+URL=https://floor-students-estimated-apache.trycloudflare.com
+{"ok":true,"service":"org-platform","super_admin":"vp-rd-super","ceo":"ceo-chanan","agents":13,"store":{"primary":"memory+disk","disk_path":"/tmp/org_platform_data/meetings.json","redis_connected":false,"firestore":"adapter_ready_requires_adc"},"project_target":"gen-lang-client-0386540117"}
+MID=8131f1e6-46eb-4647-9294-9595995f6193
+replies 1 approvals 1
+home 200
+meeting 200
+PUBLIC_E2E_PASSED https://floor-students-estimated-apache.trycloudflare.com/meeting/8131f1e6-46eb-4647-9294-9595995f6193

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Capital — App Launch Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06122e;
+      --panel: #0b1c45;
+      --panel-2: #0f2758;
+      --ink: #ffffff;
+      --muted: #d7e4ff;
+      --line: rgba(255, 255, 255, 0.18);
+      --cyan: #7ec8ff;
+      --on: #6fdf8f;
+      --off: #ff7b7b;
+      --yellow: #ffd666;
+      --font-display: "Syne", "Avenir Next", sans-serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: #ffffff;
+      font-family: var(--font-body);
+      background:
+        radial-gradient(900px 520px at 12% -18%, rgba(56, 120, 220, 0.35), transparent 58%),
+        radial-gradient(700px 420px at 92% 8%, rgba(20, 70, 160, 0.28), transparent 52%),
+        linear-gradient(180deg, #04102a 0%, #0a1a48 42%, #06122e 100%);
+    }
+    .wrap {
+      width: min(1100px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.25rem 0 2.5rem;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 1rem;
+      color: #ffffff;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.65rem;
+    }
+    .tab {
+      border: 0;
+      background: transparent;
+      color: #e8f0ff;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 500;
+    }
+    .tab[aria-selected="true"] {
+      color: #ffffff;
+      background: rgba(126, 200, 255, 0.18);
+      box-shadow: inset 0 -2px 0 var(--cyan);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: linear-gradient(165deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.1rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-height: 210px;
+      color: #ffffff;
+    }
+    .card.yellow {
+      border-color: rgba(255, 214, 102, 0.9);
+      background:
+        linear-gradient(135deg, rgba(255, 214, 102, 0.2), rgba(255, 214, 102, 0.05)),
+        linear-gradient(165deg, #14306a, #0c1f4d);
+      box-shadow: 0 0 0 1px rgba(255, 214, 102, 0.28) inset;
+    }
+    .card.yellow h2 { color: #ffffff; }
+    .card.yellow .sub, .card.yellow p { color: #ffffff; }
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin: 0;
+      color: #ffffff;
+    }
+    .sub { color: #ffffff; font-size: 0.88rem; opacity: 0.92; }
+    .card p {
+      margin: 0;
+      color: #ffffff;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      flex: 1;
+      opacity: 0.92;
+    }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.88rem;
+      color: #ffffff;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--off);
+      box-shadow: 0 0 0 3px rgba(255, 123, 123, 0.2);
+    }
+    .dot.on {
+      background: var(--on);
+      box-shadow: 0 0 0 3px rgba(111, 223, 143, 0.22);
+    }
+    .working {
+      font-size: 0.78rem;
+      color: var(--on);
+      font-weight: 600;
+    }
+    .working.bad { color: var(--off); }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3f8cff, #1f5fcc);
+      color: #ffffff;
+    }
+    .card.yellow .btn-primary {
+      background: linear-gradient(135deg, #ffe08a, #e0b84a);
+      color: #102044;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+    }
+    .card.yellow .btn-ghost {
+      border-color: rgba(255, 214, 102, 0.55);
+      color: #ffffff;
+    }
+    .footer {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      color: #ffffff;
+      font-size: 0.82rem;
+      opacity: 0.9;
+    }
+    .footer strong { color: #ffffff; }
+    .toast {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      background: #0f2758;
+      border: 1px solid var(--line);
+      color: #ffffff;
+      padding: 0.7rem 0.9rem;
+      border-radius: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: 220ms ease;
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="brand">AI Capital — App Launch Center</h1>
+    <nav class="tabs" role="tablist" aria-label="Launch categories">
+      <button class="tab" type="button" data-tab="all">All</button>
+      <button class="tab" type="button" data-tab="create-content">Content Manager</button>
+      <button class="tab" type="button" data-tab="command">Command</button>
+      <button class="tab" type="button" data-tab="pipelines">Pipelines</button>
+      <button class="tab" type="button" data-tab="sites">Sites</button>
+      <button class="tab" type="button" data-tab="meetings" aria-selected="true">Meetings</button>
+      <button class="tab" type="button" data-tab="builders">Builders</button>
+      <button class="tab" type="button" data-tab="agents">Agents</button>
+      <button class="tab" type="button" data-tab="analytics">Analytics</button>
+      <button class="tab" type="button" data-tab="mail">Mail</button>
+    </nav>
+
+    <section class="grid" id="cards" aria-label="Apps"></section>
+
+    <footer class="footer">
+      <span>Hub port: <strong id="hubPort">4720</strong></span>
+      <span>All meeting buttons → this port (not 3000)</span>
+      <span>Does not store passwords</span>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const APPS = [
+      {
+        id: "general-dashboard",
+        tab: "all",
+        title: "General dashboard",
+        subtitle: "Yellow · Launch / Open Link",
+        description: "General dashboard — Launch / Open Link",
+        path: "/dashboard",
+        launchKey: "general_dashboard",
+        yellow: true,
+      },
+      {
+        id: "meeting-room",
+        tab: "meetings",
+        title: "Meeting Room",
+        subtitle: "חדר ישיבות · AI cinema",
+        description: "Cabinet meeting room + YouTube + live agents",
+        path: "/meeting-room",
+        launchKey: "meeting_room",
+        yellow: true,
+      },
+      {
+        id: "one-on-one",
+        tab: "meetings",
+        title: "One on One Meeting",
+        subtitle: "One on One Meeting",
+        description: "One-on-one meeting room with Ultra Agent",
+        path: "/meeting-room",
+        launchKey: "one_on_one",
+        yellow: false,
+      },
+      {
+        id: "war-room",
+        tab: "meetings",
+        title: "Multi-Agent War Room",
+        subtitle: "Enterprise org meeting",
+        description: "Full AI Capital enterprise team room",
+        path: "/meeting-room",
+        launchKey: "war_room",
+        yellow: false,
+      },
+      {
+        id: "create-content",
+        tab: "create-content",
+        title: "Content Manager",
+        subtitle: "Articles · Text · MD · Image · Canva · Keyboard",
+        description: "Open Content Manager tools on this hub",
+        path: "/content-studio",
+        launchKey: "create_content",
+        yellow: true,
+      },
+      {
+        id: "dash52",
+        tab: "create-content",
+        title: "Dash 52",
+        subtitle: "AI Capital · same hub port",
+        description: "Command Center — top Menu + Content Manager dropdown",
+        path: "/dash52",
+        launchKey: "dash52",
+        yellow: true,
+      },
+      {
+        id: "content-studio",
+        tab: "create-content",
+        title: "Content Manager",
+        subtitle: "Writing · Translate · Create tools",
+        description: "Top dropdown — Writing, Translate, Articles, Create Text/MD, Image, Canva, Keyboard",
+        path: "/content-studio",
+        launchKey: "content_studio",
+        yellow: true,
+      },
+      {
+        id: "site-editor",
+        tab: "create-content",
+        title: "Site Editor CMS",
+        subtitle: "Operations · tickets · MD docs",
+        description: "Manager CMS — Operations/Company Core without SQL sa2 crash",
+        path: "/site-editor",
+        launchKey: "site_editor",
+        yellow: true,
+      },
+    ];
+
+    let activeTab = "meetings";
+    const cardsEl = document.getElementById("cards");
+    const toastEl = document.getElementById("toast");
+    const statusCache = {};
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 2400);
+    }
+
+    function portNow() {
+      return location.port || "4720";
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    function render() {
+      const apps = APPS.filter(
+        (a) =>
+          a.id === "general-dashboard" ||
+          a.id === "meeting-room" ||
+          a.id === "create-content" ||
+          activeTab === "all" ||
+          a.tab === activeTab
+      );
+      const port = portNow();
+      cardsEl.innerHTML = apps
+        .map((app) => {
+          const st = statusCache[app.id] || { on: true, port };
+          const on = st.on !== false;
+          const p = st.port || port;
+          return `<article class="card ${app.yellow ? "yellow" : ""}" data-id="${app.id}">
+            <h2>${app.title}</h2>
+            <div class="sub">${app.subtitle}</div>
+            <p>${app.description}</p>
+            <div class="status-row">
+              <div class="status">
+                <span class="dot ${on ? "on" : ""}"></span>
+                <span>${on ? "On" : "Off"} · ${p}</span>
+              </div>
+              <span class="working ${on ? "" : "bad"}">${on ? "Ready" : "Broken"}</span>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="button" data-launch="${app.id}">Launch</button>
+              <button class="btn btn-ghost" type="button" data-open="${app.id}">Open Link</button>
+            </div>
+          </article>`;
+        })
+        .join("");
+    }
+
+    async function refreshStatus() {
+      try {
+        const data = await api("/api/apps/status");
+        for (const app of APPS) {
+          const row = (data.apps || []).find((a) => a.id === app.id);
+          statusCache[app.id] = row || { on: true, port: portNow() };
+        }
+        if (data.active_port) document.getElementById("hubPort").textContent = data.active_port;
+      } catch (_) {
+        for (const app of APPS) statusCache[app.id] = { on: true, port: portNow() };
+      }
+      render();
+    }
+
+    async function go(appId) {
+      const app = APPS.find((a) => a.id === appId);
+      if (!app) return;
+      try {
+        const data = await api("/api/apps/launch", {
+          method: "POST",
+          body: JSON.stringify({ id: app.launchKey }),
+        });
+        location.href = data.path || app.path;
+      } catch (err) {
+        toast(String(err.message || err));
+        location.href = app.path;
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activeTab = tab.dataset.tab;
+        document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+        render();
+      });
+    });
+
+    cardsEl.addEventListener("click", (e) => {
+      const launch = e.target.closest("[data-launch]");
+      const open = e.target.closest("[data-open]");
+      if (launch) go(launch.dataset.launch);
+      if (open) go(open.dataset.open);
+    });
+
+    document.getElementById("hubPort").textContent = portNow();
+    refreshStatus();
+    setInterval(refreshStatus, 4000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Capital — Content Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06122e;
+      --bar: #0a1a48;
+      --panel: #0b1c45;
+      --ink: #ffffff;
+      --muted: #d7e4ff;
+      --line: rgba(255,255,255,0.18);
+      --accent: #3f8cff;
+      --tab: #ffd666;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Syne", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%; color: #ffffff; font-family: var(--font);
+      background:
+        radial-gradient(900px 520px at 12% -18%, rgba(56,120,220,0.35), transparent 58%),
+        linear-gradient(180deg, #04102a 0%, #0a1a48 42%, #06122e 100%);
+    }
+    .topnav {
+      position: sticky; top: 0; z-index: 40;
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+      padding: 0.7rem 1rem; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #0c2258, var(--bar));
+    }
+    .brand {
+      font-weight: 700; letter-spacing: -0.02em; color: #fff;
+      text-decoration: none; margin-right: 0.35rem; white-space: nowrap;
+    }
+    .nav-group { position: relative; }
+    .nav-btn {
+      appearance: none; border: 1px solid transparent; background: transparent;
+      color: #fff; border-radius: 9px; padding: 0.48rem 0.75rem; font: inherit;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex;
+      align-items: center; gap: 0.35rem; text-decoration: none;
+    }
+    .nav-btn:hover, .nav-group.open > .nav-btn { background: rgba(255,255,255,0.08); }
+    .nav-btn.active {
+      background: rgba(63,140,255,0.28);
+      box-shadow: inset 0 0 0 1px rgba(126,200,255,0.4);
+    }
+    .nav-btn .caret { font-size: 0.7rem; opacity: 0.85; }
+    .dropdown {
+      display: none; position: absolute; top: calc(100% + 0.3rem); left: 0; min-width: 240px;
+      background: #0b1c45; border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.35rem; box-shadow: 0 16px 40px rgba(0,0,0,0.35); z-index: 50;
+    }
+    .nav-group.open > .dropdown { display: grid; }
+    .dropdown a, .dropdown button {
+      appearance: none; border: 0; background: transparent; color: #fff; text-align: left;
+      text-decoration: none; font: inherit; font-size: 0.9rem; font-weight: 500;
+      padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer; width: 100%;
+    }
+    .dropdown a:hover, .dropdown button:hover { background: rgba(255,255,255,0.08); }
+    .dropdown a.active, .dropdown button.active {
+      background: rgba(63,140,255,0.28);
+    }
+    .main { padding: 1.25rem 1.4rem 2rem; width: min(960px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--tab); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.35rem; }
+    .page-title { margin: 0; font-family: var(--display); font-size: clamp(1.7rem, 2.6vw, 2.15rem); letter-spacing: -0.03em; font-weight: 700; }
+    .page-sub { margin: 0.35rem 0 1.1rem; color: #ffffff; opacity: 0.9; font-size: 0.95rem; line-height: 1.45; max-width: 52rem; }
+    .mode-label { color: var(--tab); font-size: 0.82rem; font-weight: 700; margin: 0 0 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .panel {
+      background: linear-gradient(165deg, #12306a, var(--panel));
+      border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.05rem 1.15rem;
+    }
+    label.field { display: grid; gap: 0.4rem; color: #ffffff; opacity: 0.92; font-size: 0.86rem; font-weight: 600; margin-bottom: 0.9rem; }
+    textarea, select, input {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,0.28);
+      color: #fff; padding: 0.75rem 0.85rem; font: inherit; font-size: 0.95rem; line-height: 1.45;
+    }
+    textarea { min-height: 220px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.88rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; margin-top: 0.35rem; }
+    .btn {
+      appearance: none; border: 0; border-radius: 10px; padding: 0.72rem 1.15rem; font: inherit; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+    .btn-primary { background: linear-gradient(135deg, #3f8cff, #1f5fcc); color: #fff; min-width: 8.5rem; }
+    .btn-ghost { background: transparent; border: 1px solid var(--line); color: #fff; }
+    .meta { color: #ffffff; opacity: 0.8; font-size: 0.8rem; }
+    .alert { margin-top: 1rem; border-radius: 10px; padding: 0.75rem 0.9rem; font-size: 0.9rem; line-height: 1.4; display: none; }
+    .alert.show { display: block; }
+    .alert.err { background: rgba(239,107,107,0.12); border: 1px solid rgba(239,107,107,0.45); color: #ffc9c9; }
+    .alert.ok { background: rgba(95,191,122,0.1); border: 1px solid rgba(95,191,122,0.4); color: #c8efd2; }
+    .translate-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 700px) { .translate-row { grid-template-columns: 1fr; } }
+    img.preview { width: min(100%, 640px); border-radius: 12px; border: 1px solid var(--line); margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header class="topnav" aria-label="Dash 52 navigation">
+    <a class="brand" href="/dash52">AI Capital · Dash 52</a>
+
+    <div class="nav-group" id="menu-group">
+      <button class="nav-btn" type="button" aria-expanded="false" aria-controls="menu-dd" data-dd="menu-group">
+        Menu <span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="dropdown" id="menu-dd" role="menu">
+        <a href="/dash52">Command Center</a>
+        <a href="/">AI Workspace</a>
+        <a href="/dashboard">Markets &amp; Analytics</a>
+        <a href="/publish">Pipeline Operations</a>
+        <a href="/content-studio">Content Manager</a>
+        <a href="/slack">Communications</a>
+        <a href="/site-editor">Data &amp; Documents</a>
+        <a href="/meeting-room">Infrastructure</a>
+        <a href="/publish">Security &amp; Keys</a>
+        <a href="/studio">Administration</a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="content-group">
+      <button class="nav-btn active" type="button" aria-expanded="false" aria-controls="content-dd" data-dd="content-group">
+        Content Manager <span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="dropdown" id="content-dd" role="menu">
+        <button type="button" data-mode="writing" class="active">Writing</button>
+        <button type="button" data-mode="translate">Translate</button>
+        <button type="button" data-mode="articles">Articles</button>
+        <button type="button" data-mode="create-text">Create Text</button>
+        <button type="button" data-mode="create-md">Create MD Document</button>
+        <button type="button" data-mode="image">Image Creation</button>
+        <button type="button" data-mode="canva">Canva Studio</button>
+        <button type="button" data-mode="keyboard">Keyboard Fix</button>
+      </div>
+    </div>
+
+    <a class="nav-btn" href="/">Launch Center</a>
+  </header>
+
+  <main class="main">
+    <div class="eyebrow">Content Manager</div>
+    <h1 class="page-title">Content Manager</h1>
+    <p class="page-sub">Writing, translate, articles, create tools, image, Canva, and keyboard fix — all under one dropdown on Dash 52.</p>
+    <div class="mode-label" id="mode-label">Writing</div>
+
+    <section class="panel" id="panel-writing">
+      <label class="field">Draft
+        <textarea id="draft" placeholder="Paste your draft text here." spellcheck="true"></textarea>
+      </label>
+      <label class="field">Target tone
+        <select id="tone">
+          <option value="professional" selected>Professional / Business</option>
+          <option value="institutional">Institutional / Sell-side</option>
+          <option value="executive">Executive brief</option>
+          <option value="neutral">Neutral / Clear</option>
+          <option value="persuasive">Persuasive / Marketing</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-rewrite">Rewrite</button>
+        <span class="meta" id="provider-meta"></span>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-translate" hidden>
+      <div class="translate-row">
+        <label class="field">Source<textarea id="src" placeholder="Paste your draft text here."></textarea></label>
+        <label class="field">Translation<textarea id="dst" readonly></textarea></label>
+      </div>
+      <label class="field">Target language
+        <select id="lang"><option value="he" selected>Hebrew</option><option value="en">English</option></select>
+      </label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-translate">Translate</button>
+        <span class="meta" id="provider-meta-t"></span>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-articles" hidden>
+      <label class="field">Topic<input id="art-topic" value="Rates and capital allocation" /></label>
+      <label class="field">Notes<textarea id="art-notes">Lead with the market-moving fact. Keep institutional tone.</textarea></label>
+      <label class="field">Tone
+        <select id="art-tone">
+          <option value="institutional" selected>Institutional / Sell-side</option>
+          <option value="professional">Professional / Business</option>
+          <option value="executive">Executive brief</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-article">Generate article</button></div>
+      <label class="field" style="margin-top:0.85rem;">Result<textarea id="art-out" readonly></textarea></label>
+    </section>
+
+    <section class="panel" id="panel-create-text" hidden>
+      <label class="field">Draft / prompt<textarea id="txt-prompt" placeholder="Write a short investor update…"></textarea></label>
+      <label class="field">Tone
+        <select id="txt-tone">
+          <option value="professional" selected>Professional / Business</option>
+          <option value="institutional">Institutional / Sell-side</option>
+          <option value="executive">Executive brief</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-text">Create Text</button></div>
+      <label class="field" style="margin-top:0.85rem;">Result<textarea id="txt-out" readonly></textarea></label>
+    </section>
+
+    <section class="panel" id="panel-create-md" hidden>
+      <label class="field">Title<input id="md-title" value="Company note" /></label>
+      <label class="field">Markdown<textarea id="md-body"># Company note
+
+Status and next actions.
+</textarea></label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-md">Save MD Document</button></div>
+    </section>
+
+    <section class="panel" id="panel-image" hidden>
+      <label class="field">Title<input id="img-title" value="AI Capital Brief" /></label>
+      <label class="field">Subtitle<input id="img-sub" value="Insightful Data Technologies – 2.o AI" /></label>
+      <label class="field">Style
+        <select id="img-style">
+          <option value="institutional" selected>Institutional blue</option>
+          <option value="market">Market green</option>
+          <option value="warm">Warm executive</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-image">Create image</button></div>
+      <div id="img-preview"></div>
+    </section>
+
+    <section class="panel" id="panel-canva" hidden>
+      <label class="field">Title<input id="canva-title" value="Market visual" /></label>
+      <label class="field">Creative brief<textarea id="canva-brief">Institutional cover for equity outlook. Dark navy, gold accent, no clutter.</textarea></label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-canva">Save Canva brief</button>
+        <a class="btn btn-ghost" href="https://aizevinstocks.my.canva.site/stocks" target="_blank" rel="noopener">Open live Canva site</a>
+        <a class="btn btn-ghost" href="https://www.canva.com/" target="_blank" rel="noopener">Open Canva create</a>
+      </div>
+      <p class="meta" id="canva-meta" style="margin-top:0.75rem;"></p>
+    </section>
+
+    <section class="panel" id="panel-keyboard" hidden>
+      <p class="meta" style="margin-bottom:0.75rem;">Fix Hebrew ↔ English layout mistakes.</p>
+      <label class="field">Text<textarea id="kb-in" dir="auto" placeholder="Paste mistyped text…"></textarea></label>
+      <label class="field">Mode
+        <select id="kb-mode">
+          <option value="auto" selected>Auto detect</option>
+          <option value="en_to_he">English → Hebrew</option>
+          <option value="he_to_en">Hebrew → English</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-kb">Fix keyboard</button></div>
+      <label class="field" style="margin-top:0.85rem;">Fixed<textarea id="kb-out" dir="auto" readonly></textarea></label>
+      <p class="meta" id="kb-meta"></p>
+    </section>
+
+    <div class="alert" id="alert" role="status" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const panels = {
+      writing: "panel-writing",
+      translate: "panel-translate",
+      articles: "panel-articles",
+      "create-text": "panel-create-text",
+      "create-md": "panel-create-md",
+      image: "panel-image",
+      canva: "panel-canva",
+      keyboard: "panel-keyboard",
+    };
+    const labels = {
+      writing: "Writing",
+      translate: "Translate",
+      articles: "Articles",
+      "create-text": "Create Text",
+      "create-md": "Create MD Document",
+      image: "Image Creation",
+      canva: "Canva Studio",
+      keyboard: "Keyboard Fix",
+    };
+    const alertEl = document.getElementById("alert");
+
+    function showAlert(msg, ok) {
+      alertEl.textContent = msg;
+      alertEl.classList.add("show");
+      alertEl.classList.toggle("ok", !!ok);
+      alertEl.classList.toggle("err", !ok);
+    }
+    function clearAlert() {
+      alertEl.classList.remove("show", "ok", "err");
+      alertEl.textContent = "";
+    }
+    async function api(path, body) {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      return data;
+    }
+    function closeMenus() {
+      document.querySelectorAll(".nav-group.open").forEach((g) => {
+        g.classList.remove("open");
+        const btn = g.querySelector(".nav-btn");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      });
+    }
+    function showMode(mode) {
+      if (!panels[mode]) mode = "writing";
+      Object.entries(panels).forEach(([key, id]) => {
+        document.getElementById(id).hidden = key !== mode;
+      });
+      document.querySelectorAll("#content-dd [data-mode]").forEach((el) => {
+        el.classList.toggle("active", el.dataset.mode === mode);
+      });
+      document.getElementById("mode-label").textContent = labels[mode] || mode;
+      history.replaceState(null, "", `#${mode}`);
+      clearAlert();
+      closeMenus();
+    }
+
+    document.querySelectorAll(".nav-btn[data-dd]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const group = document.getElementById(btn.dataset.dd);
+        const willOpen = !group.classList.contains("open");
+        closeMenus();
+        if (willOpen) {
+          group.classList.add("open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+    document.addEventListener("click", closeMenus);
+
+    document.querySelectorAll("#content-dd [data-mode]").forEach((el) => {
+      el.addEventListener("click", () => showMode(el.dataset.mode));
+    });
+
+    document.getElementById("btn-rewrite").onclick = async () => {
+      const btn = document.getElementById("btn-rewrite");
+      btn.disabled = true; btn.textContent = "Rewriting…"; clearAlert();
+      try {
+        const data = await api("/api/content-studio/run", {
+          mode: "rewrite",
+          text: document.getElementById("draft").value,
+          tone: document.getElementById("tone").value,
+        });
+        document.getElementById("draft").value = data.text || "";
+        document.getElementById("provider-meta").textContent = data.provider ? `via ${data.provider}` : "";
+        showAlert("Rewrite completed.", true);
+      } catch (e) { showAlert(`Rewrite failed: ${e.message || e}`, false); }
+      finally { btn.disabled = false; btn.textContent = "Rewrite"; }
+    };
+
+    document.getElementById("btn-translate").onclick = async () => {
+      const btn = document.getElementById("btn-translate");
+      btn.disabled = true; btn.textContent = "Translating…"; clearAlert();
+      try {
+        const data = await api("/api/content-studio/run", {
+          mode: "translate",
+          text: document.getElementById("src").value,
+          target_lang: document.getElementById("lang").value,
+        });
+        document.getElementById("dst").value = data.text || "";
+        document.getElementById("provider-meta-t").textContent = data.provider ? `via ${data.provider}` : "";
+        showAlert("Translate completed.", true);
+      } catch (e) { showAlert(`Translate failed: ${e.message || e}`, false); }
+      finally { btn.disabled = false; btn.textContent = "Translate"; }
+    };
+
+    document.getElementById("btn-article").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/articles", {
+          topic: document.getElementById("art-topic").value,
+          notes: document.getElementById("art-notes").value,
+          tone: document.getElementById("art-tone").value,
+        });
+        document.getElementById("art-out").value = data.article || "";
+        showAlert(`Article saved as ${data.document.id}`, true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    document.getElementById("btn-text").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/create-text", {
+          prompt: document.getElementById("txt-prompt").value,
+          tone: document.getElementById("txt-tone").value,
+        });
+        document.getElementById("txt-out").value = data.text || "";
+        showAlert(`Text saved as ${data.document.id}`, true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    document.getElementById("btn-md").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/documents", {
+          title: document.getElementById("md-title").value,
+          content: document.getElementById("md-body").value,
+        });
+        showAlert(`Saved ${data.document.id}`, true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    document.getElementById("btn-image").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/images", {
+          title: document.getElementById("img-title").value,
+          subtitle: document.getElementById("img-sub").value,
+          style: document.getElementById("img-style").value,
+        });
+        document.getElementById("img-preview").innerHTML =
+          `<img class="preview" src="${data.url}" alt="${data.title || "image"}" />`;
+        showAlert(`Image ${data.image_id} created`, true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    document.getElementById("btn-canva").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/canva", {
+          title: document.getElementById("canva-title").value,
+          brief: document.getElementById("canva-brief").value,
+        });
+        document.getElementById("canva-meta").textContent = `Brief saved as ${data.document.id}`;
+        showAlert("Canva brief saved", true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    document.getElementById("btn-kb").onclick = async () => {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/keyboard-fix", {
+          text: document.getElementById("kb-in").value,
+          mode: document.getElementById("kb-mode").value,
+        });
+        document.getElementById("kb-out").value = data.fixed || "";
+        document.getElementById("kb-meta").textContent = `${data.explanation || ""} · detected=${data.detected}`;
+        showAlert("Keyboard fix done", true);
+      } catch (e) { showAlert(String(e.message || e), false); }
+    };
+
+    const hash = (location.hash || "").replace(/^#/, "");
+    showMode(hash && panels[hash] ? hash : "writing");
+  </script>
+</body>
+</html>

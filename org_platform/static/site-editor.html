@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site Editor CMS — Insightful Data Technologies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2a;
+      --ink: #e8eef8;
+      --muted: #93a4bd;
+      --line: rgba(232,238,248,0.12);
+      --blue: #3b82f6;
+      --ok: #5fbf7a;
+      --warn: #e8c44a;
+      --bad: #ef6b6b;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Syne", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%; color: var(--ink); font-family: var(--font);
+      background:
+        radial-gradient(800px 360px at 10% -10%, rgba(59,130,246,0.16), transparent 55%),
+        linear-gradient(180deg, #0b1220, #0e1624 50%, #0b1220);
+    }
+    .wrap { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; padding: 1.2rem 0 2.5rem; }
+    .brand { font-family: var(--display); font-size: clamp(1.45rem, 2.6vw, 1.9rem); margin: 0; letter-spacing: -0.03em; }
+    .sub { color: var(--muted); margin: 0.35rem 0 1rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: linear-gradient(165deg, #172235, var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0.95rem 1rem;
+      min-height: 118px;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+      font: inherit;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+    .card:hover { border-color: rgba(59,130,246,0.55); transform: translateY(-1px); }
+    .card.active { border-color: rgba(59,130,246,0.85); box-shadow: 0 0 0 1px rgba(59,130,246,0.35) inset; }
+    .num { color: var(--blue); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em; }
+    .card h2 { margin: 0.25rem 0 0.35rem; font-size: 1.05rem; font-family: var(--display); }
+    .card p { margin: 0; color: var(--muted); font-size: 0.86rem; line-height: 1.35; }
+    .navrow { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.65rem 0; }
+    .btn {
+      appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+      color: var(--ink); border-radius: 10px; padding: 0.55rem 0.85rem; font: inherit; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .btn:hover { border-color: rgba(59,130,246,0.5); }
+    .btn.primary { background: linear-gradient(135deg, #3b82f6, #2563eb); border-color: transparent; color: #fff; }
+    .btn.active { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.55); }
+    .panel {
+      background: rgba(18,26,42,0.92); border: 1px solid var(--line); border-radius: 14px;
+      padding: 1rem 1.05rem 1.15rem; margin-top: 0.75rem;
+    }
+    .panel h3 { margin: 0 0 0.65rem; font-family: var(--display); font-size: 1.15rem; }
+    .status {
+      display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center;
+      margin: 0.75rem 0 0; font-size: 0.88rem;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.65rem;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+    .dot.ok { background: var(--ok); }
+    .dot.warn { background: var(--warn); }
+    label { display: grid; gap: 0.3rem; color: var(--muted); font-size: 0.84rem; font-weight: 600; margin-bottom: 0.65rem; }
+    input, textarea, select {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,0.28);
+      color: var(--ink); padding: 0.6rem 0.7rem; font: inherit;
+    }
+    textarea { min-height: 160px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.86rem; }
+    .list { display: grid; gap: 0.45rem; margin-top: 0.75rem; }
+    .item {
+      border: 1px solid var(--line); border-radius: 10px; padding: 0.65rem 0.75rem; background: rgba(255,255,255,0.02);
+    }
+    .item strong { display: block; margin-bottom: 0.2rem; }
+    .muted { color: var(--muted); font-size: 0.82rem; }
+    .alert {
+      margin-top: 0.75rem; border-radius: 10px; padding: 0.7rem 0.85rem; font-size: 0.88rem; line-height: 1.4;
+      display: none; border: 1px solid var(--line);
+    }
+    .alert.show { display: block; }
+    .alert.ok { background: rgba(95,191,122,0.1); border-color: rgba(95,191,122,0.4); color: #c8efd2; }
+    .alert.warn { background: rgba(232,196,74,0.1); border-color: rgba(232,196,74,0.45); color: #ffe9a8; }
+    .alert.err { background: rgba(239,107,107,0.1); border-color: rgba(239,107,107,0.45); color: #ffc9c9; }
+    .hidden { display: none !important; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;align-items:flex-start;">
+      <div>
+        <h1 class="brand">Site Editor CMS</h1>
+        <p class="sub">Central manager-grade CMS workspace · buttons only · no red SQL crash</p>
+      </div>
+      <a class="btn" href="/">Launch Center</a>
+    </div>
+
+    <div class="grid" id="modules">
+      <button class="card" type="button" data-section="company-core"><div class="num">01</div><h2>Company Core</h2><p>Chat, agents, Azure, documents, dashboards.</p></button>
+      <button class="card" type="button" data-section="create-content"><div class="num">02</div><h2>Create Content</h2><p>Writing, email, translation, images, Canva.</p></button>
+      <button class="card" type="button" data-section="run-pipeline"><div class="num">03</div><h2>Run Pipeline</h2><p>Predictions, database, newsroom, forecasting.</p></button>
+      <button class="card" type="button" data-section="operations"><div class="num">04</div><h2>Operations</h2><p>Mail, terminal, keys, process control.</p></button>
+      <button class="card" type="button" data-section="documents"><div class="num">05</div><h2>Documents</h2><p>Governance map, memory, document routing.</p></button>
+      <button class="card" type="button" data-section="activity"><div class="num">06</div><h2>Activity Reports</h2><p>History, work log, executive profile, stats.</p></button>
+    </div>
+
+    <div class="navrow" id="nav-primary">
+      <button class="btn" type="button" data-section="company-core">Company core</button>
+      <button class="btn" type="button" data-section="create-content">Create Content</button>
+      <button class="btn" type="button" data-section="run-pipeline">Run Pipeline</button>
+      <button class="btn" type="button" data-section="operations">Operations</button>
+    </div>
+    <div class="navrow">
+      <button class="btn" type="button" data-section="documents">Company Documents</button>
+      <button class="btn" type="button" data-section="activity">Activity Reports</button>
+      <button class="btn" type="button" data-section="institutional">Institutional AI</button>
+    </div>
+    <div class="navrow" id="core-actions">
+      <button class="btn primary" type="button" data-section="company-core">Company Core</button>
+      <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+      <button class="btn primary" type="button" data-action="create-ticket">Create ticket</button>
+      <button class="btn primary" type="button" data-section="documents">Documents</button>
+      <button class="btn primary" type="button" data-section="operations">Operations</button>
+      <button class="btn primary" type="button" data-action="project-details">Project Details</button>
+    </div>
+    <div class="navrow" id="content-actions">
+      <button class="btn primary" type="button" data-action="articles">Articles</button>
+      <button class="btn primary" type="button" data-action="create-text">Create Text</button>
+      <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+      <button class="btn primary" type="button" data-action="image-creation">Image Creation</button>
+      <button class="btn primary" type="button" data-action="canva-studio">Canva Studio</button>
+      <button class="btn primary" type="button" data-action="keyboard-fix">Keyboard Fix</button>
+    </div>
+    <p class="muted">Create Content tools are live on this page.</p>
+
+    <div class="status" id="db-status">
+      <span class="pill"><span class="dot warn" id="db-dot"></span><span id="db-label">Checking database…</span></span>
+      <span class="muted" id="db-hint"></span>
+    </div>
+    <div class="alert" id="alert" role="status"></div>
+
+    <section class="panel" id="workspace">
+      <h3 id="ws-title">Company Core</h3>
+      <div id="ws-body"></div>
+    </section>
+  </div>
+
+  <script>
+    const state = { section: "company-core", db: null, docs: [], tickets: [], activity: [], project: null };
+
+    function alert(msg, kind) {
+      const el = document.getElementById("alert");
+      el.textContent = msg;
+      el.className = "alert show " + (kind || "ok");
+    }
+    function clearAlert() {
+      const el = document.getElementById("alert");
+      el.className = "alert";
+      el.textContent = "";
+    }
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function setActiveButtons(section) {
+      document.querySelectorAll(".card").forEach((c) => c.classList.toggle("active", c.dataset.section === section));
+      document.querySelectorAll(".btn[data-section]").forEach((b) => b.classList.toggle("active", b.dataset.section === section));
+    }
+
+    function renderWorkspace() {
+      const title = document.getElementById("ws-title");
+      const body = document.getElementById("ws-body");
+      const s = state.section;
+      setActiveButtons(s);
+
+      if (s === "company-core") {
+        title.textContent = "Company Core";
+        body.innerHTML = `
+          <p class="muted">Chat, agents, Azure, documents, dashboards — shortcuts below.</p>
+          <div class="navrow">
+            <a class="btn" href="/dashboard">General dashboard</a>
+            <a class="btn" href="/meeting-room">Meeting Room</a>
+            <a class="btn" href="/content-studio">Content Studio</a>
+            <a class="btn" href="/slack">Communications</a>
+          </div>
+          <div class="two" style="margin-top:0.75rem;">
+            <div class="item"><strong>Open tickets</strong><div class="muted">${state.tickets.length}</div></div>
+            <div class="item"><strong>MD documents</strong><div class="muted">${state.docs.length}</div></div>
+          </div>`;
+        return;
+      }
+      if (s === "create-content") {
+        title.textContent = "Create Content";
+        body.innerHTML = `
+          <p class="muted">All legacy Create Content tools are live in this section.</p>
+          <div class="navrow">
+            <button class="btn primary" type="button" data-action="articles">Articles</button>
+            <button class="btn primary" type="button" data-action="create-text">Create Text</button>
+            <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+            <button class="btn primary" type="button" data-action="image-creation">Image Creation</button>
+            <button class="btn primary" type="button" data-action="canva-studio">Canva Studio</button>
+            <button class="btn primary" type="button" data-action="keyboard-fix">Keyboard Fix</button>
+            <a class="btn" href="/content-studio">Content Studio (Writing / Translate)</a>
+          </div>`;
+        return;
+      }
+      if (s === "run-pipeline") {
+        title.textContent = "Run Pipeline";
+        body.innerHTML = `
+          <p class="muted">Predictions and database status for the institutional pipeline.</p>
+          <div class="item"><strong>Database mode</strong><div class="muted">${(state.db && state.db.mode) || "local"}</div></div>
+          <p class="muted" style="margin-top:0.6rem;">SQL login failures no longer crash this page — pipeline tools stay available on local store.</p>`;
+        return;
+      }
+      if (s === "operations") {
+        title.textContent = "Operations";
+        body.innerHTML = `
+          <p class="muted">Mail, keys, process control — operational actions without SQL crash.</p>
+          <div class="navrow">
+            <button class="btn primary" type="button" data-action="create-ticket">Create ticket</button>
+            <button class="btn" type="button" data-action="project-details">Project Details</button>
+            <a class="btn" href="/publish">Domain / Keys publish</a>
+          </div>
+          <div class="list" id="ticket-list"></div>`;
+        renderTickets();
+        return;
+      }
+      if (s === "documents") {
+        title.textContent = "Documents";
+        body.innerHTML = `
+          <div class="navrow">
+            <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+          </div>
+          <div class="list" id="doc-list"></div>`;
+        renderDocs();
+        return;
+      }
+      if (s === "activity") {
+        title.textContent = "Activity Reports";
+        body.innerHTML = `<div class="list" id="act-list"></div>`;
+        renderActivity();
+        return;
+      }
+      if (s === "institutional") {
+        title.textContent = "Institutional AI";
+        body.innerHTML = `
+          <p class="muted">Meeting and content AI surfaces on this hub.</p>
+          <div class="navrow">
+            <a class="btn primary" href="/meeting-room">Meeting Room</a>
+            <a class="btn" href="/content-studio">Content Studio</a>
+            <a class="btn" href="/studio">VP Delivery Studio</a>
+          </div>`;
+        return;
+      }
+      if (s === "create-md") {
+        title.textContent = "Create MD Document";
+        body.innerHTML = `
+          <label>Title<input id="md-title" value="Company note" /></label>
+          <label>Markdown<textarea id="md-body"># Company note\n\nStatus and next actions.\n</textarea></label>
+          <button class="btn primary" type="button" id="md-save">Save MD Document</button>`;
+        document.getElementById("md-save").onclick = saveMd;
+        return;
+      }
+      if (s === "articles") {
+        title.textContent = "Articles";
+        body.innerHTML = `
+          <label>Topic<input id="art-topic" value="Rates and capital allocation" /></label>
+          <label>Notes<textarea id="art-notes">Lead with the market-moving fact. Keep institutional tone for Bloomberg / FT readers.</textarea></label>
+          <label>Tone
+            <select id="art-tone">
+              <option value="institutional" selected>Institutional / Sell-side</option>
+              <option value="professional">Professional / Business</option>
+              <option value="executive">Executive brief</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="art-save">Generate article</button>
+          <label style="margin-top:0.85rem;">Result<textarea id="art-out" readonly></textarea></label>`;
+        document.getElementById("art-save").onclick = saveArticle;
+        return;
+      }
+      if (s === "create-text") {
+        title.textContent = "Create Text";
+        body.innerHTML = `
+          <label>Draft / prompt<textarea id="txt-prompt">Write a short investor update on equity markets.</textarea></label>
+          <label>Tone
+            <select id="txt-tone">
+              <option value="professional" selected>Professional / Business</option>
+              <option value="institutional">Institutional / Sell-side</option>
+              <option value="executive">Executive brief</option>
+              <option value="neutral">Neutral / Clear</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="txt-save">Create Text</button>
+          <label style="margin-top:0.85rem;">Result<textarea id="txt-out" readonly></textarea></label>`;
+        document.getElementById("txt-save").onclick = saveText;
+        return;
+      }
+      if (s === "image-creation") {
+        title.textContent = "Image Creation";
+        body.innerHTML = `
+          <label>Title<input id="img-title" value="AI Capital Brief" /></label>
+          <label>Subtitle<input id="img-sub" value="Insightful Data Technologies – 2.o AI" /></label>
+          <label>Style
+            <select id="img-style">
+              <option value="institutional" selected>Institutional blue</option>
+              <option value="market">Market green</option>
+              <option value="warm">Warm executive</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="img-save">Create image</button>
+          <div id="img-preview" style="margin-top:0.85rem;"></div>
+          <div class="list" id="img-list" style="margin-top:0.85rem;"></div>`;
+        document.getElementById("img-save").onclick = saveImage;
+        loadImages();
+        return;
+      }
+      if (s === "canva-studio") {
+        title.textContent = "Canva Studio";
+        body.innerHTML = `
+          <label>Title<input id="canva-title" value="Market visual" /></label>
+          <label>Creative brief<textarea id="canva-brief">Institutional cover for equity outlook. Dark navy, gold accent, no clutter.</textarea></label>
+          <div class="navrow">
+            <button class="btn primary" type="button" id="canva-save">Save Canva brief</button>
+            <a class="btn" id="canva-site" href="https://aizevinstocks.my.canva.site/stocks" target="_blank" rel="noopener">Open live Canva site</a>
+            <a class="btn" href="https://www.canva.com/" target="_blank" rel="noopener">Open Canva create</a>
+          </div>
+          <p class="muted" id="canva-meta" style="margin-top:0.75rem;"></p>`;
+        document.getElementById("canva-save").onclick = saveCanva;
+        return;
+      }
+      if (s === "keyboard-fix") {
+        title.textContent = "Keyboard Fix";
+        body.innerHTML = `
+          <p class="muted">Fix Hebrew ↔ English layout mistakes (migrated from legacy tool).</p>
+          <label>Text<textarea id="kb-in" dir="auto">akuo</textarea></label>
+          <label>Mode
+            <select id="kb-mode">
+              <option value="auto" selected>Auto detect</option>
+              <option value="en_to_he">English → Hebrew</option>
+              <option value="he_to_en">Hebrew → English</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="kb-run">Fix keyboard</button>
+          <label style="margin-top:0.85rem;">Fixed<textarea id="kb-out" dir="auto" readonly></textarea></label>
+          <p class="muted" id="kb-meta"></p>`;
+        document.getElementById("kb-run").onclick = runKeyboard;
+        return;
+      }
+      if (s === "create-ticket") {
+        title.textContent = "Create ticket";
+        body.innerHTML = `
+          <label>Title<input id="tk-title" value="Operations follow-up" /></label>
+          <label>Priority
+            <select id="tk-pri"><option>P1</option><option selected>P2</option><option>P3</option></select>
+          </label>
+          <label>Details<textarea id="tk-body">Track Operations item from Site Editor CMS.</textarea></label>
+          <button class="btn primary" type="button" id="tk-save">Save ticket</button>`;
+        document.getElementById("tk-save").onclick = saveTicket;
+        return;
+      }
+      if (s === "project-details") {
+        title.textContent = "Project Details";
+        const p = state.project || {};
+        body.innerHTML = `
+          <div class="two">
+            <div class="item"><strong>Company</strong><div class="muted">${p.company || ""}</div></div>
+            <div class="item"><strong>Product</strong><div class="muted">${p.product || ""}</div></div>
+            <div class="item"><strong>CEO</strong><div class="muted">${p.ceo || ""}</div></div>
+            <div class="item"><strong>Tickets / Docs</strong><div class="muted">${p.tickets || 0} / ${p.documents || 0}</div></div>
+          </div>
+          <p class="muted" style="margin-top:0.75rem;">Modules: ${(p.modules || []).join(" · ")}</p>`;
+      }
+    }
+
+    function renderTickets() {
+      const el = document.getElementById("ticket-list");
+      if (!el) return;
+      if (!state.tickets.length) { el.innerHTML = `<div class="muted">No tickets yet.</div>`; return; }
+      el.innerHTML = state.tickets.slice(0, 12).map((t) =>
+        `<div class="item"><strong>${t.id} · ${escapeHtml(t.title)}</strong><div class="muted">${t.priority} · ${t.status} · ${t.created_at}</div></div>`
+      ).join("");
+    }
+    function renderDocs() {
+      const el = document.getElementById("doc-list");
+      if (!el) return;
+      if (!state.docs.length) { el.innerHTML = `<div class="muted">No documents yet.</div>`; return; }
+      el.innerHTML = state.docs.slice(0, 12).map((d) =>
+        `<div class="item"><strong>${d.id} · ${escapeHtml(d.title)}</strong><div class="muted">Updated ${d.updated_at}</div></div>`
+      ).join("");
+    }
+    function renderActivity() {
+      const el = document.getElementById("act-list");
+      if (!el) return;
+      if (!state.activity.length) { el.innerHTML = `<div class="muted">No activity yet.</div>`; return; }
+      el.innerHTML = state.activity.slice(0, 20).map((a) =>
+        `<div class="item"><strong>${escapeHtml(a.action)}</strong><div class="muted">${a.at} · ${escapeHtml(JSON.stringify(a))}</div></div>`
+      ).join("");
+    }
+    function escapeHtml(s) {
+      return String(s || "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+
+    async function saveMd() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/documents", {
+          method: "POST",
+          body: JSON.stringify({ title: document.getElementById("md-title").value, content: document.getElementById("md-body").value }),
+        });
+        alert(`Saved ${data.document.id}`, "ok");
+        await refreshLists();
+        state.section = "documents";
+        renderWorkspace();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+    async function saveTicket() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/tickets", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.getElementById("tk-title").value,
+            body: document.getElementById("tk-body").value,
+            priority: document.getElementById("tk-pri").value,
+          }),
+        });
+        alert(`Ticket ${data.ticket.id} created`, "ok");
+        await refreshLists();
+        state.section = "operations";
+        renderWorkspace();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function saveArticle() {
+      clearAlert();
+      const btn = document.getElementById("art-save");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/site-editor/articles", {
+          method: "POST",
+          body: JSON.stringify({
+            topic: document.getElementById("art-topic").value,
+            notes: document.getElementById("art-notes").value,
+            tone: document.getElementById("art-tone").value,
+          }),
+        });
+        document.getElementById("art-out").value = data.article || "";
+        alert(`Article saved as ${data.document.id}`, "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+      finally { btn.disabled = false; }
+    }
+
+    async function saveText() {
+      clearAlert();
+      const btn = document.getElementById("txt-save");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/site-editor/create-text", {
+          method: "POST",
+          body: JSON.stringify({
+            prompt: document.getElementById("txt-prompt").value,
+            tone: document.getElementById("txt-tone").value,
+          }),
+        });
+        document.getElementById("txt-out").value = data.text || "";
+        alert(`Text saved as ${data.document.id}`, "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+      finally { btn.disabled = false; }
+    }
+
+    async function saveImage() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/images", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.getElementById("img-title").value,
+            subtitle: document.getElementById("img-sub").value,
+            style: document.getElementById("img-style").value,
+          }),
+        });
+        const preview = document.getElementById("img-preview");
+        preview.innerHTML = `<img src="${data.url}" alt="${escapeHtml(data.title || "image")}" style="width:min(100%,640px);border-radius:12px;border:1px solid var(--line);" />`;
+        alert(`Image ${data.image_id} created`, "ok");
+        await loadImages();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function loadImages() {
+      const el = document.getElementById("img-list");
+      if (!el) return;
+      try {
+        const data = await api("/api/site-editor/images");
+        const imgs = data.images || [];
+        if (!imgs.length) { el.innerHTML = `<div class="muted">No images yet.</div>`; return; }
+        el.innerHTML = imgs.slice(0, 8).map((img) =>
+          `<div class="item"><strong>${escapeHtml(img.filename)}</strong><div class="muted"><a class="btn" href="${img.url}" target="_blank" rel="noopener">Open</a> · ${img.updated_at}</div></div>`
+        ).join("");
+      } catch (_) {
+        el.innerHTML = `<div class="muted">Could not load images.</div>`;
+      }
+    }
+
+    async function saveCanva() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/canva", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.getElementById("canva-title").value,
+            brief: document.getElementById("canva-brief").value,
+          }),
+        });
+        if (data.canva_site_url) document.getElementById("canva-site").href = data.canva_site_url;
+        document.getElementById("canva-meta").textContent = `Brief saved as ${data.document.id}`;
+        alert("Canva brief saved", "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function runKeyboard() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/keyboard-fix", {
+          method: "POST",
+          body: JSON.stringify({
+            text: document.getElementById("kb-in").value,
+            mode: document.getElementById("kb-mode").value,
+          }),
+        });
+        document.getElementById("kb-out").value = data.fixed || "";
+        document.getElementById("kb-meta").textContent =
+          `${data.explanation || ""} · detected=${data.detected}`;
+        alert("Keyboard fix done", "ok");
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function refreshDb() {
+      const data = await api("/api/site-editor/db-status");
+      state.db = data;
+      const dot = document.getElementById("db-dot");
+      const label = document.getElementById("db-label");
+      const hint = document.getElementById("db-hint");
+      if (data.ok) {
+        dot.className = "dot ok";
+        label.textContent = "SQL Server · connected";
+        hint.textContent = data.message || "";
+      } else {
+        dot.className = "dot warn";
+        label.textContent = "Local store · SQL offline (page stays usable)";
+        hint.textContent = data.hint || data.error || "";
+        // Never paint raw sqlalchemy traceback in red.
+      }
+    }
+    async function refreshLists() {
+      const [docs, tickets, activity, project] = await Promise.all([
+        api("/api/site-editor/documents"),
+        api("/api/site-editor/tickets"),
+        api("/api/site-editor/activity"),
+        api("/api/site-editor/project"),
+      ]);
+      state.docs = docs.documents || [];
+      state.tickets = tickets.tickets || [];
+      state.activity = activity.activity || [];
+      state.project = project.project || null;
+    }
+
+    function goSection(section) { state.section = section; clearAlert(); renderWorkspace(); }
+
+    document.body.addEventListener("click", (e) => {
+      const sectionBtn = e.target.closest("[data-section]");
+      const actionBtn = e.target.closest("[data-action]");
+      if (sectionBtn && sectionBtn.dataset.section) goSection(sectionBtn.dataset.section);
+      if (actionBtn && actionBtn.dataset.action) goSection(actionBtn.dataset.action);
+    });
+
+    (async function boot() {
+      try {
+        const hash = (location.hash || "").replace(/^#/, "");
+        if (hash) state.section = hash;
+        await refreshDb();
+        await refreshLists();
+        renderWorkspace();
+      } catch (e) {
+        alert(String(e.message || e), "err");
+        renderWorkspace();
+      }
+    })();
+  </script>
+</body>
+</html>

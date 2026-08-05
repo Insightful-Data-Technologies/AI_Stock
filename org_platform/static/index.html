@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Insightful Data Technologies – 2.o AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/room.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="brand-lockup">
+      <div class="company">Insightful Data Technologies – 2.o AI</div>
+      <div class="tag"><strong>Chanan Zevin – CEO</strong> · AI Risk Management | Hedging | Exposure | Predictive Strategy</div>
+      <div class="pillrow">
+        <span class="pill">AI Capital Enterprise Team</span>
+        <span class="pill">VP R&amp;D · ChatGPT/Codex</span>
+        <span class="pill">Claude · Dev PM</span>
+        <span class="pill">Cursor · Dev TL</span>
+        <span class="pill">Live morning meetings</span>
+      </div>
+    </header>
+
+    <section class="one-on-one-launch" id="oneOnOneLaunch" aria-label="One-on-one meeting launch">
+      <div class="one-on-one-copy">
+        <div class="company">Ultra Agent Meeting 1:1</div>
+        <p>Private room with Cursor · VP R&amp;D — voice, barge-in, screen share, summary.</p>
+        <div class="pillrow">
+          <span class="pill">CEO · Me</span>
+          <span class="pill">Cursor · VP R&amp;D</span>
+          <span class="pill">Live room</span>
+        </div>
+      </div>
+      <div class="one-on-one-actions">
+        <button class="btn btn-ok" type="button" id="launchOneOnOne">Launch 1:1</button>
+        <a class="btn btn-ghost" id="openOneOnOneLink" href="/meeting/882a60b4-9f97-4a53-9122-405c087faf65">Open Link</a>
+        <div class="one-on-one-url" id="oneOnOneUrl">https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting/882a60b4-9f97-4a53-9122-405c087faf65</div>
+      </div>
+    </section>
+
+    <section class="meeting-41b-launch" id="meeting41bLaunch" aria-label="Meeting room launch">
+      <div class="one-on-one-copy">
+        <div class="company">Meeting Room · AI Cinema</div>
+        <p>Cabinet chamber on :4720 — attached AI image look, YouTube AI film, army clothes welcome.</p>
+        <div class="pillrow">
+          <span class="pill">Cabinet image</span>
+          <span class="pill">YouTube AI reel</span>
+          <span class="pill">Live meeting</span>
+        </div>
+      </div>
+      <div class="one-on-one-actions">
+        <a class="btn btn-primary" id="launch41b" href="/meeting-room">Open Meeting Room</a>
+        <a class="btn btn-ghost" id="open41bLink" href="/meeting-room">Open Link</a>
+        <div class="one-on-one-url" id="meeting41bUrl">http://127.0.0.1:4720/meeting-room</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Organization roster</h2>
+        <div id="roster" class="roster"></div>
+      </div>
+      <div class="panel">
+        <h2>Operations</h2>
+        <form id="createForm" class="form">
+          <label>Meeting title
+            <input id="title" value="Daily Morning Meeting" required />
+          </label>
+          <label>Chair
+            <select id="chair"></select>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;flex-direction:row;">
+            <input id="morning" type="checkbox" checked /> Morning meeting agenda
+          </label>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Enter meeting room</button>
+            <a class="btn btn-steel" href="/dashboard">Dashboards</a>
+            <a class="btn btn-ghost" href="/slack">Slack / #devops tasks</a>
+            <a class="btn btn-primary" href="/studio">VP Delivery Studio</a>
+            <a class="btn btn-steel" href="/publish">Publish domain</a>
+            <button class="btn btn-ghost" type="button" id="runComm">Run comm tests</button>
+            <button class="btn btn-ghost" type="button" id="runE2E">Run SRS workflow</button>
+          </div>
+        </form>
+        <div id="meetings" class="meet-list"></div>
+        <p id="health" style="color:var(--muted);margin-top:1rem;font-size:0.82rem;"></p>
+        <pre id="opsOut" style="white-space:pre-wrap;color:var(--muted);font-size:0.75rem;"></pre>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="/static/js/home.js"></script>
+</body>
+</html>
