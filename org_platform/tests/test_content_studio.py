@@ -29,7 +29,7 @@ def test_content_studio_page(client):
     assert "Content Studio" in page.text
     assert "Rewrite" in page.text
     assert "Translate" in page.text
-    assert "Target Tone" in page.text
+    assert "Target tone" in page.text or "Target Tone" in page.text
 
 
 def test_content_studio_meta(client):

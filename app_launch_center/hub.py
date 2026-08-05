@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HUB_PORT = int(os.environ.get("HUB_PORT", "4720"))
 # Accept Launch Center ports the user already uses, plus CMS port 8511.
-ALLOWED_PORTS = [4720, 4600, 8511]
+ALLOWED_PORTS = [4720, 4600, 8511, 8502]
 
 os.environ.setdefault("ORG_DATA_DIR", os.environ.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch"))
 Path(os.environ["ORG_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
@@ -93,9 +93,18 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "id": "create-content",
             "title": "Create Content",
             "port": port,
-            "path": "/site-editor#create-content",
+            "path": "/content-studio",
             "on": True,
-            "url": f"{base}/site-editor#create-content",
+            "url": f"{base}/content-studio",
+            "color": "yellow",
+        },
+        {
+            "id": "dash52",
+            "title": "Dash 52",
+            "port": 8502 if port != 8502 else port,
+            "path": "/content-studio",
+            "on": True,
+            "url": f"http://127.0.0.1:8502/content-studio" if port != 8502 else f"{base}/content-studio",
             "color": "yellow",
         },
         {
@@ -122,9 +131,7 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
 def _launch_path(key: str) -> str:
     if key in {"general_dashboard", "dashboard"}:
         return "/dashboard"
-    if key in {"create_content", "createcontent"}:
-        return "/site-editor#create-content"
-    if key in {"content_studio", "contentstudio"}:
+    if key in {"create_content", "createcontent", "dash52", "dash_52", "content_studio", "contentstudio"}:
         return "/content-studio"
     if key in {"site_editor", "siteeditor", "cms"}:
         return "/site-editor"
@@ -183,6 +190,8 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "contentstudio",
         "create_content",
         "createcontent",
+        "dash52",
+        "dash_52",
         "site_editor",
         "siteeditor",
         "cms",

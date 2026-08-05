@@ -50,8 +50,12 @@ def test_all_apps_on_current_port_not_3000(hub_client):
     assert "content-studio" in ids
     assert "site-editor" in ids
     assert "create-content" in ids
+    assert "dash52" in ids
     for app in status["apps"]:
         assert app["on"] is True
+        if app["id"] == "dash52":
+            assert app["port"] in {4720, 8502}
+            continue
         assert app["port"] == 4720
         assert app["port"] != 3000
 
@@ -65,7 +69,8 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("war_room", "/meeting-room"),
         ("content_studio", "/content-studio"),
         ("site_editor", "/site-editor"),
-        ("create_content", "/site-editor#create-content"),
+        ("create_content", "/content-studio"),
+        ("dash52", "/content-studio"),
     ]:
         res = client.post(
             "/api/apps/launch",
