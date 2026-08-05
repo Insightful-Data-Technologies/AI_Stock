@@ -1,137 +1,121 @@
-"""AI Capital App Launch Center + Meeting platform — everything on port 4720."""
+"""AI Capital App Launch Center + Meeting platform — buttons on 4720 or 4600."""
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HUB_PORT = int(os.environ.get("HUB_PORT", "4720"))
+# Accept either Launch Center port the user already uses.
+ALLOWED_PORTS = [4720, 4600]
 
 os.environ.setdefault("ORG_DATA_DIR", os.environ.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch"))
 Path(os.environ["ORG_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
 
 from org_platform.api.app import app as meeting_app  # noqa: E402
 
-# Parent app owns hub APIs + /apps UI; meeting platform is mounted at "/".
 app = FastAPI(
     title="AI Capital — Launch Center + Meetings",
-    version="3.0.0",
-    description="Single-port stack on 4720: Launch Center, Meeting 41 B, 1:1, dashboards",
+    version="3.1.0",
+    description="Button-only Launch Center on port 4720 or 4600",
 )
 
 
 class LaunchRequest(BaseModel):
-    id: str = "one_on_one"
+    id: str = "meeting_room"
 
 
-def _base() -> str:
-    return f"http://127.0.0.1:{HUB_PORT}"
+def _request_port(request: Optional[Request]) -> int:
+    if request is None:
+        return HUB_PORT
+    host = request.headers.get("host") or ""
+    if ":" in host:
+        try:
+            return int(host.rsplit(":", 1)[-1])
+        except ValueError:
+            pass
+    return HUB_PORT
 
 
-def _app_rows() -> List[Dict[str, Any]]:
-    base = _base()
+def _base(request: Optional[Request] = None) -> str:
+    port = _request_port(request)
+    return f"http://127.0.0.1:{port}"
+
+
+def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
+    port = _request_port(request)
+    base = _base(request)
     return [
+        {
+            "id": "meeting-room",
+            "title": "Meeting Room",
+            "port": port,
+            "path": "/meeting-room",
+            "on": True,
+            "url": f"{base}/meeting-room",
+        },
         {
             "id": "general-dashboard",
             "title": "General dashboard",
-            "port": HUB_PORT,
+            "port": port,
             "path": "/dashboard",
             "on": True,
             "url": f"{base}/dashboard",
         },
-        {
-            "id": "meeting-room",
-            "title": "Meeting Room",
-            "port": HUB_PORT,
-            "path": "/meeting-room",
-            "on": True,
-            "url": f"{base}/meeting-room",
-        },
-        {
-            "id": "meeting-41b",
-            "title": "Meeting Room · AI Cinema",
-            "port": HUB_PORT,
-            "path": "/meeting-room",
-            "on": True,
-            "url": f"{base}/meeting-room",
-        },
-        {
-            "id": "one-on-one",
-            "title": "One on One Meeting",
-            "port": HUB_PORT,
-            "path": "/meeting-room",
-            "on": True,
-            "url": f"{base}/meeting-room",
-        },
-        {
-            "id": "war-room",
-            "title": "Multi-Agent War Room",
-            "port": HUB_PORT,
-            "path": "/meeting-room",
-            "on": True,
-            "url": f"{base}/meeting-room",
-        },
     ]
 
 
-def _launch_url(key: str) -> tuple[str, str]:
-    base = _base()
+def _launch_path(key: str) -> str:
     if key in {"general_dashboard", "dashboard"}:
-        return f"{base}/dashboard", f"General dashboard on :{HUB_PORT}"
-    if key in {
-        "one_on_one",
-        "one_on_one_meeting",
-        "meeting_41b",
-        "meeting41b",
-        "meeting_room",
-        "war_room",
-    }:
-        return f"{base}/meeting-room", f"Meeting Room on :{HUB_PORT}"
-    return f"{base}/meeting-room", f"Meeting Room on :{HUB_PORT}"
+        return "/dashboard"
+    return "/meeting-room"
 
 
+@app.get("/")
 @app.get("/apps")
 @app.get("/apps/")
 def launch_center() -> FileResponse:
-    """App Launch Center UI (same process / port as meetings)."""
+    """Home = button Launch Center (4720 or 4600)."""
     return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/hub")
-def hub_info() -> Dict[str, Any]:
+def hub_info(request: Request) -> Dict[str, Any]:
+    port = _request_port(request)
     return {
         "ok": True,
         "name": "AI Capital — App Launch Center",
-        "port": HUB_PORT,
-        "meeting_port": HUB_PORT,
-        "preferred_ports": [HUB_PORT],
-        "fallback_port": None,
-        "mode": "single_port_embedded",
+        "port": port,
+        "meeting_port": port,
+        "preferred_ports": ALLOWED_PORTS,
+        "fallback_port": 4600 if port == 4720 else 4720,
+        "mode": "buttons_only",
         "stores_passwords": False,
-        "apps_path": "/apps",
+        "apps_path": "/",
     }
 
 
 @app.get("/api/apps/status")
-def apps_status() -> Dict[str, Any]:
+def apps_status(request: Request) -> Dict[str, Any]:
+    port = _request_port(request)
     return {
-        "apps": _app_rows(),
-        "preferred_ports": [HUB_PORT],
-        "active_port": HUB_PORT,
-        "next_bind_port": HUB_PORT,
+        "apps": _app_rows(request),
+        "preferred_ports": ALLOWED_PORTS,
+        "active_port": port,
+        "next_bind_port": port,
         "embedded": True,
     }
 
 
 @app.post("/api/apps/launch")
-def launch_app(body: LaunchRequest) -> Dict[str, Any]:
-    key = (body.id or "one_on_one").strip().lower().replace("-", "_")
+def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
+    key = (body.id or "meeting_room").strip().lower().replace("-", "_")
     if key not in {
         "one_on_one",
         "war_room",
@@ -143,18 +127,21 @@ def launch_app(body: LaunchRequest) -> Dict[str, Any]:
         "meeting_room",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
-    url, message = _launch_url(key)
+    path = _launch_path(key)
+    port = _request_port(request)
+    url = f"{_base(request)}{path}"
     return {
         "ok": True,
-        "message": message,
+        "message": f"Opening {path}",
         "url": url,
-        "port": HUB_PORT,
+        "path": path,
+        "port": port,
         "start": {
             "started": False,
             "already_running": True,
-            "port": HUB_PORT,
+            "port": port,
             "embedded": True,
-            "preferred_ports": [HUB_PORT],
+            "preferred_ports": ALLOWED_PORTS,
         },
         "status": "On",
     }
@@ -165,11 +152,11 @@ def stop_meeting() -> Dict[str, Any]:
     return {
         "ok": True,
         "stopped": False,
-        "message": f"Meetings are embedded on :{HUB_PORT}. Stop the hub process to shut down.",
+        "message": "Use the Launch Center buttons. Stop is not needed.",
     }
 
 
-# Meeting platform (41 B, 1:1, dashboards, studio, APIs) on the same port.
+# Meeting pages + APIs on the same port (after Launch Center routes).
 app.mount("/", meeting_app)
 
 

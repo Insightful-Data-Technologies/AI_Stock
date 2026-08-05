@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Capital — App Launch Center</title>
+  <title>AI Capital — Buttons</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #0b0f14;
       --panel: #121820;
-      --panel-2: #18212b;
       --ink: #e7eef5;
       --muted: #8fa3b5;
-      --line: rgba(231, 238, 245, 0.1);
+      --line: rgba(231, 238, 245, 0.12);
       --cyan: #2fd3d8;
-      --cyan-ink: #042226;
-      --off: #d45a5a;
       --on: #5fbf7a;
-      --font-display: "Syne", "Avenir Next", sans-serif;
-      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-display: "Syne", sans-serif;
+      --font-body: "IBM Plex Sans", sans-serif;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -30,159 +27,82 @@
       font-family: var(--font-body);
       background:
         radial-gradient(900px 500px at 10% -20%, rgba(47, 211, 216, 0.12), transparent 55%),
-        radial-gradient(700px 420px at 90% 0%, rgba(95, 191, 122, 0.08), transparent 50%),
         linear-gradient(180deg, #0b0f14, #10161d 40%, #0b0f14);
     }
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 42px 42px;
-      opacity: 0.5;
-    }
     .wrap {
-      position: relative;
-      z-index: 1;
-      width: min(1100px, calc(100% - 2rem));
+      width: min(720px, calc(100% - 2rem));
       margin: 0 auto;
-      padding: 1.25rem 0 2.5rem;
+      padding: 2rem 0 3rem;
     }
     .brand {
       font-family: var(--font-display);
-      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
       font-weight: 700;
-      letter-spacing: -0.03em;
-      margin: 0 0 1rem;
-      animation: rise 600ms ease both;
+      margin: 0 0 0.35rem;
     }
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-bottom: 1.25rem;
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 0.65rem;
-    }
-    .tab {
-      border: 0;
-      background: transparent;
+    .tag {
       color: var(--muted);
-      padding: 0.45rem 0.75rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font: inherit;
-      font-weight: 500;
+      margin: 0 0 1.5rem;
     }
-    .tab[aria-selected="true"] {
-      color: var(--ink);
-      background: rgba(47, 211, 216, 0.12);
-      box-shadow: inset 0 -2px 0 var(--cyan);
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-    .card {
-      background: linear-gradient(165deg, var(--panel-2), var(--panel));
+    .port-pill {
+      display: inline-flex;
+      gap: 0.4rem;
+      align-items: center;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 1.1rem 1rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      min-height: 210px;
-      animation: rise 700ms ease both;
-    }
-    .card[data-id="general-dashboard"] {
-      border-color: rgba(232, 196, 74, 0.85);
-      background:
-        linear-gradient(165deg, rgba(60, 48, 18, 0.95), rgba(24, 28, 18, 0.98));
-      box-shadow: 0 0 0 1px rgba(232, 196, 74, 0.25) inset;
-    }
-    .card[data-id="general-dashboard"] h2 { color: #fff6d4; }
-    .card[data-id="general-dashboard"] .sub,
-    .card[data-id="general-dashboard"] p { color: #e8d9a8; }
-    .card h2 {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-      letter-spacing: -0.02em;
-    }
-    .card .sub {
       color: var(--muted);
-      font-size: 0.82rem;
-      margin-top: -0.25rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+    .port-pill strong { color: var(--cyan); }
+    .stack { display: grid; gap: 0.9rem; }
+    .card {
+      background: linear-gradient(165deg, #18212b, var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.15rem 1.1rem;
+    }
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      margin: 0 0 0.35rem;
     }
     .card p {
-      margin: 0;
+      margin: 0 0 1rem;
       color: var(--muted);
-      line-height: 1.4;
-      flex: 1;
+      line-height: 1.45;
     }
-    .status-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-top: 0.25rem;
-    }
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--off);
-      box-shadow: 0 0 0 3px rgba(212, 90, 90, 0.18);
-    }
-    .dot.on {
-      background: var(--on);
-      box-shadow: 0 0 0 3px rgba(95, 191, 122, 0.2);
-    }
-    .working { color: var(--muted); font-size: 0.85rem; }
-    .actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.35rem;
-    }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
     .btn {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.04);
-      color: var(--ink);
+      appearance: none;
+      border: 0;
       border-radius: 10px;
-      padding: 0.55rem 0.9rem;
+      padding: 0.85rem 1.2rem;
       font: inherit;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
+      color: inherit;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-width: 8.5rem;
     }
     .btn-primary {
-      background: var(--cyan);
-      color: var(--cyan-ink);
-      border-color: transparent;
+      background: linear-gradient(135deg, var(--cyan), #5fbf7a);
+      color: #042226;
     }
-    .btn:disabled {
-      opacity: 0.55;
-      cursor: wait;
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink);
     }
     .toast {
       position: fixed;
       right: 1rem;
-      bottom: 3.5rem;
-      background: #152029;
+      bottom: 1rem;
+      background: #132029;
       border: 1px solid var(--line);
       padding: 0.7rem 0.9rem;
       border-radius: 12px;
@@ -190,223 +110,72 @@
       transform: translateY(8px);
       transition: 220ms ease;
       z-index: 20;
-      max-width: min(420px, calc(100% - 2rem));
     }
     .toast.show { opacity: 1; transform: translateY(0); }
-    .footer {
-      margin-top: 2rem;
-      color: var(--muted);
-      font-size: 0.78rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1 class="brand">AI Capital — App Launch Center</h1>
-    <nav class="tabs" role="tablist" aria-label="Launch categories">
-      <button class="tab" type="button" data-tab="all">All</button>
-      <button class="tab" type="button" data-tab="command">Command</button>
-      <button class="tab" type="button" data-tab="pipelines">Pipelines</button>
-      <button class="tab" type="button" data-tab="sites">Sites</button>
-      <button class="tab" type="button" data-tab="meetings" aria-selected="true">Meetings</button>
-      <button class="tab" type="button" data-tab="builders">Builders</button>
-      <button class="tab" type="button" data-tab="agents">Agents</button>
-      <button class="tab" type="button" data-tab="analytics">Analytics</button>
-      <button class="tab" type="button" data-tab="mail">Mail</button>
-    </nav>
+  <main class="wrap">
+    <h1 class="brand">AI Capital — Launch Center</h1>
+    <p class="tag">Only buttons. Works on port <strong>4720</strong> or <strong>4600</strong>.</p>
+    <div class="port-pill">This page · port <strong id="hubPort">—</strong></div>
 
-    <section class="grid" id="cards" aria-label="Meeting apps"></section>
+    <section class="stack" aria-label="Launch buttons">
+      <article class="card">
+        <h2>Meeting Room</h2>
+        <p>AI cabinet chamber + YouTube film. Click to open.</p>
+        <div class="actions">
+          <button class="btn btn-primary" type="button" id="btnMeeting">Open Meeting Room</button>
+        </div>
+      </article>
 
-    <footer class="footer">
-      <span>Hub port: <strong id="hubPort">4720</strong></span>
-      <span>Status: Local launch only</span>
-      <span>Does not store passwords</span>
-    </footer>
-  </div>
+      <article class="card">
+        <h2>Dashboard</h2>
+        <p>General dashboard on this same port.</p>
+        <div class="actions">
+          <button class="btn btn-ghost" type="button" id="btnDash">Open Dashboard</button>
+        </div>
+      </article>
+    </section>
+  </main>
   <div class="toast" id="toast"></div>
 
   <script>
-    const APPS = [
-      {
-        id: "general-dashboard",
-        tab: "all",
-        title: "General dashboard",
-        subtitle: "Executive overview",
-        description: "Dashboards and live room links",
-        port: 4720,
-        path: "/dashboard",
-        launchKey: "general_dashboard",
-      },
-      {
-        id: "meeting-room",
-        tab: "meetings",
-        title: "Meeting Room",
-        subtitle: "AI cinema · cabinet chamber · :4720",
-        description: "Full-bleed AI meeting room with the cabinet image and YouTube film",
-        port: 4720,
-        path: "/meeting-room",
-        launchKey: "meeting_room",
-      },
-      {
-        id: "meeting-41b",
-        tab: "meetings",
-        title: "Meeting Room · AI Cinema",
-        subtitle: "Same room · YouTube AI reel",
-        description: "Cabinet chamber look — army clothes welcome — with the AI YouTube film embedded",
-        port: 4720,
-        path: "/meeting-room",
-        launchKey: "meeting_41b",
-      },
-      {
-        id: "one-on-one",
-        tab: "meetings",
-        title: "One on One Meeting",
-        subtitle: "Opens Meeting Room",
-        description: "Legacy 1:1 entry — now opens the cinematic meeting room on 4720",
-        port: 4720,
-        path: "/meeting-room",
-        launchKey: "one_on_one",
-      },
-      {
-        id: "war-room",
-        tab: "meetings",
-        title: "Multi-Agent War Room",
-        subtitle: "Opens Meeting Room",
-        description: "Legacy war room entry — now opens the cinematic meeting room on 4720",
-        port: 4720,
-        path: "/meeting-room",
-        launchKey: "war_room",
-      },
-    ];
-
-    let activeTab = "meetings";
-    const cardsEl = document.getElementById("cards");
     const toastEl = document.getElementById("toast");
-    const statusCache = {};
-
     function toast(msg) {
       toastEl.textContent = msg;
       toastEl.classList.add("show");
-      setTimeout(() => toastEl.classList.remove("show"), 2800);
+      setTimeout(() => toastEl.classList.remove("show"), 2200);
     }
 
-    async function api(path, opts = {}) {
-      const res = await fetch(path, {
-        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-        ...opts,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+    function currentPort() {
+      return location.port || "4720";
     }
 
-    function appUrl(app) {
-      const port = (statusCache[app.id] && statusCache[app.id].port) || app.port;
-      // Same-origin when hub + meetings are embedded on 4720.
-      if (String(location.port || "") === String(port) || port === 4720 && !location.port) {
-        return app.path;
-      }
-      return `http://127.0.0.1:${port}${app.path}`;
-    }
+    document.getElementById("hubPort").textContent = currentPort();
 
-    function render() {
-      // Always show general dashboard + active tab apps (dashboard is All-tab but
-      // must stay visible when Meetings is selected — yellow 1:1 entry point).
-      const apps = APPS.filter(
-        (a) => a.id === "general-dashboard" || activeTab === "all" || a.tab === activeTab
-      );
-      cardsEl.innerHTML = apps
-        .map((app) => {
-          const st = statusCache[app.id] || { on: false, port: app.port };
-          const port = st.port || app.port;
-          return `<article class="card" data-id="${app.id}">
-            <h2>${app.title}</h2>
-            <div class="sub">${app.subtitle}</div>
-            <p>${app.description}</p>
-            <div class="status-row">
-              <div class="status">
-                <span class="dot ${st.on ? "on" : ""}" id="dot-${app.id}"></span>
-                <span id="status-${app.id}">${st.on ? "On" : "Off"} · ${port}</span>
-              </div>
-              <span class="working">${st.on ? "Ready" : "Working"}</span>
-            </div>
-            <div class="actions">
-              <button class="btn btn-primary" type="button" data-launch="${app.id}">Launch</button>
-              <a class="btn" id="open-${app.id}" href="${appUrl(app)}" target="_blank" rel="noopener" data-open="${app.id}">Open Link</a>
-            </div>
-          </article>`;
-        })
-        .join("");
-    }
-
-    async function refreshStatus() {
+    async function launch(id, fallbackPath) {
       try {
-        const data = await api("/api/apps/status");
-        for (const app of APPS) {
-          const row = (data.apps || []).find((a) => a.id === app.id) || {
-            on: false,
-            port: data.next_bind_port || app.port,
-          };
-          if (row.port) app.port = row.port;
-          statusCache[app.id] = row;
-          const statusEl = document.getElementById(`status-${app.id}`);
-          const dotEl = document.getElementById(`dot-${app.id}`);
-          const openEl = document.getElementById(`open-${app.id}`);
-          if (statusEl) statusEl.textContent = `${row.on ? "On" : "Off"} · ${row.port || app.port}`;
-          if (dotEl) dotEl.classList.toggle("on", !!row.on);
-          if (openEl) openEl.href = appUrl(app);
-        }
-      } catch (_) {
-        /* hub may still be starting */
-      }
-    }
-
-    document.querySelectorAll(".tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        activeTab = tab.dataset.tab;
-        document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
-        render();
-        refreshStatus();
-      });
-    });
-
-    cardsEl.addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-launch]");
-      if (!btn) return;
-      const id = btn.dataset.launch;
-      const app = APPS.find((a) => a.id === id);
-      if (!app) return;
-      btn.disabled = true;
-      try {
-        const data = await api("/api/apps/launch", {
+        const res = await fetch("/api/apps/launch", {
           method: "POST",
-          body: JSON.stringify({ id: app.launchKey }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
         });
-        toast(data.message || "Launch requested");
-        await refreshStatus();
-        if (data.url) window.open(data.url, "_blank", "noopener");
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        location.href = data.path || data.url || fallbackPath;
       } catch (err) {
         toast(String(err.message || err));
-      } finally {
-        btn.disabled = false;
+        location.href = fallbackPath;
       }
-    });
+    }
 
-    (async () => {
-      try {
-        const info = await api("/api/hub");
-        if (info.port) document.getElementById("hubPort").textContent = info.port;
-      } catch (_) {}
-      render();
-      await refreshStatus();
-      setInterval(refreshStatus, 3000);
-    })();
+    document.getElementById("btnMeeting").addEventListener("click", () => {
+      launch("meeting_room", "/meeting-room");
+    });
+    document.getElementById("btnDash").addEventListener("click", () => {
+      launch("general_dashboard", "/dashboard");
+    });
   </script>
 </body>
 </html>
