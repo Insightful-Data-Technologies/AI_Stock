@@ -71,9 +71,7 @@ def test_one_on_one_meeting_launch(client):
 def test_meeting_simulation_page_and_ensure(client):
     page = client.get("/meeting-simulation.html")
     assert page.status_code == 200
-    assert "AI Agent Meeting Simulation" in page.text
-    assert "Ultra Agent" in page.text
-    assert page.headers.get("content-type", "").startswith("text/html")
+    assert "meeting-room" in page.text.lower()
 
     first = client.post("/api/meetings/one-on-one/ensure").json()
     assert first["created"] is True
@@ -100,18 +98,31 @@ def test_dashboard_one_on_one_box(client):
     assert exec_dash["one_on_one"]["status"] == "live"
 
 
-def test_meeting_41b_visuals_ensure_and_avatar(client):
-    page = client.get("/meeting-41b.html")
+def test_meeting_room_cinema_page(client):
+    page = client.get("/meeting-room")
     assert page.status_code == 200
-    assert "Meeting 41 B" in page.text
+    assert "Meeting Room" in page.text
+    assert "cabinet-room.png" in page.text
+    assert "_XwN09djHuM" in page.text
+    assert "youtube.com/embed/_XwN09djHuM" in page.text
 
+    legacy = client.get("/meeting-41b.html")
+    assert legacy.status_code == 200
+    assert "meeting-room" in legacy.text.lower()
+
+    asset = client.get("/static/assets/meeting-room/cabinet-room.png")
+    assert asset.status_code == 200
+    assert len(asset.content) > 10000
+
+
+def test_meeting_41b_visuals_ensure_and_avatar(client):
     home = client.get("/").text
     assert "meeting41bLaunch" in home
-    assert "Launch 41 B" in home
+    assert "Open Meeting Room" in home
 
     dash = client.get("/dashboard").text
     assert "dashboard41b" in dash
-    assert "dashLaunch41b" in dash
+    assert "Open Meeting Room" in dash
 
     first = client.post("/api/meetings/41b/ensure").json()
     assert first["created"] is True
@@ -142,6 +153,8 @@ def test_meeting_41b_visuals_ensure_and_avatar(client):
     exec_dash = client.get("/api/dashboards/executive").json()
     assert exec_dash["meeting_41b"]["live_meeting_id"] == meeting["id"]
     assert "human-avatar" in exec_dash["meeting_41b"]["features"]
+    assert exec_dash["meeting_41b"]["path"] == "/meeting-room"
+    assert "_XwN09djHuM" in exec_dash["meeting_41b"]["youtube"]
 
 
 def test_meeting_41b_avatar_upload_isolated(client, tmp_path, monkeypatch):

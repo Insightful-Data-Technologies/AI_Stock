@@ -39,21 +39,21 @@
       </div>
     </section>
 
-    <section class="meeting-41b-launch" id="dashboard41b" aria-label="Meeting 41 B on general dashboard">
+    <section class="meeting-41b-launch" id="dashboard41b" aria-label="Meeting room on general dashboard">
       <div class="dashboard-meeting-copy">
-        <div class="eyebrow">General dashboard · Meeting 41 B</div>
-        <div class="company">Meeting 41 B · Visuals</div>
-        <p>מחר · מצלמה שלך עליך · שיתוף מסך · אווטאר אנושי (כמו הבחורה) עם קול אנושי.</p>
+        <div class="eyebrow">General dashboard · Meeting Room</div>
+        <div class="company">Meeting Room · AI Cinema</div>
+        <p>Cabinet chamber on :4720 with the AI image and YouTube film — then enter the live room.</p>
         <div class="pillrow">
-          <span class="pill">Camera</span>
-          <span class="pill">Screen share</span>
-          <span class="pill" id="dash41bStatus">Checking…</span>
+          <span class="pill">Cabinet image</span>
+          <span class="pill">YouTube</span>
+          <span class="pill" id="dash41bStatus">Ready</span>
         </div>
       </div>
       <div class="one-on-one-actions">
-        <button class="btn btn-primary" type="button" id="dashLaunch41b">Launch 41 B</button>
-        <a class="btn btn-ghost" id="dashOpen41bLink" href="/meeting-41b.html">Open Link</a>
-        <div class="one-on-one-url" id="dash41bUrl">/meeting-41b.html</div>
+        <a class="btn btn-primary" id="dashLaunch41b" href="/meeting-room">Open Meeting Room</a>
+        <a class="btn btn-ghost" id="dashOpen41bLink" href="/meeting-room">Open Link</a>
+        <div class="one-on-one-url" id="dash41bUrl">http://127.0.0.1:4720/meeting-room</div>
       </div>
     </section>
 
@@ -161,45 +161,14 @@
 
     async function hydrateDash41b() {
       const statusEl = document.getElementById("dash41bStatus");
-      try {
-        const exec = await api("/api/dashboards/executive");
-        const info = exec.meeting_41b || {};
-        if (info.live_meeting_id) {
-          setDash41bLink(info.live_meeting_id);
-          return;
-        }
-        let saved = null;
-        try {
-          saved = localStorage.getItem("meeting_41b_id");
-        } catch (_) {
-          saved = null;
-        }
-        if (saved) {
-          setDash41bLink(saved);
-          if (statusEl) statusEl.textContent = "Saved room";
-          return;
-        }
-        if (statusEl) statusEl.textContent = "Ready for tomorrow";
-        document.getElementById("dash41bUrl").textContent = `${location.origin}/meeting-41b.html`;
-        document.getElementById("dashOpen41bLink").href = "/meeting-41b.html";
-      } catch (err) {
-        if (statusEl) statusEl.textContent = "Offline";
-      }
+      const urlEl = document.getElementById("dash41bUrl");
+      const openLink = document.getElementById("dashOpen41bLink");
+      const launch = document.getElementById("dashLaunch41b");
+      if (urlEl) urlEl.textContent = `${location.origin}/meeting-room`;
+      if (openLink) openLink.href = "/meeting-room";
+      if (launch && launch.tagName === "A") launch.href = "/meeting-room";
+      if (statusEl) statusEl.textContent = "Ready on :4720";
     }
-
-    document.getElementById("dashLaunch41b").addEventListener("click", async () => {
-      const btn = document.getElementById("dashLaunch41b");
-      btn.disabled = true;
-      try {
-        const data = await api("/api/meetings/41b/ensure", { method: "POST" });
-        setDash41bLink(data.meeting.id);
-        toast(data.created ? "Meeting 41 B created" : "Meeting 41 B ready");
-        location.href = `/meeting/${data.meeting.id}`;
-      } catch (err) {
-        toast(String(err.message || err));
-        btn.disabled = false;
-      }
-    });
 
     async function load() {
       const [e, m, c] = await Promise.all([

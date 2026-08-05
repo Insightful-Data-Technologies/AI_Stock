@@ -163,19 +163,7 @@ document.getElementById("launchOneOnOne").addEventListener("click", async () => 
   }
 });
 
-document.getElementById("launch41b")?.addEventListener("click", async () => {
-  const btn = document.getElementById("launch41b");
-  btn.disabled = true;
-  try {
-    const data = await api("/api/meetings/41b/ensure", { method: "POST" });
-    set41bLink(data.meeting.id);
-    toast(data.created ? "Meeting 41 B created" : "Meeting 41 B ready");
-    location.href = `/meeting/${data.meeting.id}`;
-  } catch (err) {
-    toast(String(err.message || err));
-    btn.disabled = false;
-  }
-});
+// Meeting Room launch is a plain link to /meeting-room (cinematic page on :4720).
 
 document.getElementById("runComm").addEventListener("click", async () => {
   toast("Running communication tests…");

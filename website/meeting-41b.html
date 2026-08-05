@@ -2,19 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0;url=/meeting-41b.html" />
-  <title>Meeting 41 B</title>
+  <meta http-equiv="refresh" content="0;url=http://127.0.0.1:4720/meeting-room" />
+  <title>Meeting Room</title>
   <script>
-    // Prefer Cloud Run / local org_platform host when opened from a static site copy.
-    const cloud = "https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting-41b.html";
-    if (location.hostname.includes("azurestaticapps") || location.hostname.includes("insightful")) {
-      location.replace(cloud);
-    } else {
-      location.replace("/meeting-41b.html");
-    }
+    const local = "http://127.0.0.1:4720/meeting-room";
+    const cloud = "https://enterprise-org-meeting-184723980511.europe-west2.run.app/meeting-room";
+    location.replace(location.hostname.includes("azurestaticapps") || location.hostname.includes("insightful") ? cloud : local);
   </script>
 </head>
 <body>
-  <p>Opening Meeting 41 B… <a href="/meeting-41b.html">continue</a></p>
+  <p>Opening meeting room… <a href="http://127.0.0.1:4720/meeting-room">continue</a></p>
 </body>
 </html>

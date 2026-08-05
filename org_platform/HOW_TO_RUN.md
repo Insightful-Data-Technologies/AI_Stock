@@ -2,22 +2,26 @@
 
 ## Everything on port 4720
 
-Launch Center, Meeting 41 B, One on One, and dashboards share **one** process:
-
 ```bash
 export PYTHONPATH=/workspace
 bash app_launch_center/run_hub.sh
-# or: bash org_platform/deploy/run_meeting_hub.sh
-# or: bash org_platform/deploy/run_meeting_3000.sh   # now defaults to 4720
 ```
 
 Open:
 
-- http://127.0.0.1:4720/apps — **App Launch Center**
-- http://127.0.0.1:4720/meeting-41b.html — **Meeting 41 B · Visuals**
-- http://127.0.0.1:4720/meeting-simulation.html — Ultra Agent 1:1
+- http://127.0.0.1:4720/meeting-room — **Meeting Room** (AI cabinet image + YouTube film)
+- http://127.0.0.1:4720/apps — App Launch Center
 - http://127.0.0.1:4720/dashboard — General dashboard
-- http://127.0.0.1:4720/ — Org home / War Room
+
+Legacy `/meeting-41b.html` and `/meeting-simulation.html` redirect to `/meeting-room`.
+
+## Meeting Room · AI Cinema
+
+Full-bleed cabinet chamber (AI still — uniforms included) plus the reference YouTube reel:
+
+https://www.youtube.com/watch?v=_XwN09djHuM
+
+From the page, **Enter live meeting** opens the live AI room (camera / share / voice) on the same port.
 
 ## Meeting 41 B · Visuals (camera + screen share + human avatar)
 

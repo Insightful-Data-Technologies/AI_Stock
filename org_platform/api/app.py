@@ -362,19 +362,20 @@ def exec_dashboard() -> Dict[str, Any]:
         "one_on_one": {
             "available": True,
             "path": "/dashboard",
-            "simulation_path": "/meeting-simulation.html",
+            "simulation_path": "/meeting-room",
             "live_meeting_id": live_one_on_one["id"] if live_one_on_one else None,
             "live_meeting_title": live_one_on_one.get("title") if live_one_on_one else None,
             "status": "live" if live_one_on_one else "ready",
         },
         "meeting_41b": {
             "available": True,
-            "path": "/meeting-41b.html",
+            "path": "/meeting-room",
             "live_meeting_id": live_41b["id"] if live_41b else None,
             "live_meeting_title": live_41b.get("title") if live_41b else None,
             "status": "live" if live_41b else "ready",
-            "features": ["camera", "screen-share", "human-avatar", "human-voice"],
+            "features": ["camera", "screen-share", "human-avatar", "human-voice", "ai-cinema"],
             "avatar": _avatar_status(),
+            "youtube": "https://www.youtube.com/watch?v=_XwN09djHuM",
         },
         "tasks": stats,
         "departments": {
@@ -1263,17 +1264,24 @@ def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/meeting-room")
+@app.get("/meeting-room.html")
+def meeting_room_page() -> FileResponse:
+    """Cinematic AI cabinet meeting room (image + YouTube) on :4720."""
+    return FileResponse(STATIC_DIR / "meeting-room.html")
+
+
 @app.get("/meeting-simulation.html")
 @app.get("/meeting-simulation")
 def meeting_simulation_page() -> FileResponse:
-    """Local App Launch Center target for One on One Meeting (port 3000)."""
+    """Legacy path — redirects into the cinematic meeting room."""
     return FileResponse(STATIC_DIR / "meeting-simulation.html")
 
 
 @app.get("/meeting-41b.html")
 @app.get("/meeting-41b")
 def meeting_41b_boot_page() -> FileResponse:
-    """Boot page for Meeting 41 B visuals (camera + screen share + human avatar)."""
+    """Legacy 41 B path — redirects into the cinematic meeting room."""
     return FileResponse(STATIC_DIR / "meeting-41b.html")
 
 

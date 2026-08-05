@@ -46,28 +46,36 @@ def _app_rows() -> List[Dict[str, Any]]:
             "url": f"{base}/dashboard",
         },
         {
-            "id": "one-on-one",
-            "title": "One on One Meeting",
+            "id": "meeting-room",
+            "title": "Meeting Room",
             "port": HUB_PORT,
-            "path": "/meeting-simulation.html",
+            "path": "/meeting-room",
             "on": True,
-            "url": f"{base}/meeting-simulation.html",
+            "url": f"{base}/meeting-room",
         },
         {
             "id": "meeting-41b",
-            "title": "Meeting 41 B · Visuals",
+            "title": "Meeting Room · AI Cinema",
             "port": HUB_PORT,
-            "path": "/meeting-41b.html",
+            "path": "/meeting-room",
             "on": True,
-            "url": f"{base}/meeting-41b.html",
+            "url": f"{base}/meeting-room",
+        },
+        {
+            "id": "one-on-one",
+            "title": "One on One Meeting",
+            "port": HUB_PORT,
+            "path": "/meeting-room",
+            "on": True,
+            "url": f"{base}/meeting-room",
         },
         {
             "id": "war-room",
             "title": "Multi-Agent War Room",
             "port": HUB_PORT,
-            "path": "/",
+            "path": "/meeting-room",
             "on": True,
-            "url": f"{base}/",
+            "url": f"{base}/meeting-room",
         },
     ]
 
@@ -76,11 +84,16 @@ def _launch_url(key: str) -> tuple[str, str]:
     base = _base()
     if key in {"general_dashboard", "dashboard"}:
         return f"{base}/dashboard", f"General dashboard on :{HUB_PORT}"
-    if key in {"one_on_one", "one_on_one_meeting"}:
-        return f"{base}/meeting-simulation.html", f"One on One Meeting on :{HUB_PORT}"
-    if key in {"meeting_41b", "meeting41b"}:
-        return f"{base}/meeting-41b.html", f"Meeting 41 B · Visuals on :{HUB_PORT}"
-    return f"{base}/", f"Multi-Agent War Room on :{HUB_PORT}"
+    if key in {
+        "one_on_one",
+        "one_on_one_meeting",
+        "meeting_41b",
+        "meeting41b",
+        "meeting_room",
+        "war_room",
+    }:
+        return f"{base}/meeting-room", f"Meeting Room on :{HUB_PORT}"
+    return f"{base}/meeting-room", f"Meeting Room on :{HUB_PORT}"
 
 
 @app.get("/apps")
@@ -127,6 +140,7 @@ def launch_app(body: LaunchRequest) -> Dict[str, Any]:
         "dashboard",
         "meeting_41b",
         "meeting41b",
+        "meeting_room",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     url, message = _launch_url(key)
