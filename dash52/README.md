@@ -5,7 +5,8 @@ Primary port: **4720** (same Launch Center hub). Optional alias: **8502**.
 ## Open
 - `http://127.0.0.1:4720/dash52` — Dash 52 command center (top Menu dropdown)
 - `http://127.0.0.1:4720/content-studio` — Content Manager
-- Launch Center → **Dash 52** / **Content Manager**
+- `http://127.0.0.1:4720/mailbox-domain-config` — Mailbox & Domain (Microsoft 365 IMAP + DNS)
+- Launch Center → **Dash 52** / **Content Manager** / **Mailbox & Domain**
 
 ## Run
 ```bash

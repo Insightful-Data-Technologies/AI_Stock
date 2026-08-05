@@ -1,0 +1,51 @@
+{
+  "title": "Mailbox & Domain Configuration",
+  "subtitle": "Target account settings & DNS records",
+  "organization": "Insightful Data Technologies",
+  "mailbox": {
+    "imap_host_default": "outlook.office365.com",
+    "imap_port_default": 993,
+    "auth_note": "Use a Microsoft 365 / Entra app password (or OAuth). Never store the interactive login password."
+  },
+  "dns": {
+    "provider_note": "Live GoDaddy DNS for this domain is Microsoft 365 — not Google Workspace. Do not apply Google MX hosts.",
+    "spf": {
+      "name": "@",
+      "value": "v=spf1 include:spf.protection.outlook.com -all",
+      "action": "Replace GoDaddy default SPF with Microsoft 365 SPF so outbound Outlook mail authenticates."
+    },
+    "dmarc": {
+      "name": "_dmarc",
+      "value_template": "v=DMARC1; p=none; rua=mailto:dmarc-reports@{domain}"
+    },
+    "supporting_templates": [
+      {
+        "type": "CNAME",
+        "name": "autodiscover",
+        "value": "autodiscover.outlook.com"
+      },
+      {
+        "type": "CNAME",
+        "name": "selector1._domainkey",
+        "value_template": "selector1-{domain-dashed}-com._domainkey.netorgft20972717.n-v1.dkim.mail.microsoft"
+      },
+      {
+        "type": "CNAME",
+        "name": "selector2._domainkey",
+        "value_template": "selector2-{domain-dashed}-com._domainkey.netorgft20972717.n-v1.dkim.mail.microsoft"
+      }
+    ]
+  },
+  "system_overview": {
+    "heading": "System Capability Summary",
+    "configured_features_templates": [
+      "Vercel / Cloud Run production deployment compatibility",
+      "Full support for syncing, reading, and organizing emails for {email}",
+      "Zoho Workplace style Dark Blue layout with full Folder & Stream navigation",
+      "AI Email Summarization & Action Extraction (Gemini 3.5 Flash)",
+      "Deep Thought Analysis Mode (Gemini 3.1 Pro Preview with HIGH thinking level)",
+      "Neural Chat Interface for multi-turn email interaction",
+      "Mark emails as read automatically upon selection"
+    ]
+  }
+}

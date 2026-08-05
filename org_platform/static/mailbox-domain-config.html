@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Capital — Mailbox & Domain Configuration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121c30;
+      --panel-2: #162033;
+      --line: #243247;
+      --text: #e8eef7;
+      --muted: #8fa3bc;
+      --accent: #3b82f6;
+      --accent-2: #60a5fa;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --mono: "IBM Plex Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%; color: var(--text); font-family: var(--font);
+      background:
+        radial-gradient(900px 420px at 15% -10%, rgba(59,130,246,0.18), transparent 55%),
+        radial-gradient(700px 380px at 90% 0%, rgba(14,165,233,0.12), transparent 50%),
+        linear-gradient(180deg, #070d18 0%, var(--bg) 40%, #0a1424 100%);
+    }
+    .topnav {
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+      padding: 0.7rem 1rem; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #0c2258, #0a1a48);
+    }
+    .topnav a {
+      color: #fff; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      padding: 0.4rem 0.7rem; border-radius: 8px;
+    }
+    .topnav a:hover { background: rgba(255,255,255,0.08); }
+    .topnav .brand { font-weight: 700; margin-right: 0.4rem; }
+    .wrap { padding: 1.4rem 1rem 2rem; display: grid; place-items: start center; }
+    .modal {
+      width: min(720px, 100%);
+      background: linear-gradient(180deg, #121c30 0%, #0e1626 100%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+      padding: 1.25rem 1.35rem 1.15rem;
+    }
+    .modal-head { display: flex; gap: 0.85rem; align-items: flex-start; margin-bottom: 1rem; }
+    .shield {
+      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 1.2rem;
+      background: linear-gradient(145deg, #2563eb, #1d4ed8);
+      box-shadow: 0 0 0 1px rgba(96,165,250,0.35), 0 8px 20px rgba(37,99,235,0.35);
+    }
+    .title { margin: 0; font-size: 1.28rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.92rem; }
+    .tabs {
+      display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem;
+    }
+    .tab {
+      appearance: none; border: 0; background: transparent; color: var(--muted);
+      font: inherit; font-weight: 600; font-size: 0.9rem; padding: 0.7rem 0.85rem;
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab.active { color: var(--accent-2); border-bottom-color: var(--accent); }
+    .pane { display: none; }
+    .pane.active { display: block; }
+    .info-box {
+      border: 1px solid rgba(59,130,246,0.45);
+      background: rgba(37,99,235,0.12);
+      border-radius: 10px; padding: 0.85rem 1rem; color: #cfe0ff;
+      font-size: 0.92rem; line-height: 1.45; margin-bottom: 1rem;
+    }
+    .info-box code, code { font-family: var(--mono); font-size: 0.84rem; }
+    label.field {
+      display: grid; gap: 0.35rem; font-size: 0.86rem; font-weight: 600;
+      color: #d7e4ff; margin-bottom: 0.85rem;
+    }
+    input {
+      width: 100%; border: 1px solid var(--line); border-radius: 8px;
+      background: #0c1422; color: var(--text); padding: 0.7rem 0.8rem; font: inherit;
+    }
+    .row { display: grid; grid-template-columns: 3fr 1fr; gap: 0.75rem; }
+    @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+    .section-title { color: var(--accent-2); font-weight: 600; font-size: 1.02rem; margin: 0.2rem 0 0.75rem; }
+    .dns-note { color: var(--warn); font-size: 0.86rem; margin: 0.2rem 0 0.85rem; line-height: 1.4; }
+    table {
+      width: 100%; border-collapse: collapse; border: 1px solid var(--line);
+      border-radius: 8px; overflow: hidden; font-size: 0.88rem; margin-bottom: 1rem;
+    }
+    th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+    th { background: rgba(255,255,255,0.04); color: var(--muted); font-weight: 600; }
+    tr:last-child td { border-bottom: 0; }
+    pre {
+      background: #0c1422; border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.75rem 0.85rem; font-family: var(--mono); font-size: 0.82rem;
+      white-space: pre-wrap; margin: 0 0 0.85rem;
+    }
+    .feature-box {
+      border: 1px solid var(--line); background: var(--panel-2);
+      border-radius: 10px; padding: 0.95rem 1.05rem;
+    }
+    .feature-box h4 { margin: 0 0 0.55rem; font-size: 0.95rem; }
+    .feature-box ul { margin: 0; padding-left: 1.1rem; color: #d5e2f3; font-size: 0.9rem; line-height: 1.55; }
+    .feature-box li { margin-bottom: 0.28rem; }
+    .actions { display: flex; gap: 0.75rem; margin-top: 1.1rem; }
+    .btn {
+      appearance: none; border: 1px solid var(--line); border-radius: 10px;
+      background: rgba(255,255,255,0.04); color: #fff; font: inherit; font-weight: 600;
+      padding: 0.7rem 1rem; cursor: pointer; flex: 1;
+    }
+    .btn.primary {
+      background: linear-gradient(180deg, #3b82f6, #2563eb);
+      border-color: rgba(96,165,250,0.5);
+    }
+    .pill {
+      display: inline-block; margin-top: 0.35rem; padding: 0.15rem 0.55rem;
+      border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+      border: 1px solid rgba(52,211,153,0.35); color: var(--ok);
+      background: rgba(16,185,129,0.12);
+    }
+    .pill.missing {
+      color: var(--warn); border-color: rgba(251,191,36,0.4);
+      background: rgba(251,191,36,0.1);
+    }
+    .msg { margin-top: 0.85rem; font-size: 0.9rem; color: var(--muted); min-height: 1.2em; }
+    .msg.ok { color: var(--ok); }
+    .msg.warn { color: var(--warn); }
+    .caption { margin-top: 0.85rem; color: var(--muted); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="/dash52">AI Capital · Dash 52</a>
+    <a href="/">Launch Center</a>
+    <a href="/content-studio">Content Manager</a>
+    <a href="/publish">Publish / Keys</a>
+    <a href="/mailbox-domain-config">Mailbox &amp; Domain</a>
+  </nav>
+
+  <div class="wrap">
+    <div class="modal" id="modal">
+      <div class="modal-head">
+        <div class="shield">🛡️</div>
+        <div>
+          <p class="title" id="cfg-title">Mailbox &amp; Domain Configuration</p>
+          <p class="subtitle" id="cfg-subtitle">Target account settings &amp; DNS records</p>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" data-tab="mail">📬 Mailbox &amp; Credentials</button>
+        <button class="tab" type="button" data-tab="dns">🗂️ DNS &amp; Domain Records</button>
+        <button class="tab" type="button" data-tab="overview">🧬 System Overview</button>
+      </div>
+
+      <section class="pane active" id="pane-mail">
+        <div class="info-box" id="info-box">Loading…</div>
+        <label class="field">Target Email Address
+          <input id="email" autocomplete="username" />
+        </label>
+        <div class="row">
+          <label class="field">IMAP Host Server
+            <input id="imap_host" />
+          </label>
+          <label class="field">IMAP Port
+            <input id="imap_port" />
+          </label>
+        </div>
+        <label class="field">App Password / Auth Key
+          <input id="app_password" type="password" placeholder="Enter Workspace App Password..." autocomplete="current-password" />
+        </label>
+        <div id="password-status"></div>
+      </section>
+
+      <section class="pane" id="pane-dns">
+        <p class="section-title">DNS for <code id="dns-domain">…</code></p>
+        <p class="dns-note" id="dns-note"></p>
+        <strong>MX RECORDS</strong>
+        <table>
+          <thead><tr><th>Priority</th><th>Host</th><th>Points To</th></tr></thead>
+          <tbody id="mx-body"></tbody>
+        </table>
+        <strong>SPF RECORD (TXT)</strong>
+        <pre id="spf-block"></pre>
+        <strong>DMARC RECORD (TXT)</strong>
+        <pre id="dmarc-block"></pre>
+        <strong>Supporting Microsoft 365 records</strong>
+        <table>
+          <thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead>
+          <tbody id="support-body"></tbody>
+        </table>
+      </section>
+
+      <section class="pane" id="pane-overview">
+        <p class="section-title" id="overview-heading">System Capability Summary</p>
+        <div class="feature-box">
+          <h4>✅ Configured Features:</h4>
+          <ul id="feature-list"></ul>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn" type="button" id="cancelBtn">Cancel</button>
+        <button class="btn primary" type="button" id="saveBtn">Save Configuration</button>
+      </div>
+      <div class="msg" id="msg"></div>
+      <p class="caption">AI Capital · secrets via env <code>MAILBOX_EMAIL</code>, <code>GODADDY_DOMAIN</code>, <code>MAILBOX_APP_PASSWORD</code></p>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let cfg = null;
+
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".pane").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        $("pane-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    function fill(data) {
+      cfg = data;
+      $("cfg-title").textContent = data.title;
+      $("cfg-subtitle").textContent = data.subtitle;
+      const email = data.mailbox.email || "(set MAILBOX_EMAIL)";
+      $("info-box").innerHTML =
+        "<strong>Target Mailbox Configuration.</strong> This workspace syncs and organizes email for " +
+        "<code>" + email + "</code> (" + data.organization + ").";
+      $("email").value = data.mailbox.email || "";
+      $("imap_host").value = data.mailbox.imap_host || "outlook.office365.com";
+      $("imap_port").value = data.mailbox.imap_port || 993;
+      $("app_password").value = "";
+      $("password-status").innerHTML = data.mailbox.app_password_set
+        ? '<span class="pill">App password loaded from env</span>'
+        : '<span class="pill missing">App password missing — set MAILBOX_APP_PASSWORD</span>';
+
+      $("dns-domain").textContent = data.domain || "(set GODADDY_DOMAIN)";
+      $("dns-note").textContent = "⚠️ " + data.dns.provider_note;
+      $("mx-body").innerHTML = (data.dns.mx || []).map((r) =>
+        "<tr><td>" + r.priority + "</td><td>" + r.host + "</td><td><code>" + r.points_to + "</code></td></tr>"
+      ).join("");
+      $("spf-block").textContent = "Name: " + data.dns.spf.name + "\nValue: " + data.dns.spf.value;
+      $("dmarc-block").textContent = "Name: " + data.dns.dmarc.name + "\nValue: " + data.dns.dmarc.value;
+      $("support-body").innerHTML = (data.dns.supporting || []).map((r) =>
+        "<tr><td>" + r.type + "</td><td>" + r.name + "</td><td><code>" + r.value + "</code></td></tr>"
+      ).join("");
+      $("overview-heading").textContent = data.system_overview.heading;
+      $("feature-list").innerHTML = (data.system_overview.configured_features || [])
+        .map((f) => "<li>" + f + "</li>").join("");
+    }
+
+    async function load() {
+      const res = await fetch("/api/mailbox-domain-config");
+      if (!res.ok) throw new Error("Failed to load config");
+      fill(await res.json());
+    }
+
+    $("cancelBtn").addEventListener("click", () => {
+      $("msg").className = "msg";
+      $("msg").textContent = "No changes saved.";
+      load().catch(() => {});
+    });
+
+    $("saveBtn").addEventListener("click", async () => {
+      $("msg").className = "msg";
+      $("msg").textContent = "Saving…";
+      const body = {
+        email: $("email").value.trim(),
+        imap_host: $("imap_host").value.trim(),
+        imap_port: Number($("imap_port").value || 993),
+        app_password: $("app_password").value,
+      };
+      const res = await fetch("/api/mailbox-domain-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        $("msg").className = "msg warn";
+        $("msg").textContent = data.detail || "Save failed";
+        return;
+      }
+      $("msg").className = data.app_password_set ? "msg ok" : "msg warn";
+      $("msg").textContent = data.message || "Saved.";
+      $("app_password").value = "";
+      await load();
+    });
+
+    load().catch((err) => {
+      $("info-box").textContent = String(err);
+    });
+  </script>
+</body>
+</html>

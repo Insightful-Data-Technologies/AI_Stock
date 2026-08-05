@@ -28,6 +28,7 @@ from org_platform.agents.roster import (
     public_roster,
 )
 from org_platform.content_studio.llm import DEFAULT_DRAFT, TONES, content_studio_complete
+from org_platform.mailbox.domain_config import resolve_config, save_non_secret_fields
 from org_platform.publish.env_loader import load_dotenv
 from org_platform.publish.godaddy import GoDaddyError
 from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
@@ -1533,6 +1534,48 @@ def content_studio_page() -> FileResponse:
 def dash52_page() -> FileResponse:
     """Dash 52 command center — same hub as Launch Center (4720), not a separate 8502 app."""
     return FileResponse(STATIC_DIR / "dash52.html")
+
+
+@app.get("/mailbox-domain-config")
+@app.get("/mailbox-domain-config.html")
+@app.get("/mailbox")
+def mailbox_domain_config_page() -> FileResponse:
+    """Mailbox & Domain Configuration — Microsoft 365 IMAP + DNS summary for AI Capital."""
+    return FileResponse(STATIC_DIR / "mailbox-domain-config.html")
+
+
+class MailboxDomainConfigRequest(BaseModel):
+    email: str = ""
+    imap_host: str = "outlook.office365.com"
+    imap_port: int = 993
+    app_password: str = ""
+
+
+@app.get("/api/mailbox-domain-config")
+def mailbox_domain_config_get() -> Dict[str, Any]:
+    return resolve_config()
+
+
+@app.post("/api/mailbox-domain-config")
+def mailbox_domain_config_save(body: MailboxDomainConfigRequest) -> Dict[str, Any]:
+    saved = save_non_secret_fields(body.model_dump(), P().data_dir)
+    # Session-only: if a password was submitted, keep it in process env for this run.
+    if body.app_password.strip():
+        os.environ["MAILBOX_APP_PASSWORD"] = body.app_password.strip()
+        saved["app_password_set"] = True
+    if body.email.strip():
+        os.environ["MAILBOX_EMAIL"] = body.email.strip()
+    if body.imap_host.strip():
+        os.environ["MAILBOX_IMAP_HOST"] = body.imap_host.strip()
+    os.environ["MAILBOX_IMAP_PORT"] = str(body.imap_port or 993)
+
+    password_set = bool((os.getenv("MAILBOX_APP_PASSWORD") or "").strip())
+    message = (
+        "Configuration saved (password kept in process env only, not written to disk)."
+        if password_set
+        else "Configuration saved without an app password. Set MAILBOX_APP_PASSWORD before IMAP sync will work."
+    )
+    return {"ok": True, "saved": saved, "app_password_set": password_set, "message": message, "config": resolve_config()}
 
 
 @app.get("/site-editor")
