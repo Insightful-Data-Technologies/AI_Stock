@@ -1,16 +1,17 @@
 # AI Capital — Dash 52
 
-Port **8502**. Content Studio is fully migrated (no “Not yet migrated” stub).
+Primary port: **4720** (same Launch Center hub). Optional alias: **8502**.
 
 ## Open
-- `http://127.0.0.1:8502/content-studio`
-- Or Launch Center on 4720 → **Dash 52** / **Create Content**
+- `http://127.0.0.1:4720/dash52` — Dash 52 command center
+- `http://127.0.0.1:4720/content-studio` — Content Studio tools
+- Launch Center → **Dash 52** / **Create Content**
 
 ## Run
 ```bash
+bash app_launch_center/run_hub.sh
+# optional dedicated alias on 8502:
 bash dash52/run.sh
-# or
-python app/gpt52_dashboard_app.py
 ```
 
 ## Content Studio tabs

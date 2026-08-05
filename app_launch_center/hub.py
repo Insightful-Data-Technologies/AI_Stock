@@ -101,10 +101,10 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
         {
             "id": "dash52",
             "title": "Dash 52",
-            "port": 8502 if port != 8502 else port,
-            "path": "/content-studio",
+            "port": port,
+            "path": "/dash52",
             "on": True,
-            "url": f"http://127.0.0.1:8502/content-studio" if port != 8502 else f"{base}/content-studio",
+            "url": f"{base}/dash52",
             "color": "yellow",
         },
         {
@@ -131,7 +131,9 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
 def _launch_path(key: str) -> str:
     if key in {"general_dashboard", "dashboard"}:
         return "/dashboard"
-    if key in {"create_content", "createcontent", "dash52", "dash_52", "content_studio", "contentstudio"}:
+    if key in {"dash52", "dash_52"}:
+        return "/dash52"
+    if key in {"create_content", "createcontent", "content_studio", "contentstudio"}:
         return "/content-studio"
     if key in {"site_editor", "siteeditor", "cms"}:
         return "/site-editor"

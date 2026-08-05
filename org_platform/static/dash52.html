@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Capital — Dash 52</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06122e;
+      --sidebar: #0a1a48;
+      --panel: #0b1c45;
+      --ink: #ffffff;
+      --muted: #d7e4ff;
+      --line: rgba(255,255,255,0.18);
+      --blue: #7ec8ff;
+      --accent: #3f8cff;
+      --yellow: #ffd666;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Syne", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%; color: #ffffff; font-family: var(--font);
+      background:
+        radial-gradient(900px 520px at 12% -18%, rgba(56,120,220,0.35), transparent 58%),
+        linear-gradient(180deg, #04102a 0%, #0a1a48 42%, #06122e 100%);
+    }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    @media (max-width: 960px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } }
+    .sidebar {
+      background: linear-gradient(180deg, #0c2258, var(--sidebar));
+      border-right: 1px solid var(--line); padding: 1.1rem 0.75rem;
+      display: flex; flex-direction: column; gap: 0.25rem;
+    }
+    .brand-mini { font-weight: 700; padding: 0.35rem 0.75rem 1rem; color: #ffffff; letter-spacing: -0.02em; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.75rem; border-radius: 10px;
+      color: #ffffff; text-decoration: none; font-size: 0.92rem; font-weight: 500;
+      border: 0; background: transparent; width: 100%; text-align: left; cursor: pointer; font: inherit;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.08); }
+    .nav-item.active { background: rgba(63,140,255,0.28); box-shadow: inset 0 0 0 1px rgba(126,200,255,0.4); }
+    .nav-ico { width: 1.1rem; height: 1.1rem; opacity: 0.9; flex: 0 0 auto; }
+    .main { padding: 1.25rem 1.4rem 2rem; width: min(1120px, 100%); }
+    .eyebrow { color: var(--yellow); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.3rem; }
+    .title { font-family: var(--display); font-size: clamp(1.55rem, 2.8vw, 2rem); margin: 0; letter-spacing: -0.03em; }
+    .sub { color: #ffffff; opacity: 0.9; margin: 0.4rem 0 1rem; line-height: 1.45; }
+    .top { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; align-items: flex-start; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: linear-gradient(165deg, #12306a, var(--panel));
+      border: 1px solid var(--line); border-radius: 14px; padding: 0.95rem 1rem; min-height: 118px;
+      color: #ffffff; text-decoration: none; display: block; transition: border-color 150ms ease, transform 150ms ease;
+    }
+    .card:hover { border-color: rgba(126,200,255,0.7); transform: translateY(-1px); }
+    .num { color: var(--blue); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em; }
+    .card h2 { margin: 0.3rem 0 0.35rem; font-size: 1.05rem; font-family: var(--display); color: #ffffff; }
+    .card p { margin: 0; color: #ffffff; opacity: 0.9; font-size: 0.86rem; line-height: 1.35; }
+    .navrow { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.65rem 0; }
+    .btn {
+      appearance: none; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.06);
+      color: #ffffff; border-radius: 10px; padding: 0.55rem 0.85rem; font: inherit; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .btn.primary { background: linear-gradient(135deg, #3f8cff, #1f5fcc); border-color: transparent; }
+    .btn.yellow { background: linear-gradient(135deg, #ffe08a, #e0b84a); color: #102044; border-color: transparent; }
+    .panel {
+      background: rgba(11,28,69,0.92); border: 1px solid var(--line); border-radius: 14px;
+      padding: 1rem 1.05rem 1.15rem; margin-top: 0.75rem;
+    }
+    .panel h3 { margin: 0 0 0.55rem; font-family: var(--display); }
+    .muted { color: #ffffff; opacity: 0.85; font-size: 0.88rem; line-height: 1.45; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--line);
+      border-radius: 999px; padding: 0.25rem 0.65rem; font-size: 0.82rem; margin-right: 0.35rem;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #6fdf8f; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Dash 52 navigation">
+      <div class="brand-mini">AI Capital · Dash 52</div>
+      <a class="nav-item active" href="/dash52" aria-current="page"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13h6V4H4v9zm10 7h6V4h-6v16zM4 20h6v-5H4v5zm10-9h6V4h-6v7z"/></svg>Command Center</a>
+      <a class="nav-item" href="/"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>AI Workspace</a>
+      <a class="nav-item" href="/dashboard"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg>Markets &amp; Analytics</a>
+      <a class="nav-item" href="/publish"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17h16M7 17V7l5 3 5-3v10"/></svg>Pipeline Operations</a>
+      <a class="nav-item" href="/content-studio"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h9l5 5v11H5V4z"/><path d="M14 4v5h5"/></svg>Content Studio</a>
+      <a class="nav-item" href="/slack"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 8h8v8H8z"/></svg>Communications</a>
+      <a class="nav-item" href="/site-editor"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h10v4H7zM5 7h14v14H5z"/></svg>Data &amp; Documents</a>
+      <a class="nav-item" href="/meeting-room"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Infrastructure</a>
+      <a class="nav-item" href="/publish"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg>Security &amp; Keys</a>
+      <a class="nav-item" href="/studio"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-4.5 7-4.5S17.5 16 19 19"/></svg>Administration</a>
+    </aside>
+
+    <main class="main">
+      <div class="top">
+        <div>
+          <div class="eyebrow">Dash 52 · Port 4720</div>
+          <h1 class="title">AI Capital — Dash 52</h1>
+          <p class="sub">On the Launch Center hub. One port. Buttons only. Content Studio fully migrated.</p>
+        </div>
+        <div class="navrow">
+          <a class="btn yellow" href="/content-studio">Open Content Studio</a>
+          <a class="btn" href="/">Launch Center</a>
+        </div>
+      </div>
+
+      <div class="status" style="margin-bottom:0.85rem;">
+        <span class="pill"><span class="dot"></span> On · <span id="portLabel">4720</span></span>
+        <span class="pill">Content Studio migrated</span>
+        <span class="pill">Same codebase as Launch Center</span>
+      </div>
+
+      <div class="grid" aria-label="Dash 52 modules">
+        <a class="card" href="/dashboard"><div class="num">01</div><h2>Company Core</h2><p>Chat, agents, Azure, documents, dashboards.</p></a>
+        <a class="card" href="/content-studio"><div class="num">02</div><h2>Create Content</h2><p>Writing, translate, articles, images, Canva, keyboard fix.</p></a>
+        <a class="card" href="/site-editor#run-pipeline"><div class="num">03</div><h2>Run Pipeline</h2><p>Predictions, database status, newsroom, forecasting.</p></a>
+        <a class="card" href="/site-editor#operations"><div class="num">04</div><h2>Operations</h2><p>Tickets, mail, keys, process control.</p></a>
+        <a class="card" href="/site-editor#documents"><div class="num">05</div><h2>Documents</h2><p>MD docs, governance map, document routing.</p></a>
+        <a class="card" href="/site-editor#activity"><div class="num">06</div><h2>Activity Reports</h2><p>History, work log, executive profile, stats.</p></a>
+      </div>
+
+      <div class="navrow">
+        <a class="btn primary" href="/content-studio">Content Studio</a>
+        <a class="btn primary" href="/content-studio#articles">Articles</a>
+        <a class="btn primary" href="/content-studio#create-text">Create Text</a>
+        <a class="btn primary" href="/content-studio#create-md">Create MD Document</a>
+        <a class="btn primary" href="/content-studio#image">Image Creation</a>
+        <a class="btn primary" href="/content-studio#canva">Canva Studio</a>
+        <a class="btn primary" href="/content-studio#keyboard">Keyboard Fix</a>
+      </div>
+
+      <section class="panel">
+        <h3>Migration status</h3>
+        <p class="muted">Dash 52 is on this Launch Center hub (<strong>4720</strong>): Command Center, Content Studio, and Site Editor in one process. Port 8502 remains an optional alias only.</p>
+        <div class="navrow" style="margin-top:0.75rem;">
+          <a class="btn" href="/meeting-room">Meeting Room</a>
+          <a class="btn" href="/site-editor">Site Editor CMS</a>
+          <a class="btn" href="/publish">Publish / Keys</a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    document.getElementById("portLabel").textContent = location.port || "4720";
+  </script>
+</body>
+</html>

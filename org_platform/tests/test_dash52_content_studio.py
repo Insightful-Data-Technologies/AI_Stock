@@ -44,6 +44,14 @@ def test_dash52_content_studio_fully_migrated(client):
     assert "gpt52_dashboard_app.py" not in page.text
 
 
+def test_dash52_home_on_hub(client):
+    page = client.get("/dash52")
+    assert page.status_code == 200
+    assert "AI Capital — Dash 52" in page.text
+    assert "Content Studio" in page.text
+    assert client.get("/dash-52").status_code == 200
+
+
 def test_dash52_tools_apis(client):
     assert client.post(
         "/api/site-editor/keyboard-fix",

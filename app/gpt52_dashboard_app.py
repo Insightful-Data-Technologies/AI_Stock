@@ -1,15 +1,16 @@
 """
-Legacy entry Claude referenced from the Content Studio stub:
+Legacy entry formerly referenced as:
 
   streamlit run app/gpt52_dashboard_app.py
 
-Dash 52 is now the FastAPI hub on port 8502 with Content Studio fully migrated
-(Writing, Translate, Articles, Create Text, Create MD Document, Image Creation,
-Canva Studio, Keyboard Fix). Prefer:
+Dash 52 now lives on the Launch Center hub (primary **4720**):
 
-  bash dash52/run.sh
+  http://127.0.0.1:4720/dash52
+  http://127.0.0.1:4720/content-studio
 
-Then open: http://127.0.0.1:8502/content-studio
+This script starts the same FastAPI hub. Prefer:
+
+  bash app_launch_center/run_hub.sh
 """
 from __future__ import annotations
 
@@ -22,12 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
+    port = os.environ.get("HUB_PORT", "4720")
     print("AI Capital — Dash 52")
-    print("Legacy Streamlit entry redirected to the migrated FastAPI Content Studio.")
-    print("Starting http://127.0.0.1:8502/content-studio …")
+    print("Legacy Streamlit entry redirected to the Launch Center hub.")
+    print(f"Starting http://127.0.0.1:{port}/dash52 …")
     env = os.environ.copy()
-    env["HUB_PORT"] = "8502"
-    env["ORG_DATA_DIR"] = env.get("ORG_DATA_DIR", "/tmp/org_platform_data_dash52")
+    env["HUB_PORT"] = str(port)
+    env["ORG_DATA_DIR"] = env.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch")
     return subprocess.call(
         [
             sys.executable,
@@ -37,7 +39,7 @@ def main() -> int:
             "--host",
             "0.0.0.0",
             "--port",
-            "8502",
+            str(port),
         ],
         cwd=str(ROOT),
         env=env,

@@ -53,11 +53,11 @@ def test_all_apps_on_current_port_not_3000(hub_client):
     assert "dash52" in ids
     for app in status["apps"]:
         assert app["on"] is True
-        if app["id"] == "dash52":
-            assert app["port"] in {4720, 8502}
-            continue
         assert app["port"] == 4720
         assert app["port"] != 3000
+    dash = next(a for a in status["apps"] if a["id"] == "dash52")
+    assert dash["path"] == "/dash52"
+    assert dash["url"].endswith("/dash52")
 
 
 def test_launch_buttons_go_to_paths(hub_client):
@@ -70,7 +70,7 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("content_studio", "/content-studio"),
         ("site_editor", "/site-editor"),
         ("create_content", "/content-studio"),
-        ("dash52", "/content-studio"),
+        ("dash52", "/dash52"),
     ]:
         res = client.post(
             "/api/apps/launch",
@@ -80,6 +80,16 @@ def test_launch_buttons_go_to_paths(hub_client):
         assert res["ok"] is True
         assert res["path"] == path
         assert res["port"] == 4720
+
+
+def test_dash52_page_via_hub(hub_client):
+    client, _ = hub_client
+    page = client.get("/dash52")
+    assert page.status_code == 200
+    assert "AI Capital — Dash 52" in page.text
+    assert "/content-studio" in page.text
+    assert "Port 4720" in page.text
+    assert "Create Content" in page.text
 
 
 def test_meeting_room_page(hub_client):

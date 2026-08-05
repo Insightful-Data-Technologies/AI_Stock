@@ -1307,6 +1307,14 @@ def content_studio_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "content-studio.html")
 
 
+@app.get("/dash52")
+@app.get("/dash52.html")
+@app.get("/dash-52")
+def dash52_page() -> FileResponse:
+    """Dash 52 command center — same hub as Launch Center (4720), not a separate 8502 app."""
+    return FileResponse(STATIC_DIR / "dash52.html")
+
+
 @app.get("/site-editor")
 @app.get("/site-editor.html")
 @app.get("/cms")
