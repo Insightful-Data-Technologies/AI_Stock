@@ -202,6 +202,21 @@
       min-height: 1.2em;
     }
     .status-line.ok { color: var(--green); }
+    .turn-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .turn-chip.live {
+      color: #d8ffe8;
+      border-color: rgba(61, 207, 122, 0.65);
+      background: var(--green-dim);
+    }
     .hearing {
       text-align: center;
       color: var(--muted);
@@ -209,6 +224,39 @@
       min-height: 1.2em;
     }
     .hearing em { color: var(--ink); font-style: italic; }
+    .transcript {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 160px;
+      overflow: auto;
+      padding: 0.45rem 0.2rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(8, 14, 20, 0.45);
+    }
+    .bubble {
+      max-width: 92%;
+      padding: 0.45rem 0.7rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+    .bubble.me {
+      align-self: flex-start;
+      background: #1a2a38;
+      border: 1px solid var(--line);
+    }
+    .bubble.you {
+      align-self: flex-end;
+      background: rgba(26, 90, 70, 0.35);
+      border: 1px solid rgba(61, 207, 122, 0.35);
+    }
+    .bubble .who {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
     .composer {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -334,11 +382,15 @@
       </div>
     </section>
 
-    <div class="status-line ok" id="statusLine">Ready — no red alerts · green arrow shows when screen is shared</div>
+    <div class="status-line ok" id="statusLine">
+      <span class="turn-chip live" id="turnChip">שיחה חיה · מקשיב</span>
+      · פגישה רציפה — דבר חופשי
+    </div>
     <div class="hearing" id="hearing">Hearing: <em>—</em></div>
+    <div class="transcript" id="transcript" aria-live="polite"></div>
 
     <form class="composer" id="composer">
-      <input id="chatInput" placeholder="Type a message…" autocomplete="off" />
+      <input id="chatInput" placeholder="המשך את השיחה…" autocomplete="off" />
       <button class="send" type="submit">Send</button>
     </form>
 
@@ -350,22 +402,26 @@
       <button type="button" id="endBtn" title="End"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
-    <button class="hold" id="holdBtn" type="button">Hold to talk</button>
+    <button class="hold" id="holdBtn" type="button">השיחה חיה — דבר עכשיו</button>
     <div class="log" id="log"></div>
   </div>
 
   <script>
     const state = {
       meetingId: null,
-      micOn: false,
+      micOn: true,
       camOn: false,
       sharing: false,
       listenOn: true,
       camStream: null,
       screenStream: null,
       recognition: null,
-      frameTimer: null,
       seenShare: false,
+      agentSpeaking: false,
+      busy: false,
+      utteranceBuf: "",
+      silenceTimer: null,
+      started: false,
     };
 
     const el = (id) => document.getElementById(id);
@@ -374,8 +430,12 @@
       node.textContent = `${new Date().toLocaleTimeString()} · ${msg}\n` + node.textContent;
     };
     const setStatus = (msg, ok = true) => {
-      el("statusLine").textContent = msg;
-      el("statusLine").classList.toggle("ok", ok);
+      el("statusLine").innerHTML =
+        `<span class="turn-chip ${ok ? "live" : ""}" id="turnChip">${escapeHtml(msg)}</span>`;
+    };
+    const setTurn = (label) => {
+      const chip = el("turnChip");
+      if (chip) chip.textContent = label;
     };
 
     async function api(path, opts = {}) {
@@ -393,6 +453,15 @@
       p.textContent = on ? onText : offText;
     }
 
+    function addBubble(who, name, text) {
+      const root = el("transcript");
+      const div = document.createElement("div");
+      div.className = `bubble ${who}`;
+      div.innerHTML = `<div class="who">${escapeHtml(name)}</div><div>${escapeHtml(text)}</div>`;
+      root.appendChild(div);
+      root.scrollTop = root.scrollHeight;
+    }
+
     function markShareLive(on) {
       state.sharing = on;
       state.seenShare = on;
@@ -405,45 +474,58 @@
         : "Share off";
       el("shareBtn").classList.toggle("on", on);
       el("seeBtn").classList.toggle("on", on);
-      if (on) {
-        setStatus("חץ ירוק פעיל — אני רואה את שיתוף המסך שלך", true);
-      } else {
-        setStatus("Ready — share your screen to show the green arrow", true);
-      }
+      if (on) setStatus("חץ ירוק · רואה מסך · השיחה ממשיכה", true);
     }
 
     async function ensureMeeting() {
       const data = await api("/api/meetings/forecast/ensure", { method: "POST" });
       state.meetingId = data.meeting.id;
-      log(`Forecast room ${state.meetingId.slice(0, 8)}…`);
+      const msgs = data.meeting.messages || [];
+      el("transcript").innerHTML = "";
+      msgs.slice(-8).forEach((m) => {
+        if (m.kind === "human") addBubble("me", m.sender_name || "Chanan", m.text);
+        if (m.kind === "agent") addBubble("you", m.sender_name || "VP / Maya", m.text);
+      });
+      log(`Meeting ${state.meetingId.slice(0, 8)}… · continuous`);
       return data.meeting;
     }
 
     async function sendChat(text, source = "typed") {
-      if (!text.trim()) return;
+      const cleaned = (text || "").trim();
+      if (!cleaned || state.busy) return;
+      state.busy = true;
+      setTurn("אתה דיברת · אני חושבת…");
       if (!state.meetingId) await ensureMeeting();
-      el("hearing").innerHTML = `Hearing: <em>${escapeHtml(text)}</em>`;
-      const body = {
-        text,
-        sender_id: "ceo-chanan",
-        sender_name: "Me (Chanan Zevin)",
-        heard: source === "mic",
-        source,
-        seen_frame_count: state.seenShare || state.camOn ? 1 : 0,
-      };
-      const data = await api(`/api/meetings/${state.meetingId}/messages`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      const reply = (data.replies || [])[0];
-      if (reply) {
-        el("agentTile").classList.add("speaking");
-        setTimeout(() => el("agentTile").classList.remove("speaking"), 3500);
-        speak(reply.text);
-        log(`Maya/VP: ${reply.text.slice(0, 140)}`);
-        if (state.seenShare) {
-          setStatus("רואה שיתוף מסך (חץ ירוק) · מגיב לתחזית", true);
+      el("hearing").innerHTML = `Hearing: <em>${escapeHtml(cleaned)}</em>`;
+      addBubble("me", "Chanan Zevin", cleaned);
+      pauseListen();
+      try {
+        const body = {
+          text: cleaned,
+          sender_id: "ceo-chanan",
+          sender_name: "Me (Chanan Zevin)",
+          heard: source === "mic",
+          source,
+          seen_frame_count: state.seenShare || state.camOn ? 1 : 0,
+        };
+        const data = await api(`/api/meetings/${state.meetingId}/messages`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        const reply = (data.replies || [])[0];
+        if (reply) {
+          addBubble("you", reply.sender_name || "Maya Forecast", reply.text);
+          await speakAndWait(reply.text);
+          log(`VP: ${reply.text.slice(0, 120)}`);
         }
+        setTurn("שיחה חיה · מקשיב אליך");
+        setStatus("שיחה רציפה · דבר, אני מקשיבה", true);
+      } catch (err) {
+        setStatus(String(err.message || err), false);
+      } finally {
+        state.busy = false;
+        state.utteranceBuf = "";
+        resumeListen();
       }
     }
 
@@ -451,14 +533,40 @@
       return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
-    function speak(text) {
-      if (!window.speechSynthesis || !text) return;
-      const u = new SpeechSynthesisUtterance(text);
-      const voices = speechSynthesis.getVoices();
-      const v = voices.find((x) => /en|he|female|zira|aria/i.test(`${x.lang} ${x.name}`)) || voices[0];
-      if (v) u.voice = v;
-      speechSynthesis.cancel();
-      speechSynthesis.speak(u);
+    function speakAndWait(text) {
+      return new Promise((resolve) => {
+        if (!window.speechSynthesis || !text) {
+          el("agentTile").classList.add("speaking");
+          setTimeout(() => {
+            el("agentTile").classList.remove("speaking");
+            resolve();
+          }, Math.min(8000, 1800 + text.length * 40));
+          return;
+        }
+        state.agentSpeaking = true;
+        el("agentTile").classList.add("speaking");
+        setTurn("אני מדברת · כמו בפגישה");
+        const u = new SpeechSynthesisUtterance(text);
+        const voices = speechSynthesis.getVoices();
+        const v =
+          voices.find((x) => /he/i.test(x.lang)) ||
+          voices.find((x) => /female|zira|aria|google us english/i.test(`${x.lang} ${x.name}`)) ||
+          voices[0];
+        if (v) u.voice = v;
+        u.rate = 1.02;
+        u.onend = () => {
+          state.agentSpeaking = false;
+          el("agentTile").classList.remove("speaking");
+          resolve();
+        };
+        u.onerror = () => {
+          state.agentSpeaking = false;
+          el("agentTile").classList.remove("speaking");
+          resolve();
+        };
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      });
     }
 
     async function toggleCam() {
@@ -479,10 +587,9 @@
         state.camOn = true;
         setPill("camPill", true, "Cam on", "Cam off");
         el("camBtn").classList.add("on");
-        // Push a frame so the agent "sees" you
         setTimeout(pushCamFrame, 400);
       } catch (err) {
-        setStatus("Camera blocked — portrait stays (no red error)", false);
+        setStatus("מצלמה חסומה — התמונה נשארת, השיחה ממשיכה", false);
         log(String(err.message || err));
       }
     }
@@ -522,10 +629,9 @@
           el("screenVideo").srcObject = null;
           markShareLive(false);
         });
-        // Capture a shared frame as evidence the agent sees the screen
         setTimeout(pushShareFrame, 500);
       } catch (err) {
-        setStatus("Share cancelled — try again for green arrow", false);
+        setStatus("שיתוף בוטל — השיחה נשארת רציפה", false);
         log(String(err.message || err));
       }
     }
@@ -539,7 +645,7 @@
       c.height = Math.round((c.width / video.videoWidth) * video.videoHeight);
       c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
       try {
-        const data = await api(`/api/meetings/${state.meetingId}/frames`, {
+        await api(`/api/meetings/${state.meetingId}/frames`, {
           method: "POST",
           body: JSON.stringify({
             data_url: c.toDataURL("image/jpeg", 0.65),
@@ -547,48 +653,67 @@
             note: "green-arrow-share",
           }),
         });
-        if (data.ack) setStatus("חץ ירוק · קיבלתי פריים מהמסך המשותף", true);
       } catch (_) {}
     }
 
-    function startRecognition() {
+    function wireRecognition() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) {
-        setStatus("Speech recognition unavailable — type or Hold may be limited", false);
-        return;
+        setStatus("אין זיהוי דיבור — הקלד, השיחה עדיין רציפה", false);
+        return null;
       }
       const r = new SR();
       r.lang = "he-IL";
-      r.continuous = false;
+      r.continuous = true;
       r.interimResults = true;
       r.onresult = (ev) => {
-        const text = Array.from(ev.results).map((x) => x[0].transcript).join(" ");
-        el("hearing").innerHTML = `Hearing: <em>${escapeHtml(text)}</em>`;
-        if (ev.results[ev.results.length - 1].isFinal) {
-          sendChat(text, "mic");
+        if (state.agentSpeaking || state.busy) return;
+        let interim = "";
+        let finalText = "";
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          const t = ev.results[i][0].transcript;
+          if (ev.results[i].isFinal) finalText += t;
+          else interim += t;
+        }
+        const shown = (finalText || interim || "").trim();
+        if (shown) el("hearing").innerHTML = `Hearing: <em>${escapeHtml(shown)}</em>`;
+        if (finalText.trim()) {
+          state.utteranceBuf = `${state.utteranceBuf} ${finalText}`.trim();
+          clearTimeout(state.silenceTimer);
+          state.silenceTimer = setTimeout(() => {
+            const turn = state.utteranceBuf.trim();
+            state.utteranceBuf = "";
+            if (turn) sendChat(turn, "mic");
+          }, 900);
         }
       };
-      r.onerror = () => setStatus("Mic issue — use Hold again or type (no red alert)", false);
+      r.onerror = (e) => {
+        if (e.error === "no-speech" || e.error === "aborted") return;
+        log(`mic: ${e.error}`);
+      };
+      r.onend = () => {
+        if (state.listenOn && !state.agentSpeaking) {
+          try { r.start(); } catch (_) {}
+        }
+      };
       state.recognition = r;
+      return r;
     }
 
-    function holdStart() {
-      el("holdBtn").classList.add("active");
-      el("holdBtn").textContent = "Listening…";
+    function resumeListen() {
+      state.listenOn = true;
       state.micOn = true;
       setPill("micPill", true, "Mic on", "Mic off");
       el("micBtn").classList.add("on");
       el("listenPill").classList.add("on");
-      try {
-        state.recognition?.start();
-      } catch (_) {}
+      el("holdBtn").classList.add("active");
+      el("holdBtn").textContent = "השיחה חיה — דבר עכשיו";
+      try { state.recognition?.start(); } catch (_) {}
     }
-    function holdEnd() {
-      el("holdBtn").classList.remove("active");
-      el("holdBtn").textContent = "Hold to talk";
-      try {
-        state.recognition?.stop();
-      } catch (_) {}
+
+    function pauseListen() {
+      state.listenOn = false;
+      try { state.recognition?.stop(); } catch (_) {}
     }
 
     el("composer").addEventListener("submit", async (e) => {
@@ -596,20 +721,16 @@
       const input = el("chatInput");
       const text = input.value;
       input.value = "";
-      try {
-        await sendChat(text, "typed");
-      } catch (err) {
-        setStatus(String(err.message || err), false);
-      }
+      await sendChat(text, "typed");
     });
     el("camBtn").addEventListener("click", () => toggleCam());
     el("shareBtn").addEventListener("click", () => toggleShare());
     el("seeBtn").addEventListener("click", () => {
       if (state.sharing) {
-        setStatus("חץ ירוק · כן, אני רואה את שיתוף המסך", true);
+        setStatus("חץ ירוק · כן רואה מסך · ממשיכים בשיחה", true);
         pushShareFrame();
       } else {
-        setStatus("אין שיתוף עדיין — לחץ Share להפעלת החץ הירוק", false);
+        setStatus("אין Share — השיחה ממשיכה; לחץ Share לחץ ירוק", false);
       }
     });
     el("micBtn").addEventListener("click", () => {
@@ -617,38 +738,55 @@
         state.micOn = false;
         setPill("micPill", false, "Mic on", "Mic off");
         el("micBtn").classList.remove("on");
-        holdEnd();
-      } else holdStart();
+        pauseListen();
+        el("holdBtn").classList.remove("active");
+        el("holdBtn").textContent = "לחץ להמשך שיחה חיה";
+      } else {
+        resumeListen();
+      }
     });
     el("endBtn").addEventListener("click", async () => {
+      pauseListen();
       if (state.meetingId) {
-        try {
-          await api(`/api/meetings/${state.meetingId}/end`, { method: "POST" });
-        } catch (_) {}
+        try { await api(`/api/meetings/${state.meetingId}/end`, { method: "POST" }); } catch (_) {}
       }
       state.camStream?.getTracks().forEach((t) => t.stop());
       state.screenStream?.getTracks().forEach((t) => t.stop());
-      setStatus("Meeting ended", true);
+      setStatus("הפגישה הסתיימה", true);
+      el("holdBtn").textContent = "הפגישה הסתיימה";
     });
 
-    const hold = el("holdBtn");
-    hold.addEventListener("mousedown", holdStart);
-    hold.addEventListener("mouseup", holdEnd);
-    hold.addEventListener("mouseleave", holdEnd);
-    hold.addEventListener("touchstart", (e) => { e.preventDefault(); holdStart(); });
-    hold.addEventListener("touchend", holdEnd);
+    el("holdBtn").addEventListener("click", () => {
+      if (!state.started) {
+        state.started = true;
+        resumeListen();
+        setStatus("שיחה חיה התחילה — דבר חופשי", true);
+        return;
+      }
+      speechSynthesis.cancel();
+      state.agentSpeaking = false;
+      el("agentTile").classList.remove("speaking");
+      resumeListen();
+    });
 
     (async () => {
-      startRecognition();
-      try {
-        await ensureMeeting();
-        setStatus("Ready — no red UI · open Share for green arrow", true);
-      } catch (err) {
-        setStatus("API offline — UI still works locally; share arrow is client-side", false);
-        log(String(err.message || err));
-      }
-      // Portrait always on Me seat (answers “put image at my place”)
+      wireRecognition();
       el("meTile").classList.add("has-photo");
+      try {
+        const meeting = await ensureMeeting();
+        state.started = true;
+        resumeListen();
+        setStatus("שיחה חיה · דבר חופשי", true);
+        const humans = (meeting.messages || []).filter((m) => m.kind === "human");
+        if (humans.length <= 1) {
+          // Warm opening already seeded; invite next turn without dumping a report
+          setTurn("שיחה חיה · מקשיב אליך");
+        }
+      } catch (err) {
+        setStatus("API לא זמין — UI מקומי עדיין לשיחה", false);
+        log(String(err.message || err));
+        resumeListen();
+      }
     })();
   </script>
 </body>

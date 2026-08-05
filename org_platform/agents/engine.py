@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from org_platform.agents.roster import (
     CEO_ID,
@@ -186,9 +186,8 @@ def _extract_ticker(message: str) -> str:
     import re
 
     m = re.search(r"\b([A-Z]{1,5})\b", message or "")
-    if m and m.group(1) not in {"CEO", "VP", "QA", "IT", "API", "DNS", "SSL", "HTTP", "URL"}:
+    if m and m.group(1) not in {"CEO", "VP", "QA", "IT", "API", "DNS", "SSL", "HTTP", "URL", "OK"}:
         return m.group(1)
-    # Hebrew / casual cues
     low = (message or "").lower()
     for hint, ticker in [
         ("אפל", "AAPL"),
@@ -201,10 +200,24 @@ def _extract_ticker(message: str) -> str:
         ("google", "GOOGL"),
         ("ננאדה", "NVDA"),
         ("nvidia", "NVDA"),
+        ("שוק", "SPY"),
+        ("market", "SPY"),
     ]:
         if hint in low:
             return ticker
-    return "SPY"
+    return ""
+
+
+def _recent_human_texts(history: List[Dict[str, Any]], limit: int = 6) -> List[str]:
+    out: List[str] = []
+    for m in history or []:
+        if m.get("kind") == "human" and (m.get("text") or "").strip():
+            out.append(m["text"].strip())
+    return out[-limit:]
+
+
+def _meeting_turn_index(history: List[Dict[str, Any]]) -> int:
+    return sum(1 for m in (history or []) if m.get("kind") == "agent")
 
 
 def craft_forecast_reply(
@@ -213,28 +226,92 @@ def craft_forecast_reply(
     heard: bool = False,
     frame_count: int = 0,
     source: str = "typed",
+    history: Optional[List[Dict[str, Any]]] = None,
+    meeting_title: str = "",
 ) -> Dict[str, Any]:
-    """1:1 forecast partner reply that explicitly confirms hearing and seeing."""
+    """Conversational 1:1 forecast partner — short meeting turns, not status dumps."""
     agent = ROSTER[FORECAST_ID]
     text = (message or "").strip()
+    low = text.lower()
     ticker = _extract_ticker(text)
-    sense_bits = []
-    if heard or source == "mic":
-        sense_bits.append("אני שומעת אותך — קיבלתי את המיקרופון")
-    else:
-        sense_bits.append("אני כאן ב־1:1 לתחזית — דבר למיקרופון או הקלד")
-    if frame_count > 0:
-        sense_bits.append(f"אני רואה אותך — {frame_count} פריימים מהמצלמה")
-    else:
-        sense_bits.append("הדלק מצלמה כדי שאני אוכל לראות אותך")
+    turn = _meeting_turn_index(history or [])
+    prior = _recent_human_texts(history or [])
+    # Don't treat the current utterance as "prior context" for follow-ups.
+    if prior and prior[-1].strip() == text:
+        prior = prior[:-1]
+    prior_blob = " | ".join(prior[-3:])
 
-    body = (
-        f"{' · '.join(sense_bits)}. "
-        f"Maya Forecast on “{text or 'forecast briefing'}”. "
-        f"Working thesis for {ticker}: bias = watch · hedge = defined-risk overlay · "
-        f"next step = confirm horizon (intraday / swing / position) and exposure limits. "
-        "Say a ticker or risk question and I will tighten the forecast."
-    )
+    # First sense confirmation only once — then talk like a meeting.
+    sense_prefix = ""
+    if turn == 0:
+        bits = []
+        if heard or source == "mic":
+            bits.append("אני שומעת אותך")
+        if frame_count > 0:
+            bits.append("ואני רואה אותך / את המסך")
+        if bits:
+            sense_prefix = " · ".join(bits) + ". "
+
+    # Conversational intents
+    greeting = any(k in low for k in ["שלום", "היי", "hello", "hi ", "בוקר", "hey"])
+    ask_see = any(k in low for k in ["רואה", "see", "שיתוף", "screen", "מסך"])
+    ask_hear = any(k in low for k in ["שומע", "hear", "מיקרופון", "mic"])
+    agree = any(k in low for k in ["כן", "בסדר", "ok", "okay", "יאללה", "קדימה", "continue"])
+    ask_forecast = any(
+        k in low
+        for k in ["תחזית", "forecast", "prediction", "לאן", "מגמה", "trend", "risk", "סיכון", "גידור", "hedge"]
+    ) or bool(ticker)
+
+    if greeting and turn == 0:
+        body = (
+            f"{sense_prefix}שלום חנן, אנחנו בפגישת תחזית אחד־על־אחד. "
+            "דבר חופשי — אני מקשיבה ברצף. מה נתחיל: טיקר, חשיפה, או אופק זמן?"
+        )
+    elif ask_hear:
+        body = (
+            "כן, אני שומעת אותך ברור. תמשיך באותו קצב כמו בפגישה — "
+            "תגיד מה חשוב לך עכשיו בתחזית."
+        )
+    elif ask_see:
+        if frame_count > 0:
+            body = (
+                "כן, אני רואה את השיתוף / המצלמה. "
+                "תצביע לי על מה שחשוב במסך, ואני קושרת את זה לתחזית."
+            )
+        else:
+            body = "עדיין בלי פריים — תשאיר Share דולק ואני אגיד לך ברגע שאני רואה."
+    elif agree and prior:
+        body = (
+            f"מעולה, ממשיכים ממה שאמרת: “{prior[-1][:90]}”. "
+            + (
+                f"על {ticker or 'השוק'} — נסגור bias, אופק, ומגבלת חשיפה. מה האופק שלך?"
+                if ask_forecast or ticker
+                else "רוצה שנעמיק בתחזית, בגידור, או בחשיפה?"
+            )
+        )
+    elif ask_forecast or ticker:
+        t = ticker or "השוק"
+        body = (
+            f"{sense_prefix}"
+            f"קיבלתי. לגבי {t}: תזה ראשונה — watch עם גידור מוגדר־סיכון. "
+            f"כדי שזה יהיה שיחה ולא דוח: מה האופק — יום, סווינג, או פוזיציה? "
+            f"ואם יש רמת כניסה/יציאה בראש שלך — תגיד אותה עכשיו."
+        )
+        if prior_blob and turn > 0:
+            body += f" אני מחברת גם למה שאמרת קודם בשיחה."
+    elif len(text) < 12 and turn > 0:
+        body = (
+            "איתך. תמשיך את המשפט — אני בפגישה חיה, לא מחכה לטופס. "
+            "טיקר, סיכון, או מה שאתה רואה על המסך."
+        )
+    else:
+        body = (
+            f"{sense_prefix}"
+            f"שמעתי: “{text[:140]}”. "
+            "בוא ננהל את זה כמו פגישה: אני מסכמת בקצרה ואז שואלת שאלה אחת. "
+            "מה הצעד הבא שאתה רוצה לסגור עכשיו — כיוון, גודל, או גידור?"
+        )
+
     return {
         "agent_id": agent.id,
         "agent_name": agent.name,
@@ -246,7 +323,13 @@ def craft_forecast_reply(
         "approval": None,
         "escalate_to": None,
         "voice_persona": agent.voice_persona,
-        "sense": {"heard": heard or source == "mic", "frame_count": frame_count, "ticker": ticker},
+        "sense": {
+            "heard": heard or source == "mic",
+            "frame_count": frame_count,
+            "ticker": ticker or None,
+            "turn": turn,
+            "conversational": True,
+        },
         "ts": _utcnow(),
     }
 
@@ -258,8 +341,16 @@ def generate_forecast_responses(
     heard: bool = False,
     frame_count: int = 0,
     source: str = "typed",
+    history: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    reply = craft_forecast_reply(message, heard=heard, frame_count=frame_count, source=source)
+    reply = craft_forecast_reply(
+        message,
+        heard=heard,
+        frame_count=frame_count,
+        source=source,
+        history=history,
+        meeting_title=meeting_title,
+    )
     events = [
         {
             "type": "forecast_sense",
@@ -269,6 +360,8 @@ def generate_forecast_responses(
                 "frame_count": frame_count,
                 "ticker": reply["sense"]["ticker"],
                 "meeting_title": meeting_title,
+                "turn": reply["sense"].get("turn"),
+                "conversational": True,
             },
             "ts": _utcnow(),
         }

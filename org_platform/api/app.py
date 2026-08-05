@@ -915,10 +915,7 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
         )
     if body.seed_intro:
         if body.forecast:
-            text = (
-                "Open Forecast 1:1. Confirm you can hear my microphone and see my camera — "
-                "המטרה היא התחזית."
-            )
+            text = "שלום, בוא נתחיל את פגישת התחזית."
         elif body.meeting_41b:
             text = (
                 "Open Meeting 41 B for tomorrow. Confirm my camera is on me, screen share is ready, "
@@ -932,7 +929,12 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             text = "Open the meeting and confirm all teams are present."
         if body.forecast:
             replies, events = generate_forecast_responses(
-                text, meeting["title"], heard=False, frame_count=0, source="typed"
+                text,
+                meeting["title"],
+                heard=False,
+                frame_count=0,
+                source="typed",
+                history=[],
             )
         else:
             replies, events = generate_live_responses(text, meeting["title"], chair_id=meeting["chair_id"])
@@ -985,6 +987,7 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
     if body.heard or body.source == "mic":
         P().meetings.mark_heard(meeting_id)
         meeting = P().meetings.get(meeting_id)
+    history_before = list(meeting.get("messages") or [])
     human = P().meetings.append_message(
         meeting_id,
         {
@@ -1006,6 +1009,7 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
             heard=bool(body.heard or body.source == "mic"),
             frame_count=int(frame_count or 0),
             source=body.source,
+            history=history_before,
         )
     else:
         replies, events = generate_live_responses(body.text, meeting["title"], chair_id=meeting["chair_id"])
@@ -1054,9 +1058,14 @@ async def meeting_frame(meeting_id: str, body: MeetingFrameRequest) -> Dict[str,
     ack = None
     frames = meeting.get("frames") or []
     if _is_forecast_meeting(meeting) and len(frames) == 1:
-        ack_text = "אני רואה אותך עכשיו מהמצלמה. אפשר לדבר על התחזית."
+        hist = list(meeting.get("messages") or [])
         replies, events = generate_forecast_responses(
-            ack_text, meeting["title"], heard=bool((meeting.get("sense") or {}).get("heard")), frame_count=1, source="camera"
+            "אתה רואה אותי?",
+            meeting["title"],
+            heard=bool((meeting.get("sense") or {}).get("heard")),
+            frame_count=1,
+            source="camera",
+            history=hist,
         )
         P().meetings.append_message(
             meeting_id,

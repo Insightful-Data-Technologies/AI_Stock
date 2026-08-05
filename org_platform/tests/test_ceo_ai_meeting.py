@@ -29,19 +29,11 @@ def test_ceo_ai_meeting_no_red_has_green_arrow(client):
     assert "green-arrow" in html
     assert "SEEING SHARE" in html or "share-banner" in html
     assert "ceo-chanan.png" in html
-    assert "Hold to talk" in html
+    assert "Hold to talk" in html or "השיחה חיה" in html
+    assert "transcript" in html
     assert "LISTENING" in html
+    assert "continuous" in html or "שיחה חיה" in html or "רציפה" in html
     # No hard-coded red palette in the page styles
     assert not re.search(r"--[a-z-]+:\s*#(f00|ff0000|e11|b45555|ff7b7b)\b", html, re.I)
     assert "#ff7b7b" not in html.lower()
     assert "LLM fallback" not in html  # removed scary fallback banner
-
-
-def test_hub_launches_ceo_meeting(hub_client=None):
-    # Use org app mount via hub when available
-    monkey_tmp = None
-    import os
-    from pathlib import Path as P
-
-    # lightweight: hit org app route already covered above
-    assert True

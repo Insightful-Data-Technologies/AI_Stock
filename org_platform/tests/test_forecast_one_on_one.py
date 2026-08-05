@@ -51,17 +51,16 @@ def test_forecast_ensure_and_hear_see(client):
     assert meeting["chair_id"] == "forecast-maya"
     assert set(meeting["participant_ids"]) == {"ceo-chanan", "forecast-maya"}
     assert any(e.get("type") == "forecast_one_on_one" for e in meeting.get("events", []))
-    assert any(
-        "שומע" in (m.get("text") or "") or "hear" in (m.get("text") or "").lower()
-        for m in meeting.get("messages", [])
-        if m.get("kind") == "agent"
-    )
+    agent_msgs = [m for m in meeting.get("messages", []) if m.get("kind") == "agent"]
+    assert agent_msgs
+    # Opening is conversational (meeting style), not a status dump
+    assert "פגישת תחזית" in agent_msgs[0]["text"] or "שלום" in agent_msgs[0]["text"]
 
     second = client.post("/api/meetings/forecast/ensure").json()
     assert second["created"] is False
     assert second["meeting"]["id"] == mid
 
-    # Hear via mic source
+    # Hear via mic source — continuous meeting turn
     chat = client.post(
         f"/api/meetings/{mid}/messages",
         json={
@@ -75,8 +74,23 @@ def test_forecast_ensure_and_hear_see(client):
     assert len(chat["replies"]) == 1
     reply = chat["replies"][0]
     assert reply["sender_id"] == "forecast-maya"
-    assert "שומעת" in reply["text"] or "hear" in reply["text"].lower()
+    assert "AAPL" in reply["text"] or "אופק" in reply["text"]
+    assert "Maya Forecast on" not in reply["text"]  # no robotic dump
     assert chat["meeting"]["sense"]["heard"] is True
+
+    # Follow-up turn uses conversation context
+    follow = client.post(
+        f"/api/meetings/{mid}/messages",
+        json={
+            "text": "כן, סווינג",
+            "sender_id": "ceo-chanan",
+            "sender_name": "Me (Chanan Zevin)",
+            "heard": True,
+            "source": "mic",
+        },
+    ).json()
+    assert follow["replies"][0]["sender_id"] == "forecast-maya"
+    assert follow["replies"][0]["meta"]["sense"].get("conversational") is True
 
     # See via camera frame
     frame = client.post(
@@ -87,7 +101,6 @@ def test_forecast_ensure_and_hear_see(client):
     assert frame["meeting"]["sense"]["seen"] is True
     assert frame["meeting"]["sense"]["frame_count"] >= 1
     assert client.get(frame["frame"]["path"]).status_code == 200
-    # First frame triggers see-ack from Maya
     assert frame.get("ack") is not None
     assert any("רואה" in r["text"] for r in frame["ack"]["replies"])
 
