@@ -89,12 +89,23 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "url": f"{base}/meeting-room",
             "color": "green",
         },
+        {
+            "id": "content-studio",
+            "title": "Content Studio",
+            "port": port,
+            "path": "/content-studio",
+            "on": True,
+            "url": f"{base}/content-studio",
+            "color": "yellow",
+        },
     ]
 
 
 def _launch_path(key: str) -> str:
     if key in {"general_dashboard", "dashboard"}:
         return "/dashboard"
+    if key in {"content_studio", "contentstudio"}:
+        return "/content-studio"
     return "/meeting-room"
 
 
@@ -146,6 +157,8 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "meeting_41b",
         "meeting41b",
         "meeting_room",
+        "content_studio",
+        "contentstudio",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     path = _launch_path(key)

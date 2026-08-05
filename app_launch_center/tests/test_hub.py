@@ -30,6 +30,7 @@ def test_home_has_yellow_and_meeting_buttons(hub_client):
     assert "Meeting Room" in home.text
     assert "One on One Meeting" in home.text
     assert "Multi-Agent War Room" in home.text
+    assert "Content Studio" in home.text
     assert "Launch" in home.text
     assert "Open Link" in home.text
     assert "Off · 3000" not in home.text
@@ -44,6 +45,7 @@ def test_all_apps_on_current_port_not_3000(hub_client):
     assert "meeting-room" in ids
     assert "one-on-one" in ids
     assert "war-room" in ids
+    assert "content-studio" in ids
     for app in status["apps"]:
         assert app["on"] is True
         assert app["port"] == 4720
@@ -57,6 +59,7 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("meeting_room", "/meeting-room"),
         ("one_on_one", "/meeting-room"),
         ("war_room", "/meeting-room"),
+        ("content_studio", "/content-studio"),
     ]:
         res = client.post(
             "/api/apps/launch",
@@ -73,3 +76,17 @@ def test_meeting_room_page(hub_client):
     page = client.get("/meeting-room")
     assert page.status_code == 200
     assert "cabinet-room.png" in page.text
+
+
+def test_content_studio_page_via_hub(hub_client):
+    client, _ = hub_client
+    page = client.get("/content-studio")
+    assert page.status_code == 200
+    assert "Rewrite" in page.text
+    run = client.post(
+        "/api/content-studio/run",
+        json={"mode": "rewrite", "text": "Rates held steady.", "tone": "executive"},
+    )
+    assert run.status_code == 200
+    assert run.json()["ok"] is True
+    assert "DeploymentNotFound" not in run.json()["text"]

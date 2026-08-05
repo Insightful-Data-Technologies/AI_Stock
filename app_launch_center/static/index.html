@@ -257,6 +257,16 @@
         launchKey: "war_room",
         yellow: false,
       },
+      {
+        id: "content-studio",
+        tab: "builders",
+        title: "Content Studio",
+        subtitle: "Writing · Translate · Rewrite",
+        description: "AI writing and translation — Rewrite works without DeploymentNotFound",
+        path: "/content-studio",
+        launchKey: "content_studio",
+        yellow: true,
+      },
     ];
 
     let activeTab = "meetings";
@@ -285,7 +295,12 @@
 
     function render() {
       const apps = APPS.filter(
-        (a) => a.id === "general-dashboard" || a.id === "meeting-room" || activeTab === "all" || a.tab === activeTab
+        (a) =>
+          a.id === "general-dashboard" ||
+          a.id === "meeting-room" ||
+          a.id === "content-studio" ||
+          activeTab === "all" ||
+          a.tab === activeTab
       );
       const port = portNow();
       cardsEl.innerHTML = apps

@@ -26,6 +26,7 @@ from org_platform.agents.roster import (
     hierarchy_edges,
     public_roster,
 )
+from org_platform.content_studio.llm import DEFAULT_DRAFT, TONES, content_studio_complete
 from org_platform.publish.env_loader import load_dotenv
 from org_platform.publish.godaddy import GoDaddyError
 from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
@@ -1293,6 +1294,47 @@ def meeting_page(meeting_id: str) -> FileResponse:
 @app.get("/dashboard")
 def dashboard_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "dashboard.html")
+
+
+@app.get("/content-studio")
+@app.get("/content-studio.html")
+def content_studio_page() -> FileResponse:
+    """Writing + Translate studio — Azure rewrite with safe fallbacks."""
+    return FileResponse(STATIC_DIR / "content-studio.html")
+
+
+class ContentStudioRequest(BaseModel):
+    mode: str = "rewrite"
+    text: str = ""
+    tone: str = "professional"
+    target_lang: str = "he"
+
+
+@app.get("/api/content-studio/meta")
+def content_studio_meta() -> Dict[str, Any]:
+    return {
+        "ok": True,
+        "tones": TONES,
+        "default_draft": DEFAULT_DRAFT,
+        "modes": ["rewrite", "translate"],
+        "azure_configured": bool(os.getenv("AZURE_OPENAI_ENDPOINT") and os.getenv("AZURE_OPENAI_API_KEY")),
+    }
+
+
+@app.post("/api/content-studio/run")
+def content_studio_run(body: ContentStudioRequest) -> Dict[str, Any]:
+    try:
+        return content_studio_complete(
+            mode=body.mode,
+            text=body.text,
+            tone=body.tone,
+            target_lang=body.target_lang,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        # Never leak raw Azure DeploymentNotFound blobs to the UI.
+        raise HTTPException(502, f"Content Studio failed: {exc}") from exc
 
 
 @app.get("/slack")
