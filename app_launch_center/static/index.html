@@ -9,16 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b0f14;
-      --panel: #121820;
-      --panel-2: #18212b;
-      --ink: #e7eef5;
-      --muted: #8fa3b5;
-      --line: rgba(231, 238, 245, 0.1);
-      --cyan: #2fd3d8;
-      --on: #5fbf7a;
-      --off: #d45a5a;
-      --yellow: #e8c44a;
+      --bg: #06122e;
+      --panel: #0b1c45;
+      --panel-2: #0f2758;
+      --ink: #ffffff;
+      --muted: #d7e4ff;
+      --line: rgba(255, 255, 255, 0.18);
+      --cyan: #7ec8ff;
+      --on: #6fdf8f;
+      --off: #ff7b7b;
+      --yellow: #ffd666;
       --font-display: "Syne", "Avenir Next", sans-serif;
       --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
     }
@@ -26,12 +26,12 @@
     html, body {
       margin: 0;
       min-height: 100%;
-      color: var(--ink);
+      color: #ffffff;
       font-family: var(--font-body);
       background:
-        radial-gradient(900px 500px at 10% -20%, rgba(47, 211, 216, 0.12), transparent 55%),
-        radial-gradient(700px 420px at 90% 0%, rgba(95, 191, 122, 0.08), transparent 50%),
-        linear-gradient(180deg, #0b0f14, #10161d 40%, #0b0f14);
+        radial-gradient(900px 520px at 12% -18%, rgba(56, 120, 220, 0.35), transparent 58%),
+        radial-gradient(700px 420px at 92% 8%, rgba(20, 70, 160, 0.28), transparent 52%),
+        linear-gradient(180deg, #04102a 0%, #0a1a48 42%, #06122e 100%);
     }
     .wrap {
       width: min(1100px, calc(100% - 2rem));
@@ -44,6 +44,7 @@
       font-weight: 700;
       letter-spacing: -0.03em;
       margin: 0 0 1rem;
+      color: #ffffff;
     }
     .tabs {
       display: flex;
@@ -56,7 +57,7 @@
     .tab {
       border: 0;
       background: transparent;
-      color: var(--muted);
+      color: #e8f0ff;
       padding: 0.45rem 0.75rem;
       border-radius: 8px;
       cursor: pointer;
@@ -64,8 +65,8 @@
       font-weight: 500;
     }
     .tab[aria-selected="true"] {
-      color: var(--ink);
-      background: rgba(47, 211, 216, 0.12);
+      color: #ffffff;
+      background: rgba(126, 200, 255, 0.18);
       box-shadow: inset 0 -2px 0 var(--cyan);
     }
     .grid {
@@ -82,51 +83,56 @@
       flex-direction: column;
       gap: 0.55rem;
       min-height: 210px;
+      color: #ffffff;
     }
     .card.yellow {
-      border-color: rgba(232, 196, 74, 0.85);
+      border-color: rgba(255, 214, 102, 0.9);
       background:
-        linear-gradient(135deg, rgba(232, 196, 74, 0.22), rgba(196, 163, 90, 0.08)),
-        linear-gradient(165deg, #2a2414, #1a1710);
-      box-shadow: 0 0 0 1px rgba(232, 196, 74, 0.25) inset;
+        linear-gradient(135deg, rgba(255, 214, 102, 0.2), rgba(255, 214, 102, 0.05)),
+        linear-gradient(165deg, #14306a, #0c1f4d);
+      box-shadow: 0 0 0 1px rgba(255, 214, 102, 0.28) inset;
     }
-    .card.yellow h2 { color: #fff6d4; }
-    .card.yellow .sub, .card.yellow p { color: #e8d9a8; }
+    .card.yellow h2 { color: #ffffff; }
+    .card.yellow .sub, .card.yellow p { color: #ffffff; }
     .card h2 {
       font-family: var(--font-display);
       font-size: 1.2rem;
       margin: 0;
+      color: #ffffff;
     }
-    .sub { color: var(--muted); font-size: 0.88rem; }
+    .sub { color: #ffffff; font-size: 0.88rem; opacity: 0.92; }
     .card p {
       margin: 0;
-      color: var(--muted);
+      color: #ffffff;
       font-size: 0.9rem;
       line-height: 1.4;
       flex: 1;
+      opacity: 0.92;
     }
     .status-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 0.5rem;
+      color: #ffffff;
     }
     .status {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
       font-size: 0.88rem;
+      color: #ffffff;
     }
     .dot {
       width: 10px;
       height: 10px;
       border-radius: 50%;
       background: var(--off);
-      box-shadow: 0 0 0 3px rgba(212, 90, 90, 0.2);
+      box-shadow: 0 0 0 3px rgba(255, 123, 123, 0.2);
     }
     .dot.on {
       background: var(--on);
-      box-shadow: 0 0 0 3px rgba(95, 191, 122, 0.22);
+      box-shadow: 0 0 0 3px rgba(111, 223, 143, 0.22);
     }
     .working {
       font-size: 0.78rem;
@@ -144,42 +150,45 @@
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
-      color: inherit;
+      color: #ffffff;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
     .btn-primary {
-      background: linear-gradient(135deg, var(--cyan), #5fbf7a);
-      color: #042226;
+      background: linear-gradient(135deg, #3f8cff, #1f5fcc);
+      color: #ffffff;
     }
     .card.yellow .btn-primary {
-      background: linear-gradient(135deg, #f0d56a, #c4a35a);
-      color: #1a1408;
+      background: linear-gradient(135deg, #ffe08a, #e0b84a);
+      color: #102044;
     }
     .btn-ghost {
       background: transparent;
-      border: 1px solid var(--line);
-      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #ffffff;
     }
     .card.yellow .btn-ghost {
-      border-color: rgba(232, 196, 74, 0.45);
-      color: #fff6d4;
+      border-color: rgba(255, 214, 102, 0.55);
+      color: #ffffff;
     }
     .footer {
       margin-top: 1.5rem;
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      color: var(--muted);
+      color: #ffffff;
       font-size: 0.82rem;
+      opacity: 0.9;
     }
+    .footer strong { color: #ffffff; }
     .toast {
       position: fixed;
       right: 1rem;
       bottom: 1rem;
-      background: #132029;
+      background: #0f2758;
       border: 1px solid var(--line);
+      color: #ffffff;
       padding: 0.7rem 0.9rem;
       border-radius: 12px;
       opacity: 0;
