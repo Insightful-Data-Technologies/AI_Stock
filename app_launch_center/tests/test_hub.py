@@ -68,6 +68,7 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("meeting_room", "/meeting-room"),
         ("one_on_one", "/meeting-room"),
         ("forecast_one_on_one", "/meeting-forecast.html"),
+        ("ceo_ai_meeting", "/ceo-ai-meeting.html"),
         ("war_room", "/meeting-room"),
         ("content_studio", "/content-studio"),
         ("site_editor", "/site-editor"),

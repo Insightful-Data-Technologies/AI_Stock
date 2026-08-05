@@ -9,7 +9,7 @@
   --steel: #3d7ea6;
   --ok: #6b8f71;
   --warn: #a67c52;
-  --danger: #b45555;
+  --danger: #3aa0b5; /* was red — removed; cyan alert only */
   --glow: rgba(61, 126, 166, 0.25);
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Outfit", "Avenir Next", sans-serif;

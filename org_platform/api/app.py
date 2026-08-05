@@ -1494,6 +1494,13 @@ def meeting_forecast_boot_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "meeting-forecast.html")
 
 
+@app.get("/ceo-ai-meeting.html")
+@app.get("/ceo-ai-meeting")
+def ceo_ai_meeting_page() -> FileResponse:
+    """CEO → Cursor VP R&D meeting (no red UI · green arrow on screen share)."""
+    return FileResponse(STATIC_DIR / "ceo-ai-meeting.html")
+
+
 @app.get("/meeting/{meeting_id}")
 def meeting_page(meeting_id: str) -> FileResponse:
     return FileResponse(STATIC_DIR / "meeting.html")

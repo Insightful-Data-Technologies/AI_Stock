@@ -12,8 +12,8 @@ from pydantic import BaseModel
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HUB_PORT = int(os.environ.get("HUB_PORT", "4720"))
-# Accept Launch Center ports the user already uses, plus CMS port 8511.
-ALLOWED_PORTS = [4720, 4600, 8511, 8502]
+# Accept Launch Center ports the user already uses, plus CMS port 8511 and CEO meeting 3010.
+ALLOWED_PORTS = [4720, 4600, 3010, 8511, 8502]
 
 os.environ.setdefault("ORG_DATA_DIR", os.environ.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch"))
 Path(os.environ["ORG_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
@@ -90,6 +90,15 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "color": "yellow",
         },
         {
+            "id": "ceo-ai-meeting",
+            "title": "CEO → Cursor VP R&D",
+            "port": port,
+            "path": "/ceo-ai-meeting.html",
+            "on": True,
+            "url": f"{base}/ceo-ai-meeting.html",
+            "color": "green",
+        },
+        {
             "id": "war-room",
             "title": "Multi-Agent War Room",
             "port": port,
@@ -148,6 +157,8 @@ def _launch_path(key: str) -> str:
         return "/site-editor"
     if key in {"forecast", "forecast_one_on_one", "forecast_1_1", "תחזית"}:
         return "/meeting-forecast.html"
+    if key in {"ceo_ai_meeting", "ceo_ai", "ceo_meeting", "vp_rd_meeting"}:
+        return "/ceo-ai-meeting.html"
     return "/meeting-room"
 
 
@@ -211,6 +222,10 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "forecast",
         "forecast_one_on_one",
         "forecast_1_1",
+        "ceo_ai_meeting",
+        "ceo_ai",
+        "ceo_meeting",
+        "vp_rd_meeting",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     path = _launch_path(key)

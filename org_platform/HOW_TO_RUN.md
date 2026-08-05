@@ -1,5 +1,19 @@
 # How to run the meeting room
 
+## CEO → Cursor VP R&D (`ceo-ai-meeting.html`)
+
+Also on **3010** (and 4720/4600):
+
+```bash
+bash app_launch_center/run_hub.sh
+# → http://127.0.0.1:3010/ceo-ai-meeting.html
+```
+
+- **No red UI** (alerts use cyan/amber/green only)
+- **Green arrow** appears on the screen-share tile when Share is live (“אני רואה את שיתוף המסך”)
+- Me seat shows Chanan portrait; Cam overlays when allowed
+- Cursor VP tile shows **LISTENING** in green
+
 ## Forecast 1:1 · Hear & See
 
 Goal: predictive strategy in a true one-on-one where the agent **hears** (mic STT) and **sees** (camera frames).

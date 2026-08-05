@@ -6,7 +6,7 @@ export PYTHONPATH="${PYTHONPATH:-}:$(pwd)"
 export ORG_DATA_DIR="${ORG_DATA_DIR:-/tmp/org_platform_data_launch}"
 mkdir -p "$ORG_DATA_DIR"
 
-PORTS="${HUB_PORTS:-${HUB_PORT:-4720,4600}}"
+PORTS="${HUB_PORTS:-${HUB_PORT:-4720,4600,3010}}"
 IFS=',' read -r -a PORT_LIST <<< "$PORTS"
 
 pids=()
