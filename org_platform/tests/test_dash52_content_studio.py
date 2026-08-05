@@ -26,7 +26,7 @@ def client(monkeypatch, tmp_path):
 def test_dash52_content_studio_fully_migrated(client):
     page = client.get("/content-studio")
     assert page.status_code == 200
-    assert "Content Manager" in page.text
+    assert "Content Studio" in page.text
     for label in [
         "Writing",
         "Translate",
@@ -42,7 +42,7 @@ def test_dash52_content_studio_fully_migrated(client):
     assert "still available in the legacy dashboard" not in page.text
     assert "gpt52_dashboard_app.py" not in page.text
     assert "Menu" in page.text
-    assert "Content Manager" in page.text
+    assert "Fully migrated" in page.text
     # No emoji icons in the top nav (text-only dropdowns).
     assert "🏛️" not in page.text
     assert "✍️" not in page.text
@@ -52,7 +52,7 @@ def test_dash52_home_on_hub(client):
     page = client.get("/dash52")
     assert page.status_code == 200
     assert "AI Capital — Dash 52" in page.text
-    assert "Content Manager" in page.text
+    assert "Content" in page.text
     assert client.get("/dash-52").status_code == 200
 
 

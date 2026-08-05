@@ -5,3 +5,6 @@ org_platform/**/__pycache__/
 .org_platform_data/
 .env
 .env_godaddy
+
+# Generated Content Studio / Site Editor images
+org_platform/static/assets/site-editor/images/

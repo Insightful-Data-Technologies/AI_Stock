@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Capital — Content Manager</title>
+  <title>AI Capital — Content Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
@@ -111,7 +111,7 @@
         <a href="/">AI Workspace</a>
         <a href="/dashboard">Markets &amp; Analytics</a>
         <a href="/publish">Pipeline Operations</a>
-        <a href="/content-studio">Content Manager</a>
+        <a href="/content-studio">Content Studio</a>
         <a href="/slack">Communications</a>
         <a href="/site-editor">Data &amp; Documents</a>
         <a href="/meeting-room">Infrastructure</a>
@@ -122,7 +122,7 @@
 
     <div class="nav-group" id="content-group">
       <button class="nav-btn active" type="button" aria-expanded="false" aria-controls="content-dd" data-dd="content-group">
-        Content Manager <span class="caret" aria-hidden="true">▾</span>
+        Content Studio <span class="caret" aria-hidden="true">▾</span>
       </button>
       <div class="dropdown" id="content-dd" role="menu">
         <button type="button" data-mode="writing" class="active">Writing</button>
@@ -140,12 +140,13 @@
   </header>
 
   <main class="main">
-    <div class="eyebrow">Content Manager</div>
-    <h1 class="page-title">Content Manager</h1>
-    <p class="page-sub">Writing, translate, articles, create tools, image, Canva, and keyboard fix — all under one dropdown on Dash 52.</p>
+    <div class="eyebrow">Content Studio</div>
+    <h1 class="page-title">Content Studio</h1>
+    <p class="page-sub">Real AI-backed writing and translation tools — plus Articles, Create Text, MD, Image, Canva, and Keyboard Fix. Fully migrated from the legacy dashboard; no stub left.</p>
     <div class="mode-label" id="mode-label">Writing</div>
 
     <section class="panel" id="panel-writing">
+      <p class="meta" style="margin:0 0 0.85rem;">Paste a draft, choose a tone, and get a rewritten version — real Azure OpenAI call (local fallback if the cloud model is unreachable).</p>
       <label class="field">Draft
         <textarea id="draft" placeholder="Paste your draft text here." spellcheck="true"></textarea>
       </label>
