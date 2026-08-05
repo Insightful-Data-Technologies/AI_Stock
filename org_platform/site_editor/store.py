@@ -101,6 +101,10 @@ def list_activity() -> List[Dict[str, Any]]:
     return _read("activity.json")
 
 
+def log_activity(action: str, detail: Optional[Dict[str, Any]] = None) -> None:
+    _log(action, detail or {})
+
+
 def project_details() -> Dict[str, Any]:
     return {
         "company": "Insightful Data Technologies – 2.o AI",

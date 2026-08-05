@@ -144,7 +144,15 @@
       <button class="btn primary" type="button" data-section="operations">Operations</button>
       <button class="btn primary" type="button" data-action="project-details">Project Details</button>
     </div>
-    <p class="muted">For full Company Core tools, open the matching dashboard workspace section.</p>
+    <div class="navrow" id="content-actions">
+      <button class="btn primary" type="button" data-action="articles">Articles</button>
+      <button class="btn primary" type="button" data-action="create-text">Create Text</button>
+      <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+      <button class="btn primary" type="button" data-action="image-creation">Image Creation</button>
+      <button class="btn primary" type="button" data-action="canva-studio">Canva Studio</button>
+      <button class="btn primary" type="button" data-action="keyboard-fix">Keyboard Fix</button>
+    </div>
+    <p class="muted">Create Content tools are migrated into this page — no legacy dashboard required.</p>
 
     <div class="status" id="db-status">
       <span class="pill"><span class="dot warn" id="db-dot"></span><span id="db-label">Checking database…</span></span>
@@ -211,10 +219,15 @@
       if (s === "create-content") {
         title.textContent = "Create Content";
         body.innerHTML = `
-          <p class="muted">Writing, translation, and institutional drafts.</p>
+          <p class="muted">All legacy Create Content tools are live in this section.</p>
           <div class="navrow">
-            <a class="btn primary" href="/content-studio">Open Content Studio</a>
-            <button class="btn" type="button" data-action="create-md">Create MD Document</button>
+            <button class="btn primary" type="button" data-action="articles">Articles</button>
+            <button class="btn primary" type="button" data-action="create-text">Create Text</button>
+            <button class="btn primary" type="button" data-action="create-md">Create MD Document</button>
+            <button class="btn primary" type="button" data-action="image-creation">Image Creation</button>
+            <button class="btn primary" type="button" data-action="canva-studio">Canva Studio</button>
+            <button class="btn primary" type="button" data-action="keyboard-fix">Keyboard Fix</button>
+            <a class="btn" href="/content-studio">Content Studio (Writing / Translate)</a>
           </div>`;
         return;
       }
@@ -273,6 +286,91 @@
           <label>Markdown<textarea id="md-body"># Company note\n\nStatus and next actions.\n</textarea></label>
           <button class="btn primary" type="button" id="md-save">Save MD Document</button>`;
         document.getElementById("md-save").onclick = saveMd;
+        return;
+      }
+      if (s === "articles") {
+        title.textContent = "Articles";
+        body.innerHTML = `
+          <label>Topic<input id="art-topic" value="Rates and capital allocation" /></label>
+          <label>Notes<textarea id="art-notes">Lead with the market-moving fact. Keep institutional tone for Bloomberg / FT readers.</textarea></label>
+          <label>Tone
+            <select id="art-tone">
+              <option value="institutional" selected>Institutional / Sell-side</option>
+              <option value="professional">Professional / Business</option>
+              <option value="executive">Executive brief</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="art-save">Generate article</button>
+          <label style="margin-top:0.85rem;">Result<textarea id="art-out" readonly></textarea></label>`;
+        document.getElementById("art-save").onclick = saveArticle;
+        return;
+      }
+      if (s === "create-text") {
+        title.textContent = "Create Text";
+        body.innerHTML = `
+          <label>Draft / prompt<textarea id="txt-prompt">Write a short investor update on equity markets.</textarea></label>
+          <label>Tone
+            <select id="txt-tone">
+              <option value="professional" selected>Professional / Business</option>
+              <option value="institutional">Institutional / Sell-side</option>
+              <option value="executive">Executive brief</option>
+              <option value="neutral">Neutral / Clear</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="txt-save">Create Text</button>
+          <label style="margin-top:0.85rem;">Result<textarea id="txt-out" readonly></textarea></label>`;
+        document.getElementById("txt-save").onclick = saveText;
+        return;
+      }
+      if (s === "image-creation") {
+        title.textContent = "Image Creation";
+        body.innerHTML = `
+          <label>Title<input id="img-title" value="AI Capital Brief" /></label>
+          <label>Subtitle<input id="img-sub" value="Insightful Data Technologies – 2.o AI" /></label>
+          <label>Style
+            <select id="img-style">
+              <option value="institutional" selected>Institutional blue</option>
+              <option value="market">Market green</option>
+              <option value="warm">Warm executive</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="img-save">Create image</button>
+          <div id="img-preview" style="margin-top:0.85rem;"></div>
+          <div class="list" id="img-list" style="margin-top:0.85rem;"></div>`;
+        document.getElementById("img-save").onclick = saveImage;
+        loadImages();
+        return;
+      }
+      if (s === "canva-studio") {
+        title.textContent = "Canva Studio";
+        body.innerHTML = `
+          <label>Title<input id="canva-title" value="Market visual" /></label>
+          <label>Creative brief<textarea id="canva-brief">Institutional cover for equity outlook. Dark navy, gold accent, no clutter.</textarea></label>
+          <div class="navrow">
+            <button class="btn primary" type="button" id="canva-save">Save Canva brief</button>
+            <a class="btn" id="canva-site" href="https://aizevinstocks.my.canva.site/stocks" target="_blank" rel="noopener">Open live Canva site</a>
+            <a class="btn" href="https://www.canva.com/" target="_blank" rel="noopener">Open Canva create</a>
+          </div>
+          <p class="muted" id="canva-meta" style="margin-top:0.75rem;"></p>`;
+        document.getElementById("canva-save").onclick = saveCanva;
+        return;
+      }
+      if (s === "keyboard-fix") {
+        title.textContent = "Keyboard Fix";
+        body.innerHTML = `
+          <p class="muted">Fix Hebrew ↔ English layout mistakes (migrated from legacy tool).</p>
+          <label>Text<textarea id="kb-in" dir="auto">akuo</textarea></label>
+          <label>Mode
+            <select id="kb-mode">
+              <option value="auto" selected>Auto detect</option>
+              <option value="en_to_he">English → Hebrew</option>
+              <option value="he_to_en">Hebrew → English</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" id="kb-run">Fix keyboard</button>
+          <label style="margin-top:0.85rem;">Fixed<textarea id="kb-out" dir="auto" readonly></textarea></label>
+          <p class="muted" id="kb-meta"></p>`;
+        document.getElementById("kb-run").onclick = runKeyboard;
         return;
       }
       if (s === "create-ticket") {
@@ -357,6 +455,112 @@
         await refreshLists();
         state.section = "operations";
         renderWorkspace();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function saveArticle() {
+      clearAlert();
+      const btn = document.getElementById("art-save");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/site-editor/articles", {
+          method: "POST",
+          body: JSON.stringify({
+            topic: document.getElementById("art-topic").value,
+            notes: document.getElementById("art-notes").value,
+            tone: document.getElementById("art-tone").value,
+          }),
+        });
+        document.getElementById("art-out").value = data.article || "";
+        alert(`Article saved as ${data.document.id}`, "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+      finally { btn.disabled = false; }
+    }
+
+    async function saveText() {
+      clearAlert();
+      const btn = document.getElementById("txt-save");
+      btn.disabled = true;
+      try {
+        const data = await api("/api/site-editor/create-text", {
+          method: "POST",
+          body: JSON.stringify({
+            prompt: document.getElementById("txt-prompt").value,
+            tone: document.getElementById("txt-tone").value,
+          }),
+        });
+        document.getElementById("txt-out").value = data.text || "";
+        alert(`Text saved as ${data.document.id}`, "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+      finally { btn.disabled = false; }
+    }
+
+    async function saveImage() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/images", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.getElementById("img-title").value,
+            subtitle: document.getElementById("img-sub").value,
+            style: document.getElementById("img-style").value,
+          }),
+        });
+        const preview = document.getElementById("img-preview");
+        preview.innerHTML = `<img src="${data.url}" alt="${escapeHtml(data.title || "image")}" style="width:min(100%,640px);border-radius:12px;border:1px solid var(--line);" />`;
+        alert(`Image ${data.image_id} created`, "ok");
+        await loadImages();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function loadImages() {
+      const el = document.getElementById("img-list");
+      if (!el) return;
+      try {
+        const data = await api("/api/site-editor/images");
+        const imgs = data.images || [];
+        if (!imgs.length) { el.innerHTML = `<div class="muted">No images yet.</div>`; return; }
+        el.innerHTML = imgs.slice(0, 8).map((img) =>
+          `<div class="item"><strong>${escapeHtml(img.filename)}</strong><div class="muted"><a class="btn" href="${img.url}" target="_blank" rel="noopener">Open</a> · ${img.updated_at}</div></div>`
+        ).join("");
+      } catch (_) {
+        el.innerHTML = `<div class="muted">Could not load images.</div>`;
+      }
+    }
+
+    async function saveCanva() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/canva", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.getElementById("canva-title").value,
+            brief: document.getElementById("canva-brief").value,
+          }),
+        });
+        if (data.canva_site_url) document.getElementById("canva-site").href = data.canva_site_url;
+        document.getElementById("canva-meta").textContent = `Brief saved as ${data.document.id}`;
+        alert("Canva brief saved", "ok");
+        await refreshLists();
+      } catch (e) { alert(String(e.message || e), "err"); }
+    }
+
+    async function runKeyboard() {
+      clearAlert();
+      try {
+        const data = await api("/api/site-editor/keyboard-fix", {
+          method: "POST",
+          body: JSON.stringify({
+            text: document.getElementById("kb-in").value,
+            mode: document.getElementById("kb-mode").value,
+          }),
+        });
+        document.getElementById("kb-out").value = data.fixed || "";
+        document.getElementById("kb-meta").textContent =
+          `${data.explanation || ""} · detected=${data.detected}`;
+        alert("Keyboard fix done", "ok");
       } catch (e) { alert(String(e.message || e), "err"); }
     }
 

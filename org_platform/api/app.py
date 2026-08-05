@@ -30,8 +30,10 @@ from org_platform.content_studio.llm import DEFAULT_DRAFT, TONES, content_studio
 from org_platform.publish.env_loader import load_dotenv
 from org_platform.publish.godaddy import GoDaddyError
 from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
+from org_platform.site_editor import content_tools as site_content
 from org_platform.site_editor import db as site_db
 from org_platform.site_editor import store as site_store
+from org_platform.site_editor.keyboard_fix import fix_keyboard
 from org_platform.store.platform import get_platform
 
 # Load /workspace/.env (or cwd .env) so GODADDY_* keys are available when present.
@@ -1360,6 +1362,71 @@ def site_editor_activity() -> Dict[str, Any]:
 @app.get("/api/site-editor/project")
 def site_editor_project() -> Dict[str, Any]:
     return {"ok": True, "project": site_store.project_details()}
+
+
+class SiteArticleRequest(BaseModel):
+    topic: str = "Market note"
+    notes: str = ""
+    tone: str = "institutional"
+
+
+class SiteTextRequest(BaseModel):
+    prompt: str = ""
+    tone: str = "professional"
+
+
+class SiteImageRequest(BaseModel):
+    title: str = "Insightful visual"
+    subtitle: str = "Insightful Data Technologies – 2.o AI"
+    style: str = "institutional"
+
+
+class SiteCanvaRequest(BaseModel):
+    title: str = "Canva brief"
+    brief: str = ""
+
+
+class SiteKeyboardRequest(BaseModel):
+    text: str = ""
+    mode: str = "auto"
+
+
+@app.post("/api/site-editor/articles")
+def site_editor_article(body: SiteArticleRequest) -> Dict[str, Any]:
+    try:
+        return site_content.create_article(body.topic, body.notes, body.tone)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(502, f"Article creation failed: {exc}") from exc
+
+
+@app.post("/api/site-editor/create-text")
+def site_editor_create_text(body: SiteTextRequest) -> Dict[str, Any]:
+    try:
+        return site_content.create_text(body.prompt, body.tone)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(502, f"Create Text failed: {exc}") from exc
+
+
+@app.get("/api/site-editor/images")
+def site_editor_images() -> Dict[str, Any]:
+    return {"images": site_content.list_images()}
+
+
+@app.post("/api/site-editor/images")
+def site_editor_create_image(body: SiteImageRequest) -> Dict[str, Any]:
+    return site_content.create_image(body.title, body.subtitle, body.style)
+
+
+@app.post("/api/site-editor/canva")
+def site_editor_canva(body: SiteCanvaRequest) -> Dict[str, Any]:
+    return site_content.canva_studio(brief=body.brief, title=body.title)
+
+
+@app.post("/api/site-editor/keyboard-fix")
+def site_editor_keyboard_fix(body: SiteKeyboardRequest) -> Dict[str, Any]:
+    return fix_keyboard(body.text, body.mode)
 
 
 class ContentStudioRequest(BaseModel):
