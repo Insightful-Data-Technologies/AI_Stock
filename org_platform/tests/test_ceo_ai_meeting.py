@@ -1,4 +1,4 @@
-"""CEO AI meeting page — no red UI, green screen-share arrow."""
+"""CEO meeting — cinema presence, no Hold-to-talk / transcript chrome."""
 from __future__ import annotations
 
 import re
@@ -22,18 +22,33 @@ def client(tmp_path, monkeypatch):
     return TestClient(app_mod.app)
 
 
-def test_ceo_ai_meeting_no_red_has_green_arrow(client):
+def test_ceo_meeting_cinema_no_hold_no_transcript(client):
     page = client.get("/ceo-ai-meeting.html")
     assert page.status_code == 200
     html = page.text
-    assert "green-arrow" in html
-    assert "SEEING SHARE" in html or "share-banner" in html
+    assert "Hold to talk" not in html
+    assert 'id="transcript"' not in html
     assert "ceo-chanan.png" in html
-    assert "Hold to talk" in html or "השיחה חיה" in html
-    assert "transcript" in html
-    assert "LISTENING" in html
-    assert "continuous" in html or "שיחה חיה" in html or "רציפה" in html
-    # No hard-coded red palette in the page styles
-    assert not re.search(r"--[a-z-]+:\s*#(f00|ff0000|e11|b45555|ff7b7b)\b", html, re.I)
-    assert "#ff7b7b" not in html.lower()
-    assert "LLM fallback" not in html  # removed scary fallback banner
+    assert "_XwN09djHuM" in html
+    assert "agent-girl.mp4" in html
+    assert "drift" in html  # cinema motion
+    assert 'id="writeForm"' in html
+    assert "classList.toggle" in html or 'writeForm"' in html
+
+
+def test_gossip_led_replies(client):
+    mid = client.post("/api/meetings/forecast/ensure").json()["meeting"]["id"]
+    r1 = client.post(
+        f"/api/meetings/{mid}/messages",
+        json={"text": "היי", "heard": True, "source": "mic", "sender_id": "ceo-chanan"},
+    ).json()["replies"][0]["text"]
+    assert "תוביל" in r1 or "איתך" in r1
+    assert "Maya Forecast on" not in r1
+    assert "bias" not in r1.lower()
+
+    r2 = client.post(
+        f"/api/meetings/{mid}/messages",
+        json={"text": "תגיד לי על AAPL ברכילות", "heard": True, "source": "mic", "sender_id": "ceo-chanan"},
+    ).json()["replies"][0]
+    assert r2["meta"]["sense"]["style"] == "gossip-led"
+    assert len(r2["text"]) < 160

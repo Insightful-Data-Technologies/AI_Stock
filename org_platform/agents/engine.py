@@ -229,88 +229,47 @@ def craft_forecast_reply(
     history: Optional[List[Dict[str, Any]]] = None,
     meeting_title: str = "",
 ) -> Dict[str, Any]:
-    """Conversational 1:1 forecast partner — short meeting turns, not status dumps."""
+    """Gossip-style 1:1 — user leads, short, continuous, no status dumps."""
     agent = ROSTER[FORECAST_ID]
     text = (message or "").strip()
     low = text.lower()
     ticker = _extract_ticker(text)
     turn = _meeting_turn_index(history or [])
     prior = _recent_human_texts(history or [])
-    # Don't treat the current utterance as "prior context" for follow-ups.
     if prior and prior[-1].strip() == text:
         prior = prior[:-1]
-    prior_blob = " | ".join(prior[-3:])
 
-    # First sense confirmation only once — then talk like a meeting.
-    sense_prefix = ""
-    if turn == 0:
-        bits = []
-        if heard or source == "mic":
-            bits.append("אני שומעת אותך")
-        if frame_count > 0:
-            bits.append("ואני רואה אותך / את המסך")
-        if bits:
-            sense_prefix = " · ".join(bits) + ". "
-
-    # Conversational intents
-    greeting = any(k in low for k in ["שלום", "היי", "hello", "hi ", "בוקר", "hey"])
-    ask_see = any(k in low for k in ["רואה", "see", "שיתוף", "screen", "מסך"])
-    ask_hear = any(k in low for k in ["שומע", "hear", "מיקרופון", "mic"])
-    agree = any(k in low for k in ["כן", "בסדר", "ok", "okay", "יאללה", "קדימה", "continue"])
+    greeting = any(k in low for k in ["שלום", "היי", "hello", "hi", "בוקר", "מה קורה", "הייי"])
+    ask_see = any(k in low for k in ["רואה", "see", "מצלמה", "תמונה"])
+    ask_hear = any(k in low for k in ["שומע", "hear", "מיקרופון"])
+    agree = any(k in low for k in ["כן", "בסדר", "יאללה", "קדימה", "ok", "okay", "נכון"])
+    gossip = any(k in low for k in ["רכיל", "בין כה", "תגיד", "מה דעתך", "מעניין", "שמעת"])
     ask_forecast = any(
-        k in low
-        for k in ["תחזית", "forecast", "prediction", "לאן", "מגמה", "trend", "risk", "סיכון", "גידור", "hedge"]
+        k in low for k in ["תחזית", "forecast", "לאן", "מגמה", "trend", "סיכון", "risk", "גידור", "hedge", "שוק"]
     ) or bool(ticker)
 
-    if greeting and turn == 0:
-        body = (
-            f"{sense_prefix}שלום חנן, אנחנו בפגישת תחזית אחד־על־אחד. "
-            "דבר חופשי — אני מקשיבה ברצף. מה נתחיל: טיקר, חשיפה, או אופק זמן?"
-        )
+    # User leads: short backchannels + one nudge, never a report.
+    if greeting and turn <= 1:
+        body = "היי חנן, אני איתך. תוביל — אני מקשיבה."
     elif ask_hear:
-        body = (
-            "כן, אני שומעת אותך ברור. תמשיך באותו קצב כמו בפגישה — "
-            "תגיד מה חשוב לך עכשיו בתחזית."
-        )
+        body = "כן, שומעת אותך. תמשיך."
     elif ask_see:
-        if frame_count > 0:
-            body = (
-                "כן, אני רואה את השיתוף / המצלמה. "
-                "תצביע לי על מה שחשוב במסך, ואני קושרת את זה לתחזית."
-            )
-        else:
-            body = "עדיין בלי פריים — תשאיר Share דולק ואני אגיד לך ברגע שאני רואה."
+        body = "כן, רואה אותך. מה אתה רוצה שאשים לב אליו?"
+    elif gossip and prior:
+        body = f"הבנתי לאן אתה מכוון מ־“{prior[-1][:70]}”. תגיד את החלק העסיסי."
     elif agree and prior:
-        body = (
-            f"מעולה, ממשיכים ממה שאמרת: “{prior[-1][:90]}”. "
-            + (
-                f"על {ticker or 'השוק'} — נסגור bias, אופק, ומגבלת חשיפה. מה האופק שלך?"
-                if ask_forecast or ticker
-                else "רוצה שנעמיק בתחזית, בגידור, או בחשיפה?"
-            )
-        )
+        body = "סגור. אתה מוביל — מה הצעד הבא שלך?"
     elif ask_forecast or ticker:
-        t = ticker or "השוק"
-        body = (
-            f"{sense_prefix}"
-            f"קיבלתי. לגבי {t}: תזה ראשונה — watch עם גידור מוגדר־סיכון. "
-            f"כדי שזה יהיה שיחה ולא דוח: מה האופק — יום, סווינג, או פוזיציה? "
-            f"ואם יש רמת כניסה/יציאה בראש שלך — תגיד אותה עכשיו."
-        )
-        if prior_blob and turn > 0:
-            body += f" אני מחברת גם למה שאמרת קודם בשיחה."
-    elif len(text) < 12 and turn > 0:
-        body = (
-            "איתך. תמשיך את המשפט — אני בפגישה חיה, לא מחכה לטופס. "
-            "טיקר, סיכון, או מה שאתה רואה על המסך."
-        )
+        t = ticker or "זה"
+        body = f"על {t} — אני איתך. אתה רואה bullish או זהירות עכשיו?"
+        if prior:
+            body = f"קשור למה שאמרת קודם. על {t} — לאן אתה מושך?"
+    elif len(text) < 18 and turn > 0:
+        body = "איתך. תמשיך."
     else:
-        body = (
-            f"{sense_prefix}"
-            f"שמעתי: “{text[:140]}”. "
-            "בוא ננהל את זה כמו פגישה: אני מסכמת בקצרה ואז שואלת שאלה אחת. "
-            "מה הצעד הבא שאתה רוצה לסגור עכשיו — כיוון, גודל, או גידור?"
-        )
+        # Mirror + invite — gossip meeting energy, user still leads
+        snippet = text[:110]
+        body = f"שמעתי אותך על “{snippet}”. מה החלק שאתה רוצה לפתוח עכשיו?"
 
     return {
         "agent_id": agent.id,
@@ -329,6 +288,7 @@ def craft_forecast_reply(
             "ticker": ticker or None,
             "turn": turn,
             "conversational": True,
+            "style": "gossip-led",
         },
         "ts": _utcnow(),
     }

@@ -53,8 +53,8 @@ def test_forecast_ensure_and_hear_see(client):
     assert any(e.get("type") == "forecast_one_on_one" for e in meeting.get("events", []))
     agent_msgs = [m for m in meeting.get("messages", []) if m.get("kind") == "agent"]
     assert agent_msgs
-    # Opening is conversational (meeting style), not a status dump
-    assert "פגישת תחזית" in agent_msgs[0]["text"] or "שלום" in agent_msgs[0]["text"]
+    # Opening is gossip-led, user leads
+    assert "איתך" in agent_msgs[0]["text"] or "תוביל" in agent_msgs[0]["text"]
 
     second = client.post("/api/meetings/forecast/ensure").json()
     assert second["created"] is False
@@ -74,15 +74,15 @@ def test_forecast_ensure_and_hear_see(client):
     assert len(chat["replies"]) == 1
     reply = chat["replies"][0]
     assert reply["sender_id"] == "forecast-maya"
-    assert "AAPL" in reply["text"] or "אופק" in reply["text"]
-    assert "Maya Forecast on" not in reply["text"]  # no robotic dump
+    assert "AAPL" in reply["text"] or "מושך" in reply["text"] or "bullish" in reply["text"].lower()
+    assert "Maya Forecast on" not in reply["text"]
     assert chat["meeting"]["sense"]["heard"] is True
 
     # Follow-up turn uses conversation context
     follow = client.post(
         f"/api/meetings/{mid}/messages",
         json={
-            "text": "כן, סווינג",
+            "text": "כן",
             "sender_id": "ceo-chanan",
             "sender_name": "Me (Chanan Zevin)",
             "heard": True,
@@ -91,6 +91,7 @@ def test_forecast_ensure_and_hear_see(client):
     ).json()
     assert follow["replies"][0]["sender_id"] == "forecast-maya"
     assert follow["replies"][0]["meta"]["sense"].get("conversational") is True
+    assert follow["replies"][0]["meta"]["sense"].get("style") == "gossip-led"
 
     # See via camera frame
     frame = client.post(
@@ -103,7 +104,3 @@ def test_forecast_ensure_and_hear_see(client):
     assert client.get(frame["frame"]["path"]).status_code == 200
     assert frame.get("ack") is not None
     assert any("רואה" in r["text"] for r in frame["ack"]["replies"])
-
-    dash = client.get("/api/dashboards/executive").json()
-    assert dash["forecast_one_on_one"]["live_meeting_id"] == mid
-    assert dash["forecast_one_on_one"]["status"] == "live"

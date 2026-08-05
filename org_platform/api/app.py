@@ -915,7 +915,7 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
         )
     if body.seed_intro:
         if body.forecast:
-            text = "שלום, בוא נתחיל את פגישת התחזית."
+            text = "היי"
         elif body.meeting_41b:
             text = (
                 "Open Meeting 41 B for tomorrow. Confirm my camera is on me, screen share is ready, "
