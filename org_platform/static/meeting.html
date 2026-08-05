@@ -113,15 +113,17 @@
     <section class="visual-stage" id="visualStage" aria-label="Meeting visual stage">
       <div class="visual-grid">
         <article class="visual-tile" id="meTile">
-          <div class="visual-label">אני · המצלמה עלי</div>
+          <div class="visual-label">אני · התמונה שלי</div>
+          <img id="mePortrait" class="me-portrait" src="/static/assets/portraits/ceo-chanan.png" alt="Chanan Zevin" />
           <video id="meCamera" playsinline autoplay muted></video>
-          <div class="visual-empty" id="meCameraEmpty">המצלמה תיפתח אוטומטית</div>
+          <div class="visual-empty" id="meCameraEmpty">התמונה שלך כאן · המצלמה מעליה כשדולקת</div>
         </article>
         <article class="visual-tile agent-tile" id="agentTile">
-          <div class="visual-label">את · אווטאר תחזית · קול אנושי</div>
-          <video id="agentAvatar" playsinline muted loop poster="/static/assets/avatar/agent-girl.png"></video>
-          <img id="agentPoster" src="/static/assets/avatar/agent-girl.png" alt="AI human avatar" />
-          <div class="visual-empty" id="agentEmpty">Maya Forecast · מראה אנושי</div>
+          <div class="visual-label">את · אווטאר מגיב · קול אנושי</div>
+          <img id="agentPoster" class="agent-still" src="/static/assets/avatar/agent-girl.png" alt="AI human avatar" />
+          <video id="agentAvatar" class="agent-talk" playsinline muted loop poster="/static/assets/avatar/agent-girl.png"></video>
+          <div class="reply-cue" id="replyCue" aria-hidden="true">מגיבה…</div>
+          <div class="visual-empty" id="agentEmpty">Maya Forecast · אווטאר שמגיב כשמדברת</div>
         </article>
         <article class="visual-tile" id="shareTile">
           <div class="visual-label">שיתוף מסך</div>

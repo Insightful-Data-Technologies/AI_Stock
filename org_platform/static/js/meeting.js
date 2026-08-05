@@ -15,6 +15,7 @@ const state = {
   recognition: null,
   frameTimer: null,
   lastFrameCount: 0,
+  avatarRespondTimer: null,
   avatarUrl: "/static/assets/avatar/agent-girl.mp4",
   avatarPoster: "/static/assets/avatar/agent-girl.png",
 };
@@ -76,6 +77,8 @@ function unlockVoice() {
 }
 
 function enqueueSpeak(text, agentId) {
+  // Always drive the responding avatar — even before voice unlock / if TTS fails.
+  respondAsAvatar(text, agentId);
   if (!state.voiceOn || !state.voiceUnlocked || !window.speechSynthesis) return;
   state.speakQueue = state.speakQueue.then(
     () =>
@@ -96,13 +99,33 @@ function enqueueSpeak(text, agentId) {
         u.onend = () => {
           if (state.speakingId === agentId) state.speakingId = null;
           paintParticipants();
-          setAgentSpeaking(false);
+          // Keep avatar responding until timed visual ends (handled in respondAsAvatar).
           resolve();
         };
         u.onerror = () => resolve();
         window.speechSynthesis.speak(u);
       })
   );
+}
+
+function respondAsAvatar(text, agentId) {
+  const partnerIds = new Set(["forecast-maya", "ea-sofia", "vp-rd"]);
+  const isPartner =
+    partnerIds.has(agentId) ||
+    (state.modeForecast && agentId === "forecast-maya") ||
+    state.mode41b ||
+    state.modeForecast;
+  if (!isPartner && !state.modeForecast && !state.mode41b) return;
+  state.speakingId = agentId || state.speakingId || "forecast-maya";
+  paintParticipants();
+  setAgentSpeaking(true);
+  const ms = Math.min(12000, Math.max(2200, String(text || "").length * 55));
+  clearTimeout(state.avatarRespondTimer);
+  state.avatarRespondTimer = setTimeout(() => {
+    if (state.speakingId === (agentId || "forecast-maya")) state.speakingId = null;
+    paintParticipants();
+    setAgentSpeaking(false);
+  }, ms);
 }
 
 function avatarHtml(a, sizeClass = "avatar-img") {
@@ -120,12 +143,14 @@ function paintSeats() {
   if (me) {
     document.getElementById("mePhoto").src = me.photo;
     document.getElementById("meLabel").textContent = `Me: ${me.name}`;
+    const portrait = document.getElementById("mePortrait");
+    if (portrait && me.photo) portrait.src = me.photo;
   }
   if (you) {
     document.getElementById("youPhoto").src =
       state.mode41b || state.modeForecast ? state.avatarPoster : you.photo;
     document.getElementById("youLabel").textContent = state.modeForecast
-      ? `You: ${you.name} · forecast`
+      ? `You: ${you.name} · responding avatar`
       : state.mode41b
       ? `You: ${you.name} · human avatar`
       : `You: ${you.name}`;
@@ -173,12 +198,28 @@ function updateSenseUI() {
 function setAgentSpeaking(on) {
   const tile = document.getElementById("agentTile");
   const video = document.getElementById("agentAvatar");
+  const poster = document.getElementById("agentPoster");
   if (!tile || !video) return;
   tile.classList.toggle("speaking", Boolean(on));
+  tile.classList.add("has-media");
+  if (poster) poster.src = state.avatarPoster || poster.src;
   if (on) {
+    if (!video.src || video.getAttribute("src") !== state.avatarUrl) {
+      video.src = state.avatarUrl;
+      video.poster = state.avatarPoster;
+    }
+    video.currentTime = 0;
     video.play().catch(() => {});
-  } else if (!state.mode41b && !state.modeForecast) {
+    document.getElementById("visualStatus").textContent = "אווטאר מגיב עכשיו";
+  } else {
     video.pause();
+    try {
+      video.currentTime = 0;
+    } catch (_) {}
+    if (state.modeForecast || state.mode41b) {
+      document.getElementById("visualStatus").textContent =
+        "אווטאר מוכן · יגיב כשיש תשובה";
+    }
   }
 }
 
@@ -188,34 +229,48 @@ async function enableAvatarStage(label) {
   if (avatar?.video_path) state.avatarUrl = avatar.video_path;
   const poster = document.getElementById("agentPoster");
   const video = document.getElementById("agentAvatar");
-  if (poster) poster.src = state.avatarPoster;
+  const tile = document.getElementById("agentTile");
+  if (poster) {
+    poster.src = state.avatarPoster;
+    poster.classList.add("agent-still");
+  }
   if (video) {
     video.poster = state.avatarPoster;
     video.src = state.avatarUrl;
-    video.classList.add("has-media");
-    document.getElementById("agentTile")?.classList.add("has-media");
-    video.play().catch(() => {});
+    video.pause();
   }
+  tile?.classList.add("has-media");
+  // Idle = still portrait. Speaking = video + cue (setAgentSpeaking).
+  setAgentSpeaking(false);
   document.getElementById("visualStatus").textContent = label;
-}
-
-async function enable41bVisuals() {
-  state.mode41b = true;
-  document.body.classList.add("mode-41b");
-  await enableAvatarStage("41 B ready · turn on camera · share screen · human avatar voice");
-  await startCamera();
-  paintSeats();
 }
 
 async function enableForecastVisuals() {
   state.modeForecast = true;
   document.body.classList.add("mode-forecast");
-  await enableAvatarStage("Forecast 1:1 · Listen on · Camera on · אני שומעת / רואה");
+  document.getElementById("meTile")?.classList.add("has-portrait");
+  await enableAvatarStage("Forecast 1:1 · אווטאר מגיב · התמונה שלך במושב");
   await startCamera();
   startListening();
   startFrameLoop();
   paintSeats();
   updateSenseUI();
+  // Demo respond so the avatar is visibly alive once the room opens.
+  setTimeout(() => {
+    respondAsAvatar(
+      "שלום חנן. אני Maya Forecast — אווטאר שמגיב. התמונה שלך אצלך, ואני רואה ושומעת לתחזית.",
+      "forecast-maya"
+    );
+  }, 600);
+}
+
+async function enable41bVisuals() {
+  state.mode41b = true;
+  document.body.classList.add("mode-41b");
+  document.getElementById("meTile")?.classList.add("has-portrait");
+  await enableAvatarStage("41 B ready · camera · share · responding avatar");
+  await startCamera();
+  paintSeats();
 }
 
 async function startCamera() {
@@ -508,14 +563,12 @@ document.getElementById("testVoiceBtn").addEventListener("click", () => {
   const partner = state.modeForecast
     ? agentById("forecast-maya")
     : agentById("ea-sofia");
-  enqueueSpeak(
-    state.modeForecast
-      ? "שלום חנן. אני Maya Forecast. אני שומעת אותך ורואה אותך — בואו נתחיל בתחזית."
-      : state.mode41b
-      ? "Hello Chanan. This is Meeting 41 B. My human avatar and voice are ready for our session tomorrow."
-      : "Hello, this is Sofia Marchetti, Executive Assistant to CEO Chanan Zevin. Human voice check successful.",
-    partner?.id || "ea-sofia"
-  );
+  const line = state.modeForecast
+    ? "שלום חנן. אני Maya Forecast. האווטאר שלי מגיב עכשיו — אני שומעת ורואה אותך לתחזית."
+    : state.mode41b
+    ? "Hello Chanan. This is Meeting 41 B. My human avatar is responding with voice."
+    : "Hello, this is Sofia Marchetti, Executive Assistant to CEO Chanan Zevin. Human voice check successful.";
+  enqueueSpeak(line, partner?.id || "ea-sofia");
 });
 
 document.getElementById("cameraBtn")?.addEventListener("click", async () => {
