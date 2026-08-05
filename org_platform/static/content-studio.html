@@ -3,66 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Capital — Dash 52</title>
+  <title>AI Capital — Content Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0c1118;
-      --sidebar: #101722;
-      --panel: #141c27;
-      --ink: #e8eef6;
-      --muted: #8fa0b5;
-      --line: rgba(232, 238, 246, 0.1);
-      --accent: #3b82f6;
-      --tab: #e8a24a;
-      --font: "Manrope", "Segoe UI", sans-serif;
+      --bg: #06122e;
+      --bar: #0a1a48;
+      --panel: #0b1c45;
+      --ink: #ffffff;
+      --muted: #d7e4ff;
+      --line: rgba(255,255,255,0.18);
+      --accent: #3f8cff;
+      --tab: #ffd666;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Syne", sans-serif;
     }
     * { box-sizing: border-box; }
     html, body {
-      margin: 0; min-height: 100%; color: var(--ink); font-family: var(--font);
+      margin: 0; min-height: 100%; color: #ffffff; font-family: var(--font);
       background:
-        radial-gradient(900px 420px at 0% 0%, rgba(59, 130, 246, 0.12), transparent 55%),
-        linear-gradient(180deg, #0c1118, #0f1520 45%, #0c1118);
+        radial-gradient(900px 520px at 12% -18%, rgba(56,120,220,0.35), transparent 58%),
+        linear-gradient(180deg, #04102a 0%, #0a1a48 42%, #06122e 100%);
     }
-    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } }
-    .sidebar {
-      background: linear-gradient(180deg, #121a25, var(--sidebar));
-      border-right: 1px solid var(--line); padding: 1.1rem 0.75rem;
-      display: flex; flex-direction: column; gap: 0.25rem;
+    .topnav {
+      position: sticky; top: 0; z-index: 40;
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+      padding: 0.7rem 1rem; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #0c2258, var(--bar));
     }
-    .brand-mini { font-weight: 700; letter-spacing: -0.02em; padding: 0.4rem 0.75rem 1rem; font-size: 0.95rem; color: #c9d6e6; }
-    .nav-item {
-      display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.75rem; border-radius: 10px;
-      color: var(--muted); text-decoration: none; font-size: 0.92rem; font-weight: 500;
-      border: 0; background: transparent; width: 100%; text-align: left; cursor: pointer; font-family: inherit;
+    .brand {
+      font-weight: 700; letter-spacing: -0.02em; color: #fff;
+      text-decoration: none; margin-right: 0.35rem; white-space: nowrap;
     }
-    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--ink); }
-    .nav-item.active { background: rgba(59, 130, 246, 0.22); color: #fff; box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.35); }
-    .nav-ico { width: 1.15rem; height: 1.15rem; opacity: 0.85; flex: 0 0 auto; }
-    .main { padding: 1.35rem 1.5rem 2rem; width: min(960px, 100%); }
+    .nav-group { position: relative; }
+    .nav-btn {
+      appearance: none; border: 1px solid transparent; background: transparent;
+      color: #fff; border-radius: 9px; padding: 0.48rem 0.75rem; font: inherit;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex;
+      align-items: center; gap: 0.35rem; text-decoration: none;
+    }
+    .nav-btn:hover, .nav-group.open > .nav-btn { background: rgba(255,255,255,0.08); }
+    .nav-btn.active {
+      background: rgba(63,140,255,0.28);
+      box-shadow: inset 0 0 0 1px rgba(126,200,255,0.4);
+    }
+    .nav-btn .caret { font-size: 0.7rem; opacity: 0.85; }
+    .dropdown {
+      display: none; position: absolute; top: calc(100% + 0.3rem); left: 0; min-width: 240px;
+      background: #0b1c45; border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.35rem; box-shadow: 0 16px 40px rgba(0,0,0,0.35); z-index: 50;
+    }
+    .nav-group.open > .dropdown { display: grid; }
+    .dropdown a, .dropdown button {
+      appearance: none; border: 0; background: transparent; color: #fff; text-align: left;
+      text-decoration: none; font: inherit; font-size: 0.9rem; font-weight: 500;
+      padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer; width: 100%;
+    }
+    .dropdown a:hover, .dropdown button:hover { background: rgba(255,255,255,0.08); }
+    .dropdown a.active, .dropdown button.active {
+      background: rgba(63,140,255,0.28);
+    }
+    .main { padding: 1.25rem 1.4rem 2rem; width: min(960px, 100%); margin: 0 auto; }
     .eyebrow { color: var(--tab); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.35rem; }
-    .page-title { margin: 0; font-size: clamp(1.7rem, 2.6vw, 2.15rem); letter-spacing: -0.03em; font-weight: 700; }
-    .page-sub { margin: 0.35rem 0 1.1rem; color: var(--muted); font-size: 0.95rem; line-height: 1.45; max-width: 52rem; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 0.85rem 1.15rem; border-bottom: 1px solid var(--line); margin-bottom: 1.15rem; }
-    .tab {
-      appearance: none; background: transparent; border: 0; color: var(--muted); font: inherit; font-weight: 600;
-      padding: 0.55rem 0.1rem 0.7rem; cursor: pointer; position: relative;
-    }
-    .tab[aria-selected="true"] { color: var(--ink); }
-    .tab[aria-selected="true"]::after {
-      content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--tab); border-radius: 2px;
-    }
+    .page-title { margin: 0; font-family: var(--display); font-size: clamp(1.7rem, 2.6vw, 2.15rem); letter-spacing: -0.03em; font-weight: 700; }
+    .page-sub { margin: 0.35rem 0 1.1rem; color: #ffffff; opacity: 0.9; font-size: 0.95rem; line-height: 1.45; max-width: 52rem; }
+    .mode-label { color: var(--tab); font-size: 0.82rem; font-weight: 700; margin: 0 0 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; }
     .panel {
-      background: linear-gradient(165deg, rgba(255,255,255,0.03), transparent), var(--panel);
+      background: linear-gradient(165deg, #12306a, var(--panel));
       border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.05rem 1.15rem;
     }
-    label.field { display: grid; gap: 0.4rem; color: var(--muted); font-size: 0.86rem; font-weight: 600; margin-bottom: 0.9rem; }
+    label.field { display: grid; gap: 0.4rem; color: #ffffff; opacity: 0.92; font-size: 0.86rem; font-weight: 600; margin-bottom: 0.9rem; }
     textarea, select, input {
       width: 100%; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,0.28);
-      color: var(--ink); padding: 0.75rem 0.85rem; font: inherit; font-size: 0.95rem; line-height: 1.45;
+      color: #fff; padding: 0.75rem 0.85rem; font: inherit; font-size: 0.95rem; line-height: 1.45;
     }
     textarea { min-height: 220px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.88rem; }
     .actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; margin-top: 0.35rem; }
@@ -71,165 +86,176 @@
       cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn:disabled { opacity: 0.55; cursor: wait; }
-    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; min-width: 8.5rem; }
-    .btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
-    .meta { color: var(--muted); font-size: 0.8rem; }
+    .btn-primary { background: linear-gradient(135deg, #3f8cff, #1f5fcc); color: #fff; min-width: 8.5rem; }
+    .btn-ghost { background: transparent; border: 1px solid var(--line); color: #fff; }
+    .meta { color: #ffffff; opacity: 0.8; font-size: 0.8rem; }
     .alert { margin-top: 1rem; border-radius: 10px; padding: 0.75rem 0.9rem; font-size: 0.9rem; line-height: 1.4; display: none; }
     .alert.show { display: block; }
     .alert.err { background: rgba(239,107,107,0.12); border: 1px solid rgba(239,107,107,0.45); color: #ffc9c9; }
     .alert.ok { background: rgba(95,191,122,0.1); border: 1px solid rgba(95,191,122,0.4); color: #c8efd2; }
     .translate-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 700px) { .translate-row { grid-template-columns: 1fr; } }
-    .topbar-mobile { display: none; margin-bottom: 0.75rem; }
-    @media (max-width: 900px) { .topbar-mobile { display: flex; gap: 0.5rem; flex-wrap: wrap; } }
     img.preview { width: min(100%, 640px); border-radius: 12px; border: 1px solid var(--line); margin-top: 0.75rem; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar" aria-label="Dash 52 navigation">
-      <div class="brand-mini">AI Capital · Dash 52</div>
-      <a class="nav-item" href="/dashboard"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13h6V4H4v9zm10 7h6V4h-6v16zM4 20h6v-5H4v5zm10-9h6V4h-6v7z"/></svg>Command Center</a>
-      <a class="nav-item" href="/"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>AI Workspace</a>
-      <a class="nav-item" href="/dashboard"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg>Markets &amp; Analytics</a>
-      <a class="nav-item" href="/publish"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17h16M7 17V7l5 3 5-3v10"/></svg>Pipeline Operations</a>
-      <a class="nav-item active" href="/content-studio" aria-current="page"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h9l5 5v11H5V4z"/><path d="M14 4v5h5"/></svg>Content Studio</a>
-      <a class="nav-item" href="/slack"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 8h8v8H8z"/></svg>Communications</a>
-      <a class="nav-item" href="/site-editor"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h10v4H7zM5 7h14v14H5z"/></svg>Data &amp; Documents</a>
-      <a class="nav-item" href="/meeting-room"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Infrastructure</a>
-      <a class="nav-item" href="/publish"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg>Security &amp; Keys</a>
-      <a class="nav-item" href="/"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-4.5 7-4.5S17.5 16 19 19"/></svg>Administration</a>
-    </aside>
+  <header class="topnav" aria-label="Dash 52 navigation">
+    <a class="brand" href="/dash52">AI Capital · Dash 52</a>
 
-    <main class="main">
-      <div class="topbar-mobile">
-        <a class="btn btn-ghost" href="/">Launch Center</a>
-        <a class="btn btn-ghost" href="/site-editor">Site Editor</a>
+    <div class="nav-group" id="menu-group">
+      <button class="nav-btn" type="button" aria-expanded="false" aria-controls="menu-dd" data-dd="menu-group">
+        Menu <span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="dropdown" id="menu-dd" role="menu">
+        <a href="/dash52">Command Center</a>
+        <a href="/">AI Workspace</a>
+        <a href="/dashboard">Markets &amp; Analytics</a>
+        <a href="/publish">Pipeline Operations</a>
+        <a href="/content-studio">Content Manager</a>
+        <a href="/slack">Communications</a>
+        <a href="/site-editor">Data &amp; Documents</a>
+        <a href="/meeting-room">Infrastructure</a>
+        <a href="/publish">Security &amp; Keys</a>
+        <a href="/studio">Administration</a>
       </div>
-      <div class="eyebrow">Content Studio</div>
-      <h1 class="page-title">Content Studio</h1>
-      <p class="page-sub">Real AI-backed writing and translation tools — fully migrated into Dash 52.</p>
+    </div>
 
-      <div class="tabs" role="tablist" aria-label="Content Studio modes">
-        <button class="tab" type="button" role="tab" aria-selected="true" data-mode="writing">Writing</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="translate">Translate</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="articles">Articles</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="create-text">Create Text</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="create-md">Create MD Document</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="image">Image Creation</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="canva">Canva Studio</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-mode="keyboard">Keyboard Fix</button>
+    <div class="nav-group" id="content-group">
+      <button class="nav-btn active" type="button" aria-expanded="false" aria-controls="content-dd" data-dd="content-group">
+        Content Manager <span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="dropdown" id="content-dd" role="menu">
+        <button type="button" data-mode="writing" class="active">Writing</button>
+        <button type="button" data-mode="translate">Translate</button>
+        <button type="button" data-mode="articles">Articles</button>
+        <button type="button" data-mode="create-text">Create Text</button>
+        <button type="button" data-mode="create-md">Create MD Document</button>
+        <button type="button" data-mode="image">Image Creation</button>
+        <button type="button" data-mode="canva">Canva Studio</button>
+        <button type="button" data-mode="keyboard">Keyboard Fix</button>
       </div>
+    </div>
 
-      <section class="panel" id="panel-writing">
-        <label class="field">Draft
-          <textarea id="draft" placeholder="Paste your draft text here." spellcheck="true"></textarea>
-        </label>
-        <label class="field">Target tone
-          <select id="tone">
-            <option value="professional" selected>Professional / Business</option>
-            <option value="institutional">Institutional / Sell-side</option>
-            <option value="executive">Executive brief</option>
-            <option value="neutral">Neutral / Clear</option>
-            <option value="persuasive">Persuasive / Marketing</option>
-          </select>
-        </label>
-        <div class="actions">
-          <button class="btn btn-primary" type="button" id="btn-rewrite">Rewrite</button>
-          <span class="meta" id="provider-meta"></span>
-        </div>
-      </section>
+    <a class="nav-btn" href="/">Launch Center</a>
+  </header>
 
-      <section class="panel" id="panel-translate" hidden>
-        <div class="translate-row">
-          <label class="field">Source<textarea id="src" placeholder="Paste your draft text here."></textarea></label>
-          <label class="field">Translation<textarea id="dst" readonly></textarea></label>
-        </div>
-        <label class="field">Target language
-          <select id="lang"><option value="he" selected>Hebrew</option><option value="en">English</option></select>
-        </label>
-        <div class="actions">
-          <button class="btn btn-primary" type="button" id="btn-translate">Translate</button>
-          <span class="meta" id="provider-meta-t"></span>
-        </div>
-      </section>
+  <main class="main">
+    <div class="eyebrow">Content Manager</div>
+    <h1 class="page-title">Content Manager</h1>
+    <p class="page-sub">Writing, translate, articles, create tools, image, Canva, and keyboard fix — all under one dropdown on Dash 52.</p>
+    <div class="mode-label" id="mode-label">Writing</div>
 
-      <section class="panel" id="panel-articles" hidden>
-        <label class="field">Topic<input id="art-topic" value="Rates and capital allocation" /></label>
-        <label class="field">Notes<textarea id="art-notes">Lead with the market-moving fact. Keep institutional tone.</textarea></label>
-        <label class="field">Tone
-          <select id="art-tone">
-            <option value="institutional" selected>Institutional / Sell-side</option>
-            <option value="professional">Professional / Business</option>
-            <option value="executive">Executive brief</option>
-          </select>
-        </label>
-        <div class="actions"><button class="btn btn-primary" type="button" id="btn-article">Generate article</button></div>
-        <label class="field" style="margin-top:0.85rem;">Result<textarea id="art-out" readonly></textarea></label>
-      </section>
+    <section class="panel" id="panel-writing">
+      <label class="field">Draft
+        <textarea id="draft" placeholder="Paste your draft text here." spellcheck="true"></textarea>
+      </label>
+      <label class="field">Target tone
+        <select id="tone">
+          <option value="professional" selected>Professional / Business</option>
+          <option value="institutional">Institutional / Sell-side</option>
+          <option value="executive">Executive brief</option>
+          <option value="neutral">Neutral / Clear</option>
+          <option value="persuasive">Persuasive / Marketing</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-rewrite">Rewrite</button>
+        <span class="meta" id="provider-meta"></span>
+      </div>
+    </section>
 
-      <section class="panel" id="panel-create-text" hidden>
-        <label class="field">Draft / prompt<textarea id="txt-prompt" placeholder="Write a short investor update…"></textarea></label>
-        <label class="field">Tone
-          <select id="txt-tone">
-            <option value="professional" selected>Professional / Business</option>
-            <option value="institutional">Institutional / Sell-side</option>
-            <option value="executive">Executive brief</option>
-          </select>
-        </label>
-        <div class="actions"><button class="btn btn-primary" type="button" id="btn-text">Create Text</button></div>
-        <label class="field" style="margin-top:0.85rem;">Result<textarea id="txt-out" readonly></textarea></label>
-      </section>
+    <section class="panel" id="panel-translate" hidden>
+      <div class="translate-row">
+        <label class="field">Source<textarea id="src" placeholder="Paste your draft text here."></textarea></label>
+        <label class="field">Translation<textarea id="dst" readonly></textarea></label>
+      </div>
+      <label class="field">Target language
+        <select id="lang"><option value="he" selected>Hebrew</option><option value="en">English</option></select>
+      </label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-translate">Translate</button>
+        <span class="meta" id="provider-meta-t"></span>
+      </div>
+    </section>
 
-      <section class="panel" id="panel-create-md" hidden>
-        <label class="field">Title<input id="md-title" value="Company note" /></label>
-        <label class="field">Markdown<textarea id="md-body"># Company note\n\nStatus and next actions.\n</textarea></label>
-        <div class="actions"><button class="btn btn-primary" type="button" id="btn-md">Save MD Document</button></div>
-      </section>
+    <section class="panel" id="panel-articles" hidden>
+      <label class="field">Topic<input id="art-topic" value="Rates and capital allocation" /></label>
+      <label class="field">Notes<textarea id="art-notes">Lead with the market-moving fact. Keep institutional tone.</textarea></label>
+      <label class="field">Tone
+        <select id="art-tone">
+          <option value="institutional" selected>Institutional / Sell-side</option>
+          <option value="professional">Professional / Business</option>
+          <option value="executive">Executive brief</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-article">Generate article</button></div>
+      <label class="field" style="margin-top:0.85rem;">Result<textarea id="art-out" readonly></textarea></label>
+    </section>
 
-      <section class="panel" id="panel-image" hidden>
-        <label class="field">Title<input id="img-title" value="AI Capital Brief" /></label>
-        <label class="field">Subtitle<input id="img-sub" value="Insightful Data Technologies – 2.o AI" /></label>
-        <label class="field">Style
-          <select id="img-style">
-            <option value="institutional" selected>Institutional blue</option>
-            <option value="market">Market green</option>
-            <option value="warm">Warm executive</option>
-          </select>
-        </label>
-        <div class="actions"><button class="btn btn-primary" type="button" id="btn-image">Create image</button></div>
-        <div id="img-preview"></div>
-      </section>
+    <section class="panel" id="panel-create-text" hidden>
+      <label class="field">Draft / prompt<textarea id="txt-prompt" placeholder="Write a short investor update…"></textarea></label>
+      <label class="field">Tone
+        <select id="txt-tone">
+          <option value="professional" selected>Professional / Business</option>
+          <option value="institutional">Institutional / Sell-side</option>
+          <option value="executive">Executive brief</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-text">Create Text</button></div>
+      <label class="field" style="margin-top:0.85rem;">Result<textarea id="txt-out" readonly></textarea></label>
+    </section>
 
-      <section class="panel" id="panel-canva" hidden>
-        <label class="field">Title<input id="canva-title" value="Market visual" /></label>
-        <label class="field">Creative brief<textarea id="canva-brief">Institutional cover for equity outlook. Dark navy, gold accent, no clutter.</textarea></label>
-        <div class="actions">
-          <button class="btn btn-primary" type="button" id="btn-canva">Save Canva brief</button>
-          <a class="btn btn-ghost" href="https://aizevinstocks.my.canva.site/stocks" target="_blank" rel="noopener">Open live Canva site</a>
-          <a class="btn btn-ghost" href="https://www.canva.com/" target="_blank" rel="noopener">Open Canva create</a>
-        </div>
-        <p class="meta" id="canva-meta" style="margin-top:0.75rem;"></p>
-      </section>
+    <section class="panel" id="panel-create-md" hidden>
+      <label class="field">Title<input id="md-title" value="Company note" /></label>
+      <label class="field">Markdown<textarea id="md-body"># Company note
 
-      <section class="panel" id="panel-keyboard" hidden>
-        <p class="meta" style="margin-bottom:0.75rem;">Fix Hebrew ↔ English layout mistakes (migrated from legacy Streamlit tool).</p>
-        <label class="field">Text<textarea id="kb-in" dir="auto" placeholder="Paste mistyped text…"></textarea></label>
-        <label class="field">Mode
-          <select id="kb-mode">
-            <option value="auto" selected>Auto detect</option>
-            <option value="en_to_he">English → Hebrew</option>
-            <option value="he_to_en">Hebrew → English</option>
-          </select>
-        </label>
-        <div class="actions"><button class="btn btn-primary" type="button" id="btn-kb">Fix keyboard</button></div>
-        <label class="field" style="margin-top:0.85rem;">Fixed<textarea id="kb-out" dir="auto" readonly></textarea></label>
-        <p class="meta" id="kb-meta"></p>
-      </section>
+Status and next actions.
+</textarea></label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-md">Save MD Document</button></div>
+    </section>
 
-      <div class="alert" id="alert" role="status" aria-live="polite"></div>
-    </main>
-  </div>
+    <section class="panel" id="panel-image" hidden>
+      <label class="field">Title<input id="img-title" value="AI Capital Brief" /></label>
+      <label class="field">Subtitle<input id="img-sub" value="Insightful Data Technologies – 2.o AI" /></label>
+      <label class="field">Style
+        <select id="img-style">
+          <option value="institutional" selected>Institutional blue</option>
+          <option value="market">Market green</option>
+          <option value="warm">Warm executive</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-image">Create image</button></div>
+      <div id="img-preview"></div>
+    </section>
+
+    <section class="panel" id="panel-canva" hidden>
+      <label class="field">Title<input id="canva-title" value="Market visual" /></label>
+      <label class="field">Creative brief<textarea id="canva-brief">Institutional cover for equity outlook. Dark navy, gold accent, no clutter.</textarea></label>
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="btn-canva">Save Canva brief</button>
+        <a class="btn btn-ghost" href="https://aizevinstocks.my.canva.site/stocks" target="_blank" rel="noopener">Open live Canva site</a>
+        <a class="btn btn-ghost" href="https://www.canva.com/" target="_blank" rel="noopener">Open Canva create</a>
+      </div>
+      <p class="meta" id="canva-meta" style="margin-top:0.75rem;"></p>
+    </section>
+
+    <section class="panel" id="panel-keyboard" hidden>
+      <p class="meta" style="margin-bottom:0.75rem;">Fix Hebrew ↔ English layout mistakes.</p>
+      <label class="field">Text<textarea id="kb-in" dir="auto" placeholder="Paste mistyped text…"></textarea></label>
+      <label class="field">Mode
+        <select id="kb-mode">
+          <option value="auto" selected>Auto detect</option>
+          <option value="en_to_he">English → Hebrew</option>
+          <option value="he_to_en">Hebrew → English</option>
+        </select>
+      </label>
+      <div class="actions"><button class="btn btn-primary" type="button" id="btn-kb">Fix keyboard</button></div>
+      <label class="field" style="margin-top:0.85rem;">Fixed<textarea id="kb-out" dir="auto" readonly></textarea></label>
+      <p class="meta" id="kb-meta"></p>
+    </section>
+
+    <div class="alert" id="alert" role="status" aria-live="polite"></div>
+  </main>
 
   <script>
     const panels = {
@@ -241,6 +267,16 @@
       image: "panel-image",
       canva: "panel-canva",
       keyboard: "panel-keyboard",
+    };
+    const labels = {
+      writing: "Writing",
+      translate: "Translate",
+      articles: "Articles",
+      "create-text": "Create Text",
+      "create-md": "Create MD Document",
+      image: "Image Creation",
+      canva: "Canva Studio",
+      keyboard: "Keyboard Fix",
     };
     const alertEl = document.getElementById("alert");
 
@@ -266,16 +302,43 @@
       }
       return data;
     }
+    function closeMenus() {
+      document.querySelectorAll(".nav-group.open").forEach((g) => {
+        g.classList.remove("open");
+        const btn = g.querySelector(".nav-btn");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      });
+    }
     function showMode(mode) {
-      document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.mode === mode)));
+      if (!panels[mode]) mode = "writing";
       Object.entries(panels).forEach(([key, id]) => {
         document.getElementById(id).hidden = key !== mode;
       });
+      document.querySelectorAll("#content-dd [data-mode]").forEach((el) => {
+        el.classList.toggle("active", el.dataset.mode === mode);
+      });
+      document.getElementById("mode-label").textContent = labels[mode] || mode;
+      history.replaceState(null, "", `#${mode}`);
       clearAlert();
+      closeMenus();
     }
 
-    document.querySelectorAll(".tab").forEach((tab) => {
-      tab.addEventListener("click", () => showMode(tab.dataset.mode));
+    document.querySelectorAll(".nav-btn[data-dd]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const group = document.getElementById(btn.dataset.dd);
+        const willOpen = !group.classList.contains("open");
+        closeMenus();
+        if (willOpen) {
+          group.classList.add("open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+    document.addEventListener("click", closeMenus);
+
+    document.querySelectorAll("#content-dd [data-mode]").forEach((el) => {
+      el.addEventListener("click", () => showMode(el.dataset.mode));
     });
 
     document.getElementById("btn-rewrite").onclick = async () => {
@@ -386,7 +449,7 @@
     };
 
     const hash = (location.hash || "").replace(/^#/, "");
-    if (hash && panels[hash]) showMode(hash);
+    showMode(hash && panels[hash] ? hash : "writing");
   </script>
 </body>
 </html>

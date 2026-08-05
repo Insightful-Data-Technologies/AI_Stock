@@ -26,7 +26,7 @@ def client(monkeypatch, tmp_path):
 def test_content_studio_page(client):
     page = client.get("/content-studio")
     assert page.status_code == 200
-    assert "Content Studio" in page.text
+    assert "Content Manager" in page.text
     assert "Rewrite" in page.text
     assert "Translate" in page.text
     assert "Target tone" in page.text or "Target Tone" in page.text

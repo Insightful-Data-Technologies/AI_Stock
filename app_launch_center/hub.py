@@ -91,7 +91,7 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
         },
         {
             "id": "create-content",
-            "title": "Create Content",
+            "title": "Content Manager",
             "port": port,
             "path": "/content-studio",
             "on": True,
@@ -109,7 +109,7 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
         },
         {
             "id": "content-studio",
-            "title": "Content Studio",
+            "title": "Content Manager",
             "port": port,
             "path": "/content-studio",
             "on": True,

@@ -30,9 +30,8 @@ def test_home_has_yellow_and_meeting_buttons(hub_client):
     assert "Meeting Room" in home.text
     assert "One on One Meeting" in home.text
     assert "Multi-Agent War Room" in home.text
-    assert "Content Studio" in home.text
+    assert "Content Manager" in home.text
     assert "Site Editor CMS" in home.text
-    assert "Create Content" in home.text
     assert "Launch" in home.text
     assert "Open Link" in home.text
     assert "Off · 3000" not in home.text
@@ -87,9 +86,11 @@ def test_dash52_page_via_hub(hub_client):
     page = client.get("/dash52")
     assert page.status_code == 200
     assert "AI Capital — Dash 52" in page.text
-    assert "/content-studio" in page.text
+    assert "Content Manager" in page.text
     assert "Port 4720" in page.text
-    assert "Create Content" in page.text
+    assert "Articles" in page.text
+    assert "Create Text" in page.text
+    assert "NOT YET MIGRATED" not in page.text.upper()
 
 
 def test_meeting_room_page(hub_client):
