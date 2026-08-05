@@ -195,6 +195,7 @@
     <h1 class="brand">AI Capital — App Launch Center</h1>
     <nav class="tabs" role="tablist" aria-label="Launch categories">
       <button class="tab" type="button" data-tab="all">All</button>
+      <button class="tab" type="button" data-tab="create-content">Create Content</button>
       <button class="tab" type="button" data-tab="command">Command</button>
       <button class="tab" type="button" data-tab="pipelines">Pipelines</button>
       <button class="tab" type="button" data-tab="sites">Sites</button>
@@ -258,8 +259,18 @@
         yellow: false,
       },
       {
+        id: "create-content",
+        tab: "create-content",
+        title: "Create Content",
+        subtitle: "Articles · Text · MD · Image · Canva · Keyboard",
+        description: "Open Create Content tools on this port (4720)",
+        path: "/site-editor#create-content",
+        launchKey: "create_content",
+        yellow: true,
+      },
+      {
         id: "content-studio",
-        tab: "builders",
+        tab: "create-content",
         title: "Content Studio",
         subtitle: "Writing · Translate · Rewrite",
         description: "AI writing and translation — Rewrite works without DeploymentNotFound",
@@ -269,7 +280,7 @@
       },
       {
         id: "site-editor",
-        tab: "builders",
+        tab: "create-content",
         title: "Site Editor CMS",
         subtitle: "Operations · tickets · MD docs",
         description: "Manager CMS — Operations/Company Core without SQL sa2 crash",
@@ -308,8 +319,7 @@
         (a) =>
           a.id === "general-dashboard" ||
           a.id === "meeting-room" ||
-          a.id === "content-studio" ||
-          a.id === "site-editor" ||
+          a.id === "create-content" ||
           activeTab === "all" ||
           a.tab === activeTab
       );

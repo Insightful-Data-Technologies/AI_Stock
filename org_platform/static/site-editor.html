@@ -605,6 +605,8 @@
 
     (async function boot() {
       try {
+        const hash = (location.hash || "").replace(/^#/, "");
+        if (hash) state.section = hash;
         await refreshDb();
         await refreshLists();
         renderWorkspace();

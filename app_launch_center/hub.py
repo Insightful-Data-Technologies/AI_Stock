@@ -90,6 +90,15 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "color": "green",
         },
         {
+            "id": "create-content",
+            "title": "Create Content",
+            "port": port,
+            "path": "/site-editor#create-content",
+            "on": True,
+            "url": f"{base}/site-editor#create-content",
+            "color": "yellow",
+        },
+        {
             "id": "content-studio",
             "title": "Content Studio",
             "port": port,
@@ -113,6 +122,8 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
 def _launch_path(key: str) -> str:
     if key in {"general_dashboard", "dashboard"}:
         return "/dashboard"
+    if key in {"create_content", "createcontent"}:
+        return "/site-editor#create-content"
     if key in {"content_studio", "contentstudio"}:
         return "/content-studio"
     if key in {"site_editor", "siteeditor", "cms"}:
@@ -170,6 +181,8 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "meeting_room",
         "content_studio",
         "contentstudio",
+        "create_content",
+        "createcontent",
         "site_editor",
         "siteeditor",
         "cms",

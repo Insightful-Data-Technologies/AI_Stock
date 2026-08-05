@@ -32,6 +32,7 @@ def test_home_has_yellow_and_meeting_buttons(hub_client):
     assert "Multi-Agent War Room" in home.text
     assert "Content Studio" in home.text
     assert "Site Editor CMS" in home.text
+    assert "Create Content" in home.text
     assert "Launch" in home.text
     assert "Open Link" in home.text
     assert "Off · 3000" not in home.text
@@ -48,6 +49,7 @@ def test_all_apps_on_current_port_not_3000(hub_client):
     assert "war-room" in ids
     assert "content-studio" in ids
     assert "site-editor" in ids
+    assert "create-content" in ids
     for app in status["apps"]:
         assert app["on"] is True
         assert app["port"] == 4720
@@ -63,6 +65,7 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("war_room", "/meeting-room"),
         ("content_studio", "/content-studio"),
         ("site_editor", "/site-editor"),
+        ("create_content", "/site-editor#create-content"),
     ]:
         res = client.post(
             "/api/apps/launch",
