@@ -30,6 +30,7 @@ class Role(str, Enum):
     CEO = "ceo"
     EXECUTIVE_ASSISTANT = "executive_assistant"
     VP_RD = "vp_rd"
+    FORECAST_ANALYST = "forecast_analyst"
     MAIN_PM = "main_pm"
     DEV_PM = "dev_pm"
     DEVOPS_PM = "devops_pm"
@@ -129,6 +130,26 @@ def _build() -> Dict[str, OrgAgent]:
             photo="/static/assets/portraits/vp-rd.png",
             voice_gender="male",
             join_seat="you",
+        ),
+        _a(
+            id="forecast-maya",
+            name="Maya Forecast",
+            title="Forecast Analyst — Predictive Strategy",
+            role=Role.FORECAST_ANALYST,
+            team=Team.EXECUTIVE,
+            reports_to="ceo-chanan",
+            can_approve=False,
+            voice_persona="calm precise market strategist woman",
+            color="#C9A24A",
+            avatar_initials="MF",
+            email="maya.forecast@insightfuldata.ai",
+            specialties=["forecast", "hedging", "exposure", "predictive strategy", "risk"],
+            system_prompt=(
+                "You are Maya Forecast, 1:1 forecast partner for CEO Chanan Zevin. "
+                "You listen (STT) and see (camera frames). Lead predictive strategy, hedges, and exposure."
+            ),
+            photo="/static/assets/avatar/agent-girl.png",
+            voice_gender="female",
         ),
         _a(
             id="pm-main",
@@ -446,6 +467,7 @@ ROSTER: Dict[str, OrgAgent] = _build()
 CEO_ID = "ceo-chanan"
 EA_ID = "ea-sofia"
 VP_RD_ID = "vp-rd"
+FORECAST_ID = "forecast-maya"
 MAIN_PM_ID = "pm-main"
 DEV_PM_ID = "pm-dev-claude"
 DEV_TL_ID = "dev-tl-cursor"

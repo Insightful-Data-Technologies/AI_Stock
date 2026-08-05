@@ -81,6 +81,15 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "color": "green",
         },
         {
+            "id": "forecast-one-on-one",
+            "title": "Forecast 1:1 · Hear & See",
+            "port": port,
+            "path": "/meeting-forecast.html",
+            "on": True,
+            "url": f"{base}/meeting-forecast.html",
+            "color": "yellow",
+        },
+        {
             "id": "war-room",
             "title": "Multi-Agent War Room",
             "port": port,
@@ -137,6 +146,8 @@ def _launch_path(key: str) -> str:
         return "/content-studio"
     if key in {"site_editor", "siteeditor", "cms"}:
         return "/site-editor"
+    if key in {"forecast", "forecast_one_on_one", "forecast_1_1", "תחזית"}:
+        return "/meeting-forecast.html"
     return "/meeting-room"
 
 
@@ -197,6 +208,9 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "site_editor",
         "siteeditor",
         "cms",
+        "forecast",
+        "forecast_one_on_one",
+        "forecast_1_1",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     path = _launch_path(key)

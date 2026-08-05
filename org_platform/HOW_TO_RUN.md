@@ -1,5 +1,28 @@
 # How to run the meeting room
 
+## Forecast 1:1 · Hear & See
+
+Goal: predictive strategy in a true one-on-one where the agent **hears** (mic STT) and **sees** (camera frames).
+
+```bash
+export PYTHONPATH=/workspace
+bash app_launch_center/run_hub.sh
+```
+
+Open:
+
+- http://127.0.0.1:4720/meeting-forecast.html
+- Launch Center → **Forecast 1:1 · Hear & See**
+
+In the room:
+
+1. Click **Start meeting with voice**
+2. **Listen on** — continuous speech recognition (he-IL) → agent replies with “אני שומעת אותך”
+3. **Camera on** — frames upload every ~4s → agent replies with “אני רואה אותך”
+4. Ask for a ticker / hedge / exposure forecast by voice or text
+
+Partner agent: **Maya Forecast** (`forecast-maya`).
+
 ## Everything on port 4720
 
 ```bash

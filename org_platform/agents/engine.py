@@ -9,6 +9,7 @@ from org_platform.agents.roster import (
     DEV_PM_ID,
     DEV_TL_ID,
     EA_ID,
+    FORECAST_ID,
     MAIN_PM_ID,
     ROSTER,
     VP_RD_ID,
@@ -179,3 +180,97 @@ def morning_meeting_script() -> List[Dict[str, str]]:
         {"owner": MAIN_PM_ID, "item": "Owners and expected completion times"},
         {"owner": EA_ID, "item": "Decisions requiring escalation"},
     ]
+
+
+def _extract_ticker(message: str) -> str:
+    import re
+
+    m = re.search(r"\b([A-Z]{1,5})\b", message or "")
+    if m and m.group(1) not in {"CEO", "VP", "QA", "IT", "API", "DNS", "SSL", "HTTP", "URL"}:
+        return m.group(1)
+    # Hebrew / casual cues
+    low = (message or "").lower()
+    for hint, ticker in [
+        ("אפל", "AAPL"),
+        ("apple", "AAPL"),
+        ("טסלה", "TSLA"),
+        ("tesla", "TSLA"),
+        ("מיקרוסופט", "MSFT"),
+        ("microsoft", "MSFT"),
+        ("גוגל", "GOOGL"),
+        ("google", "GOOGL"),
+        ("ננאדה", "NVDA"),
+        ("nvidia", "NVDA"),
+    ]:
+        if hint in low:
+            return ticker
+    return "SPY"
+
+
+def craft_forecast_reply(
+    message: str,
+    *,
+    heard: bool = False,
+    frame_count: int = 0,
+    source: str = "typed",
+) -> Dict[str, Any]:
+    """1:1 forecast partner reply that explicitly confirms hearing and seeing."""
+    agent = ROSTER[FORECAST_ID]
+    text = (message or "").strip()
+    ticker = _extract_ticker(text)
+    sense_bits = []
+    if heard or source == "mic":
+        sense_bits.append("אני שומעת אותך — קיבלתי את המיקרופון")
+    else:
+        sense_bits.append("אני כאן ב־1:1 לתחזית — דבר למיקרופון או הקלד")
+    if frame_count > 0:
+        sense_bits.append(f"אני רואה אותך — {frame_count} פריימים מהמצלמה")
+    else:
+        sense_bits.append("הדלק מצלמה כדי שאני אוכל לראות אותך")
+
+    body = (
+        f"{' · '.join(sense_bits)}. "
+        f"Maya Forecast on “{text or 'forecast briefing'}”. "
+        f"Working thesis for {ticker}: bias = watch · hedge = defined-risk overlay · "
+        f"next step = confirm horizon (intraday / swing / position) and exposure limits. "
+        "Say a ticker or risk question and I will tighten the forecast."
+    )
+    return {
+        "agent_id": agent.id,
+        "agent_name": agent.name,
+        "title": agent.title,
+        "team": agent.team.value,
+        "color": agent.color,
+        "avatar_initials": agent.avatar_initials,
+        "text": body,
+        "approval": None,
+        "escalate_to": None,
+        "voice_persona": agent.voice_persona,
+        "sense": {"heard": heard or source == "mic", "frame_count": frame_count, "ticker": ticker},
+        "ts": _utcnow(),
+    }
+
+
+def generate_forecast_responses(
+    message: str,
+    meeting_title: str,
+    *,
+    heard: bool = False,
+    frame_count: int = 0,
+    source: str = "typed",
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    reply = craft_forecast_reply(message, heard=heard, frame_count=frame_count, source=source)
+    events = [
+        {
+            "type": "forecast_sense",
+            "payload": {
+                "heard": reply["sense"]["heard"],
+                "seen": frame_count > 0,
+                "frame_count": frame_count,
+                "ticker": reply["sense"]["ticker"],
+                "meeting_title": meeting_title,
+            },
+            "ts": _utcnow(),
+        }
+    ]
+    return [reply], events

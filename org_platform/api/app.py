@@ -13,13 +13,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from org_platform.agents.comm_tests import run_all_communication_tests, run_communication_test
-from org_platform.agents.engine import generate_live_responses, morning_meeting_script
+from org_platform.agents.engine import generate_forecast_responses, generate_live_responses, morning_meeting_script
 from org_platform.agents.roster import (
     CEO_ID,
     COMPANY,
     DEV_PM_ID,
     DEV_TL_ID,
     EA_ID,
+    FORECAST_ID,
     MAIN_PM_ID,
     ROSTER,
     VP_RD_ID,
@@ -62,18 +63,29 @@ class CreateMeetingRequest(BaseModel):
     morning: bool = False
     one_on_one: bool = False
     meeting_41b: bool = False
+    forecast: bool = False
 
 
 AVATAR_DIR = STATIC_DIR / "assets" / "avatar"
 AVATAR_VIDEO = AVATAR_DIR / "agent-girl.mp4"
 AVATAR_POSTER = AVATAR_DIR / "agent-girl.png"
 MEETING_41B_TITLE = "Meeting 41 B · Visuals"
+FORECAST_MEETING_TITLE = "Forecast 1:1 · Hear & See"
 
 
 class ChatRequest(BaseModel):
     text: str
     sender_name: str = "Human Operator"
     sender_id: str = "human-operator"
+    heard: bool = False
+    source: str = "typed"  # typed | mic | camera
+    seen_frame_count: Optional[int] = None
+
+
+class MeetingFrameRequest(BaseModel):
+    data_url: str
+    note: str = ""
+    source: str = "camera"
 
 
 class EscalateRequest(BaseModel):
@@ -360,6 +372,7 @@ def exec_dashboard() -> Dict[str, Any]:
     stats = P().tasks.stats()
     live_one_on_one = _find_live_one_on_one()
     live_41b = _find_live_41b()
+    live_forecast = _find_live_forecast()
     return {
         "company": COMPANY,
         "operational_status": "online",
@@ -381,6 +394,15 @@ def exec_dashboard() -> Dict[str, Any]:
             "features": ["camera", "screen-share", "human-avatar", "human-voice", "ai-cinema"],
             "avatar": _avatar_status(),
             "youtube": "https://www.youtube.com/watch?v=_XwN09djHuM",
+        },
+        "forecast_one_on_one": {
+            "available": True,
+            "path": "/meeting-forecast.html",
+            "live_meeting_id": live_forecast["id"] if live_forecast else None,
+            "live_meeting_title": live_forecast.get("title") if live_forecast else None,
+            "status": "live" if live_forecast else "ready",
+            "features": ["hear", "see", "mic-stt", "camera-frames", "forecast"],
+            "partner": FORECAST_ID,
         },
         "tasks": stats,
         "departments": {
@@ -657,6 +679,18 @@ def re_search_41b(title: str) -> bool:
     return bool(re.search(r"41\s*b|meeting\s*41", title, re.I))
 
 
+def re_search_forecast(title: str) -> bool:
+    return bool(re.search(r"forecast|תחזית", title, re.I))
+
+
+def _is_forecast_meeting(meeting: Optional[Dict[str, Any]]) -> bool:
+    if not meeting:
+        return False
+    if any(e.get("type") == "forecast_one_on_one" for e in (meeting.get("events") or [])):
+        return True
+    return re_search_forecast(meeting.get("title") or "")
+
+
 def _avatar_status() -> Dict[str, Any]:
     video_ok = AVATAR_VIDEO.exists() and AVATAR_VIDEO.stat().st_size > 0
     poster_ok = AVATAR_POSTER.exists() and AVATAR_POSTER.stat().st_size > 0
@@ -677,6 +711,16 @@ def _find_live_41b() -> Optional[Dict[str, Any]]:
         title = meeting.get("title") or ""
         events = meeting.get("events") or []
         if any(e.get("type") == "meeting_41b" for e in events) or re_search_41b(title):
+            return meeting
+    return None
+
+
+def _find_live_forecast() -> Optional[Dict[str, Any]]:
+    for summary in P().meetings.list_meetings():
+        if summary.get("status") != "live":
+            continue
+        meeting = P().meetings.get(summary["id"]) or summary
+        if _is_forecast_meeting(meeting):
             return meeting
     return None
 
@@ -719,6 +763,25 @@ async def ensure_meeting_41b() -> Dict[str, Any]:
     return {**created, "created": True, "avatar": _avatar_status()}
 
 
+@app.post("/api/meetings/forecast/ensure")
+async def ensure_forecast_meeting() -> Dict[str, Any]:
+    """Find or create Forecast 1:1 where the agent hears (mic) and sees (camera)."""
+    existing = _find_live_forecast()
+    if existing:
+        return {"meeting": existing, "created": False, "avatar": _avatar_status()}
+    created = await create_meeting(
+        CreateMeetingRequest(
+            title=FORECAST_MEETING_TITLE,
+            chair_id=FORECAST_ID,
+            participant_ids=[CEO_ID, FORECAST_ID],
+            seed_intro=True,
+            morning=False,
+            forecast=True,
+        )
+    )
+    return {**created, "created": True, "avatar": _avatar_status()}
+
+
 @app.get("/api/meetings/41b/avatar")
 def meeting_41b_avatar() -> Dict[str, Any]:
     return _avatar_status()
@@ -752,9 +815,18 @@ async def upload_meeting_41b_avatar(file: UploadFile = File(...)) -> Dict[str, A
 
 @app.post("/api/meetings")
 async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
-    if body.chair_id not in ROSTER:
+    if body.chair_id not in ROSTER and not body.forecast and not body.meeting_41b:
         raise HTTPException(400, f"Unknown chair_id {body.chair_id}")
-    if body.meeting_41b:
+    if body.forecast:
+        title = body.title if body.title and body.title != "Daily Morning Meeting" else FORECAST_MEETING_TITLE
+        chair_id = FORECAST_ID
+        participants = body.participant_ids or [CEO_ID, FORECAST_ID]
+        participants = [pid for pid in participants if pid in ROSTER]
+        if CEO_ID not in participants:
+            participants.insert(0, CEO_ID)
+        if FORECAST_ID not in participants:
+            participants.append(FORECAST_ID)
+    elif body.meeting_41b:
         title = body.title if body.title and body.title != "Daily Morning Meeting" else MEETING_41B_TITLE
         chair_id = EA_ID if EA_ID in ROSTER else VP_RD_ID
         participants = body.participant_ids or [CEO_ID, EA_ID, VP_RD_ID]
@@ -777,6 +849,8 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
         if DEV_TL_ID not in participants:
             participants.append(DEV_TL_ID)
     else:
+        if body.chair_id not in ROSTER:
+            raise HTTPException(400, f"Unknown chair_id {body.chair_id}")
         title = body.title
         chair_id = body.chair_id
         participants = body.participant_ids or list(ROSTER.keys())
@@ -786,6 +860,22 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
         participant_ids=participants,
         created_by="human-operator",
     )
+    if body.forecast:
+        P().meetings.append_events(
+            meeting["id"],
+            [
+                {
+                    "type": "forecast_one_on_one",
+                    "payload": {
+                        "mode": "forecast-1-1",
+                        "features": ["hear", "see", "mic-stt", "camera-frames", "forecast"],
+                        "partner": FORECAST_ID,
+                        "participants": participants,
+                    },
+                    "ts": meeting["created_at"],
+                }
+            ],
+        )
     if body.meeting_41b:
         P().meetings.append_events(
             meeting["id"],
@@ -824,7 +914,12 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             [{"type": "morning_agenda", "payload": {"agenda": morning_meeting_script()}, "ts": meeting["created_at"]}],
         )
     if body.seed_intro:
-        if body.meeting_41b:
+        if body.forecast:
+            text = (
+                "Open Forecast 1:1. Confirm you can hear my microphone and see my camera — "
+                "המטרה היא התחזית."
+            )
+        elif body.meeting_41b:
             text = (
                 "Open Meeting 41 B for tomorrow. Confirm my camera is on me, screen share is ready, "
                 "and your human avatar (girl appearance) speaks with a human voice."
@@ -835,7 +930,12 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             text = "Open the morning meeting and confirm attendance."
         else:
             text = "Open the meeting and confirm all teams are present."
-        replies, events = generate_live_responses(text, meeting["title"], chair_id=meeting["chair_id"])
+        if body.forecast:
+            replies, events = generate_forecast_responses(
+                text, meeting["title"], heard=False, frame_count=0, source="typed"
+            )
+        else:
+            replies, events = generate_live_responses(text, meeting["title"], chair_id=meeting["chair_id"])
         P().meetings.append_message(
             meeting["id"],
             {"kind": "human", "sender_id": "human-operator", "sender_name": "Human Operator", "text": text},
@@ -861,6 +961,7 @@ async def create_meeting(body: CreateMeetingRequest) -> Dict[str, Any]:
             "morning": body.morning,
             "one_on_one": body.one_on_one,
             "meeting_41b": body.meeting_41b,
+            "forecast": body.forecast,
         },
     )
     return {"meeting": meeting}
@@ -881,6 +982,9 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
         raise HTTPException(404, "Meeting not found")
     if meeting.get("status") != "live":
         raise HTTPException(400, "Meeting is not live")
+    if body.heard or body.source == "mic":
+        P().meetings.mark_heard(meeting_id)
+        meeting = P().meetings.get(meeting_id)
     human = P().meetings.append_message(
         meeting_id,
         {
@@ -888,9 +992,23 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
             "sender_id": body.sender_id,
             "sender_name": body.sender_name,
             "text": body.text,
+            "source": body.source,
+            "heard": bool(body.heard or body.source == "mic"),
         },
     )
-    replies, events = generate_live_responses(body.text, meeting["title"], chair_id=meeting["chair_id"])
+    frame_count = body.seen_frame_count
+    if frame_count is None:
+        frame_count = len(meeting.get("frames") or [])
+    if _is_forecast_meeting(meeting):
+        replies, events = generate_forecast_responses(
+            body.text,
+            meeting["title"],
+            heard=bool(body.heard or body.source == "mic"),
+            frame_count=int(frame_count or 0),
+            source=body.source,
+        )
+    else:
+        replies, events = generate_live_responses(body.text, meeting["title"], chair_id=meeting["chair_id"])
     agent_msgs = []
     for r in replies:
         agent_msgs.append(
@@ -909,6 +1027,82 @@ async def post_message(meeting_id: str, body: ChatRequest) -> Dict[str, Any]:
     payload = {"human": human, "replies": agent_msgs, "events": events, "meeting": P().meetings.get(meeting_id)}
     await broadcast(meeting_id, {"type": "chat_burst", **payload})
     return payload
+
+
+@app.post("/api/meetings/{meeting_id}/frames")
+async def meeting_frame(meeting_id: str, body: MeetingFrameRequest) -> Dict[str, Any]:
+    meeting = P().meetings.get(meeting_id)
+    if not meeting:
+        raise HTTPException(404, "Meeting not found")
+    if meeting.get("status") != "live":
+        raise HTTPException(400, "Meeting is not live")
+    if not body.data_url or len(body.data_url) < 32:
+        raise HTTPException(400, "data_url required")
+    if len(body.data_url) > 12_000_000:
+        raise HTTPException(400, "frame too large")
+    try:
+        frame = P().meetings.add_frame(meeting_id, body.data_url, note=body.note, source=body.source or "camera")
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    P().audit.append(
+        "meeting_frame",
+        CEO_ID,
+        {"meeting_id": meeting_id, "frame_id": frame["id"], "bytes": frame["bytes"], "source": body.source},
+    )
+    # Auto-ack once when agent first sees the CEO (forecast rooms).
+    meeting = P().meetings.get(meeting_id)
+    ack = None
+    frames = meeting.get("frames") or []
+    if _is_forecast_meeting(meeting) and len(frames) == 1:
+        ack_text = "אני רואה אותך עכשיו מהמצלמה. אפשר לדבר על התחזית."
+        replies, events = generate_forecast_responses(
+            ack_text, meeting["title"], heard=bool((meeting.get("sense") or {}).get("heard")), frame_count=1, source="camera"
+        )
+        P().meetings.append_message(
+            meeting_id,
+            {"kind": "system", "sender_id": "system", "sender_name": "Sense", "text": "camera frame received"},
+        )
+        for r in replies:
+            P().meetings.append_message(
+                meeting_id,
+                {
+                    "kind": "agent",
+                    "sender_id": r["agent_id"],
+                    "sender_name": r["agent_name"],
+                    "text": r["text"],
+                    "meta": r,
+                },
+            )
+        P().meetings.append_events(meeting_id, events)
+        ack = {"replies": replies}
+        await broadcast(
+            meeting_id,
+            {
+                "type": "chat_burst",
+                "replies": [
+                    {
+                        "sender_id": r["agent_id"],
+                        "sender_name": r["agent_name"],
+                        "text": r["text"],
+                        "meta": r,
+                    }
+                    for r in replies
+                ],
+                "meeting": P().meetings.get(meeting_id),
+            },
+        )
+    payload = {"frame": frame, "meeting": P().meetings.get(meeting_id), "ack": ack}
+    await broadcast(meeting_id, {"type": "frame", "frame": frame, "meeting": payload["meeting"]})
+    return payload
+
+
+@app.get("/api/meetings/frames/{meeting_id}/{filename}")
+def meeting_frame_file(meeting_id: str, filename: str) -> FileResponse:
+    path = P().meetings.frame_file(meeting_id, filename)
+    if not path or not path.exists():
+        raise HTTPException(404, "frame not found")
+    media = "image/jpeg" if str(path).endswith((".jpg", ".jpeg")) else "image/png"
+    return FileResponse(path, media_type=media)
 
 
 @app.post("/api/meetings/{meeting_id}/escalate")
@@ -966,6 +1160,9 @@ async def meeting_ws(websocket: WebSocket, meeting_id: str) -> None:
                         text=data.get("text", ""),
                         sender_name=data.get("sender_name", "Human Operator"),
                         sender_id=data.get("sender_id", "human-operator"),
+                        heard=bool(data.get("heard")),
+                        source=data.get("source", "typed"),
+                        seen_frame_count=data.get("seen_frame_count"),
                     ),
                 )
             elif data.get("type") == "ping":
@@ -1288,6 +1485,13 @@ def meeting_simulation_page() -> FileResponse:
 def meeting_41b_boot_page() -> FileResponse:
     """Legacy 41 B path — redirects into the cinematic meeting room."""
     return FileResponse(STATIC_DIR / "meeting-41b.html")
+
+
+@app.get("/meeting-forecast.html")
+@app.get("/meeting-forecast")
+def meeting_forecast_boot_page() -> FileResponse:
+    """Forecast 1:1 boot — ensures hear/see room then redirects into /meeting/{id}."""
+    return FileResponse(STATIC_DIR / "meeting-forecast.html")
 
 
 @app.get("/meeting/{meeting_id}")

@@ -25,7 +25,7 @@ def client(tmp_path, monkeypatch):
 def test_health_and_meeting_flow(client):
     h = client.get("/api/health").json()
     assert h["ok"] is True
-    assert h["agents"] == 21
+    assert h["agents"] == 22
     created = client.post(
         "/api/meetings",
         json={"title": "Sync", "chair_id": "vp-rd", "seed_intro": True, "morning": True},

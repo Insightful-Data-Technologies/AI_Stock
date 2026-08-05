@@ -60,7 +60,7 @@ def test_hierarchy_complete(client):
         "it-2",
     }
     assert required.issubset(ids)
-    assert len(org["roster"]) == 21
+    assert len(org["roster"]) == 22
 
 
 def test_channels_and_email_simulated(client):

@@ -29,6 +29,7 @@ def test_home_has_yellow_and_meeting_buttons(hub_client):
     assert "General dashboard" in home.text
     assert "Meeting Room" in home.text
     assert "One on One Meeting" in home.text
+    assert "Forecast 1:1" in home.text
     assert "Multi-Agent War Room" in home.text
     assert "Content Manager" in home.text
     assert "Site Editor CMS" in home.text
@@ -45,6 +46,7 @@ def test_all_apps_on_current_port_not_3000(hub_client):
     assert "general-dashboard" in ids
     assert "meeting-room" in ids
     assert "one-on-one" in ids
+    assert "forecast-one-on-one" in ids
     assert "war-room" in ids
     assert "content-studio" in ids
     assert "site-editor" in ids
@@ -65,6 +67,7 @@ def test_launch_buttons_go_to_paths(hub_client):
         ("general_dashboard", "/dashboard"),
         ("meeting_room", "/meeting-room"),
         ("one_on_one", "/meeting-room"),
+        ("forecast_one_on_one", "/meeting-forecast.html"),
         ("war_room", "/meeting-room"),
         ("content_studio", "/content-studio"),
         ("site_editor", "/site-editor"),

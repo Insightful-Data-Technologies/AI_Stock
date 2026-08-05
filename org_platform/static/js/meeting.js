@@ -8,8 +8,13 @@ const state = {
   speakQueue: Promise.resolve(),
   speakAs: localStorage.getItem("meetingSpeakAs") || "me",
   mode41b: false,
+  modeForecast: false,
   cameraStream: null,
   screenStream: null,
+  listenOn: false,
+  recognition: null,
+  frameTimer: null,
+  lastFrameCount: 0,
   avatarUrl: "/static/assets/avatar/agent-girl.mp4",
   avatarPoster: "/static/assets/avatar/agent-girl.png",
 };
@@ -107,7 +112,9 @@ function avatarHtml(a, sizeClass = "avatar-img") {
 
 function paintSeats() {
   const me = bySeat("me") || agentById("ceo-chanan");
-  const you = state.mode41b
+  const you = state.modeForecast
+    ? agentById("forecast-maya") || bySeat("you") || agentById("ea-sofia")
+    : state.mode41b
     ? agentById("ea-sofia") || bySeat("you") || agentById("vp-rd")
     : bySeat("you") || agentById("vp-rd");
   if (me) {
@@ -115,8 +122,11 @@ function paintSeats() {
     document.getElementById("meLabel").textContent = `Me: ${me.name}`;
   }
   if (you) {
-    document.getElementById("youPhoto").src = state.mode41b ? state.avatarPoster : you.photo;
-    document.getElementById("youLabel").textContent = state.mode41b
+    document.getElementById("youPhoto").src =
+      state.mode41b || state.modeForecast ? state.avatarPoster : you.photo;
+    document.getElementById("youLabel").textContent = state.modeForecast
+      ? `You: ${you.name} · forecast`
+      : state.mode41b
       ? `You: ${you.name} · human avatar`
       : `You: ${you.name}`;
   }
@@ -129,8 +139,35 @@ function is41bMeeting(meeting) {
   return (meeting.events || []).some((e) => e.type === "meeting_41b");
 }
 
+function isForecastMeeting(meeting) {
+  if (!meeting) return false;
+  if (/forecast|תחזית/i.test(meeting.title || "")) return true;
+  return (meeting.events || []).some((e) => e.type === "forecast_one_on_one");
+}
+
 function reSearch41b(title) {
   return /41\s*b|meeting\s*41/i.test(title || "");
+}
+
+function updateSenseUI() {
+  const sense = state.meeting?.sense || {};
+  const hear = document.getElementById("hearPill");
+  const see = document.getElementById("seePill");
+  const detail = document.getElementById("senseDetail");
+  if (!hear || !see) return;
+  const heard = Boolean(sense.heard || state.listenOn);
+  const seen = Boolean(sense.seen || (sense.frame_count || 0) > 0 || state.lastFrameCount > 0);
+  hear.classList.toggle("on", heard);
+  see.classList.toggle("on", seen);
+  hear.textContent = heard ? "אני שומעת אותך" : "לא שומעת עדיין";
+  see.textContent = seen
+    ? `אני רואה אותך · ${sense.frame_count || state.lastFrameCount || 0} frames`
+    : "לא רואה עדיין";
+  if (detail) {
+    detail.textContent = state.modeForecast
+      ? "תחזית 1:1 · mic STT + camera frames"
+      : "";
+  }
 }
 
 function setAgentSpeaking(on) {
@@ -140,14 +177,12 @@ function setAgentSpeaking(on) {
   tile.classList.toggle("speaking", Boolean(on));
   if (on) {
     video.play().catch(() => {});
-  } else if (!state.mode41b) {
+  } else if (!state.mode41b && !state.modeForecast) {
     video.pause();
   }
 }
 
-async function enable41bVisuals() {
-  state.mode41b = true;
-  document.body.classList.add("mode-41b");
+async function enableAvatarStage(label) {
   const avatar = await api("/api/meetings/41b/avatar").catch(() => null);
   if (avatar?.poster_path) state.avatarPoster = avatar.poster_path;
   if (avatar?.video_path) state.avatarUrl = avatar.video_path;
@@ -161,10 +196,26 @@ async function enable41bVisuals() {
     document.getElementById("agentTile")?.classList.add("has-media");
     video.play().catch(() => {});
   }
-  document.getElementById("visualStatus").textContent =
-    "41 B ready · turn on camera · share screen · human avatar voice";
+  document.getElementById("visualStatus").textContent = label;
+}
+
+async function enable41bVisuals() {
+  state.mode41b = true;
+  document.body.classList.add("mode-41b");
+  await enableAvatarStage("41 B ready · turn on camera · share screen · human avatar voice");
   await startCamera();
   paintSeats();
+}
+
+async function enableForecastVisuals() {
+  state.modeForecast = true;
+  document.body.classList.add("mode-forecast");
+  await enableAvatarStage("Forecast 1:1 · Listen on · Camera on · אני שומעת / רואה");
+  await startCamera();
+  startListening();
+  startFrameLoop();
+  paintSeats();
+  updateSenseUI();
 }
 
 async function startCamera() {
@@ -182,9 +233,12 @@ async function startCamera() {
     el.srcObject = state.cameraStream;
     document.getElementById("meTile")?.classList.add("has-media");
     document.getElementById("cameraBtn").textContent = "Camera on";
-    document.getElementById("visualStatus").textContent = "Camera on you · avatar ready";
+    document.getElementById("visualStatus").textContent = state.modeForecast
+      ? "Camera on · frames go to forecast agent"
+      : "Camera on you · avatar ready";
+    if (state.modeForecast) startFrameLoop();
   } catch (err) {
-    document.getElementById("visualStatus").textContent = "Camera blocked — allow webcam for 41 B";
+    document.getElementById("visualStatus").textContent = "Camera blocked — allow webcam";
     console.error(err);
   }
 }
@@ -198,6 +252,54 @@ function stopCamera() {
   if (el) el.srcObject = null;
   document.getElementById("meTile")?.classList.remove("has-media");
   document.getElementById("cameraBtn").textContent = "Camera off";
+  stopFrameLoop();
+}
+
+function captureCameraFrame() {
+  const video = document.getElementById("meCamera");
+  if (!video || !state.cameraStream || video.videoWidth < 16) return null;
+  const canvas = document.createElement("canvas");
+  const w = Math.min(640, video.videoWidth);
+  const h = Math.round((w / video.videoWidth) * video.videoHeight);
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.7);
+}
+
+async function pushCameraFrame() {
+  if (!state.modeForecast) return;
+  const dataUrl = captureCameraFrame();
+  if (!dataUrl) return;
+  try {
+    const data = await api(`/api/meetings/${meetingId}/frames`, {
+      method: "POST",
+      body: JSON.stringify({ data_url: dataUrl, source: "camera", note: "forecast-see" }),
+    });
+    if (data.meeting) state.meeting = data.meeting;
+    state.lastFrameCount = (data.meeting?.frames || []).length;
+    updateSenseUI();
+    if (data.ack?.replies) {
+      data.ack.replies.forEach((r) => enqueueSpeak(r.text, r.agent_id));
+      paintMessages();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function startFrameLoop() {
+  if (state.frameTimer || !state.modeForecast) return;
+  pushCameraFrame();
+  state.frameTimer = setInterval(pushCameraFrame, 4000);
+}
+
+function stopFrameLoop() {
+  if (state.frameTimer) {
+    clearInterval(state.frameTimer);
+    state.frameTimer = null;
+  }
 }
 
 async function startScreenShare() {
@@ -334,12 +436,14 @@ function applySnapshot(meeting, roster) {
   paintParticipants();
   paintMessages();
   paintEvents();
+  updateSenseUI();
 }
 
 function handleBurst(payload) {
   if (payload.meeting) state.meeting = payload.meeting;
   paintMessages();
   paintEvents();
+  updateSenseUI();
   (payload.replies || []).forEach((r) => {
     enqueueSpeak(r.text || r.meta?.text || "", r.sender_id || r.meta?.agent_id);
   });
@@ -351,7 +455,9 @@ function speakerIdentity() {
     return { sender_id: me.id, sender_name: `Me (${me.name})` };
   }
   if (state.speakAs === "you") {
-    const you = bySeat("you") || agentById("vp-rd");
+    const you = state.modeForecast
+      ? agentById("forecast-maya") || bySeat("you")
+      : bySeat("you") || agentById("vp-rd");
     return { sender_id: you.id, sender_name: `You (${you.name})` };
   }
   return { sender_id: "human-operator", sender_name: "Observer" };
@@ -365,6 +471,11 @@ function connectWs() {
     const data = JSON.parse(ev.data);
     if (data.type === "snapshot") applySnapshot(data.meeting, data.roster);
     if (data.type === "chat_burst") handleBurst(data);
+    if (data.type === "frame" && data.meeting) {
+      state.meeting = data.meeting;
+      state.lastFrameCount = (data.meeting.frames || []).length;
+      updateSenseUI();
+    }
     if (data.type === "meeting_ended") {
       applySnapshot(data.meeting, state.roster);
       toast("Meeting ended");
@@ -373,15 +484,19 @@ function connectWs() {
   ws.onclose = () => setTimeout(connectWs, 1500);
 }
 
-async function sendChat(text) {
+async function sendChat(text, opts = {}) {
   if (!text.trim()) return;
   const identity = speakerIdentity();
+  const source = opts.source || "typed";
+  const heard = Boolean(opts.heard || source === "mic");
+  const seen_frame_count = (state.meeting?.frames || []).length || state.lastFrameCount || 0;
+  const payload = { type: "chat", text, ...identity, heard, source, seen_frame_count };
   if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-    state.ws.send(JSON.stringify({ type: "chat", text, ...identity }));
+    state.ws.send(JSON.stringify(payload));
   } else {
     const data = await api(`/api/meetings/${meetingId}/messages`, {
       method: "POST",
-      body: JSON.stringify({ text, ...identity }),
+      body: JSON.stringify({ text, ...identity, heard, source, seen_frame_count }),
     });
     handleBurst(data);
   }
@@ -390,12 +505,16 @@ async function sendChat(text) {
 document.getElementById("enableVoiceBtn").addEventListener("click", unlockVoice);
 document.getElementById("testVoiceBtn").addEventListener("click", () => {
   if (!state.voiceUnlocked) unlockVoice();
-  const sofia = agentById("ea-sofia");
+  const partner = state.modeForecast
+    ? agentById("forecast-maya")
+    : agentById("ea-sofia");
   enqueueSpeak(
-    state.mode41b
+    state.modeForecast
+      ? "שלום חנן. אני Maya Forecast. אני שומעת אותך ורואה אותך — בואו נתחיל בתחזית."
+      : state.mode41b
       ? "Hello Chanan. This is Meeting 41 B. My human avatar and voice are ready for our session tomorrow."
       : "Hello, this is Sofia Marchetti, Executive Assistant to CEO Chanan Zevin. Human voice check successful.",
-    sofia?.id || "ea-sofia"
+    partner?.id || "ea-sofia"
   );
 });
 
@@ -412,6 +531,10 @@ document.getElementById("avatarUpload")?.addEventListener("change", async (e) =>
     toast(String(err.message || err));
   }
 });
+document.getElementById("listenBtn")?.addEventListener("click", () => {
+  if (state.listenOn) stopListening();
+  else startListening();
+});
 
 document.getElementById("composer").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -420,7 +543,7 @@ document.getElementById("composer").addEventListener("submit", async (e) => {
   const text = input.value;
   input.value = "";
   try {
-    await sendChat(text);
+    await sendChat(text, { source: "typed", heard: false });
   } catch (err) {
     toast(String(err.message || err));
   }
@@ -429,7 +552,7 @@ document.getElementById("composer").addEventListener("submit", async (e) => {
 document.getElementById("speakAs").addEventListener("change", (e) => {
   state.speakAs = e.target.value;
   localStorage.setItem("meetingSpeakAs", state.speakAs);
-  toast(state.speakAs === "me" ? "Speaking as Me (CEO)" : state.speakAs === "you" ? "Speaking as You (VP R&D)" : "Observer mode");
+  toast(state.speakAs === "me" ? "Speaking as Me (CEO)" : state.speakAs === "you" ? "Speaking as You (AI)" : "Observer mode");
 });
 
 document.getElementById("escalateBtn").addEventListener("click", async () => {
@@ -458,30 +581,76 @@ document.getElementById("voiceToggle").addEventListener("click", (e) => {
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const micBtn = document.getElementById("micBtn");
-if (SpeechRecognition) {
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
+
+function wireRecognition(recognition) {
+  recognition.continuous = Boolean(state.modeForecast);
   recognition.interimResults = false;
-  recognition.lang = "en-US";
+  recognition.lang = state.modeForecast ? "he-IL" : "en-US";
   recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
+    const text = event.results[event.results.length - 1][0].transcript;
     document.getElementById("chatInput").value = text;
-    sendChat(text);
-    document.getElementById("voiceStatus").textContent = "Heard you — agents responding";
+    sendChat(text, { source: "mic", heard: true });
+    document.getElementById("voiceStatus").textContent = "Heard you — forecast responding";
+    updateSenseUI();
   };
   recognition.onerror = () => {
     document.getElementById("voiceStatus").textContent = "Mic error — type instead";
   };
+  recognition.onend = () => {
+    if (state.listenOn && state.modeForecast) {
+      try {
+        recognition.start();
+      } catch (_) {}
+    }
+  };
+  return recognition;
+}
+
+function startListening() {
+  if (!state.recognition) {
+    if (!SpeechRecognition) {
+      toast("Speech recognition unavailable");
+      return;
+    }
+    state.recognition = wireRecognition(new SpeechRecognition());
+  } else {
+    wireRecognition(state.recognition);
+  }
+  if (!state.voiceUnlocked) unlockVoice();
+  try {
+    state.recognition.start();
+    state.listenOn = true;
+    const btn = document.getElementById("listenBtn");
+    if (btn) btn.textContent = "Listening…";
+    document.getElementById("voiceStatus").textContent = "Listening continuously…";
+    updateSenseUI();
+  } catch (_) {}
+}
+
+function stopListening() {
+  state.listenOn = false;
+  try {
+    state.recognition?.stop();
+  } catch (_) {}
+  const btn = document.getElementById("listenBtn");
+  if (btn) btn.textContent = "Listen on";
+  document.getElementById("voiceStatus").textContent = "Listen off";
+  updateSenseUI();
+}
+
+if (SpeechRecognition) {
+  state.recognition = wireRecognition(new SpeechRecognition());
   const start = () => {
     if (!state.voiceUnlocked) unlockVoice();
     try {
-      recognition.start();
+      state.recognition.start();
       document.getElementById("voiceStatus").textContent = "Listening…";
     } catch (_) {}
   };
   const stop = () => {
+    if (state.listenOn) return;
     try {
-      recognition.stop();
+      state.recognition.stop();
     } catch (_) {}
   };
   micBtn.addEventListener("mousedown", start);
@@ -494,6 +663,8 @@ if (SpeechRecognition) {
 } else {
   micBtn.disabled = true;
   document.getElementById("voiceStatus").textContent = "Speech recognition unavailable — TTS still active";
+  const listenBtn = document.getElementById("listenBtn");
+  if (listenBtn) listenBtn.disabled = true;
 }
 
 if (window.speechSynthesis) {
@@ -503,15 +674,27 @@ if (window.speechSynthesis) {
 api(`/api/meetings/${meetingId}`)
   .then(async (data) => {
     applySnapshot(data.meeting, state.roster);
-    if (is41bMeeting(data.meeting)) {
+    if (isForecastMeeting(data.meeting)) {
+      await enableForecastVisuals();
+    } else if (is41bMeeting(data.meeting)) {
       await enable41bVisuals();
     }
     return api("/api/org");
   })
   .then((org) => {
     state.roster = org.roster;
-    // For 41 B, present the AI seat with Sofia's human girl appearance + female voice.
-    if (state.mode41b) {
+    if (state.modeForecast) {
+      state.roster = state.roster.map((a) => {
+        if (a.id === "forecast-maya") {
+          return { ...a, photo: state.avatarPoster, voice_gender: "female", join_seat: "you" };
+        }
+        if (a.id === "vp-rd") {
+          return { ...a, join_seat: a.join_seat === "you" ? "" : a.join_seat };
+        }
+        return a;
+      });
+    } else if (state.mode41b) {
+      // For 41 B, present the AI seat with Sofia's human girl appearance + female voice.
       state.roster = state.roster.map((a) => {
         if (a.id === "ea-sofia") {
           return { ...a, photo: state.avatarPoster, voice_gender: "female", join_seat: "you" };
@@ -525,6 +708,7 @@ api(`/api/meetings/${meetingId}`)
     paintSeats();
     paintParticipants();
     paintMessages();
+    updateSenseUI();
     connectWs();
   })
   .catch((err) => toast(String(err.message || err)));

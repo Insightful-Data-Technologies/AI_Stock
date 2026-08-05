@@ -50,8 +50,35 @@
     }
     .gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
     .visual-stage { display: none; }
-    body.mode-41b .visual-stage { display: block; }
-    body.mode-41b .room-layout { grid-template-rows: auto 1fr; }
+    body.mode-41b .visual-stage,
+    body.mode-forecast .visual-stage { display: block; }
+    body.mode-41b .room-layout,
+    body.mode-forecast .room-layout { grid-template-rows: auto 1fr; }
+    .sense-bar {
+      display: none;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 0.45rem 0.9rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(20, 40, 28, 0.55);
+      font-size: 0.86rem;
+    }
+    body.mode-forecast .sense-bar { display: flex; }
+    .sense-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .sense-pill.on {
+      color: #d8f5d0;
+      border-color: rgba(111, 223, 143, 0.55);
+      background: rgba(111, 223, 143, 0.12);
+    }
   </style>
 </head>
 <body>
@@ -76,13 +103,14 @@
       </div>
       <div class="actions">
         <a class="btn btn-ghost" href="/">Org home</a>
+        <a class="btn btn-ghost" href="/meeting-forecast.html">Forecast 1:1</a>
         <a class="btn btn-ghost" href="/meeting-41b.html">Meeting 41 B</a>
         <button class="btn btn-steel" id="escalateBtn" type="button">Escalate to CEO</button>
         <button class="btn btn-ghost" id="endBtn" type="button">End meeting</button>
       </div>
     </header>
 
-    <section class="visual-stage" id="visualStage" aria-label="Meeting 41 B visual stage">
+    <section class="visual-stage" id="visualStage" aria-label="Meeting visual stage">
       <div class="visual-grid">
         <article class="visual-tile" id="meTile">
           <div class="visual-label">אני · המצלמה עלי</div>
@@ -90,10 +118,10 @@
           <div class="visual-empty" id="meCameraEmpty">המצלמה תיפתח אוטומטית</div>
         </article>
         <article class="visual-tile agent-tile" id="agentTile">
-          <div class="visual-label">את · אווטאר אנושי · קול אנושי</div>
+          <div class="visual-label">את · אווטאר תחזית · קול אנושי</div>
           <video id="agentAvatar" playsinline muted loop poster="/static/assets/avatar/agent-girl.png"></video>
           <img id="agentPoster" src="/static/assets/avatar/agent-girl.png" alt="AI human avatar" />
-          <div class="visual-empty" id="agentEmpty">מראה אנושי כמו הבחורה</div>
+          <div class="visual-empty" id="agentEmpty">Maya Forecast · מראה אנושי</div>
         </article>
         <article class="visual-tile" id="shareTile">
           <div class="visual-label">שיתוף מסך</div>
@@ -103,15 +131,22 @@
       </div>
       <div class="visual-controls">
         <button class="btn btn-steel" id="cameraBtn" type="button">Camera on</button>
+        <button class="btn btn-primary" id="listenBtn" type="button">Listen on</button>
         <button class="btn btn-primary" id="shareBtn" type="button">Share screen</button>
         <button class="btn btn-ghost" id="stopShareBtn" type="button" disabled>Stop share</button>
         <label class="btn btn-ghost" style="cursor:pointer;">
           Upload avatar video
           <input id="avatarUpload" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
         </label>
-        <span id="visualStatus" style="color:var(--muted);font-size:0.82rem;">41 B · camera · share · human avatar</span>
+        <span id="visualStatus" style="color:var(--muted);font-size:0.82rem;">Forecast · hear · see</span>
       </div>
     </section>
+
+    <div class="sense-bar" id="senseBar" aria-live="polite">
+      <span class="sense-pill" id="hearPill">לא שומעת עדיין</span>
+      <span class="sense-pill" id="seePill">לא רואה עדיין</span>
+      <span id="senseDetail" style="color:var(--muted)">הפעל Listen + Camera לתחזית</span>
+    </div>
 
     <section class="room-layout">
       <aside class="side">

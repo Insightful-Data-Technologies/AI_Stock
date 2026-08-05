@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forecast 1:1 — Hear &amp; See</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", "Avenir Next", sans-serif;
+      color: #f3e6d0;
+      background: radial-gradient(700px 420px at 20% 0%, #1a3a2a, transparent 60%), #0b120e;
+    }
+    .card {
+      width: min(420px, calc(100% - 2rem));
+      padding: 1.4rem 1.25rem;
+      border-radius: 16px;
+      border: 1px solid rgba(201, 162, 74, 0.35);
+      background: linear-gradient(165deg, #163226, #0e1a14);
+      text-align: center;
+    }
+    h1 { margin: 0 0 0.5rem; font-size: 1.35rem; }
+    p { margin: 0 0 1rem; color: #c4b49a; line-height: 1.45; }
+    .err { color: #ff9b9b; margin-top: 0.75rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>תחזית · פגישה אחד על אחד</h1>
+    <p>פותח חדר שבו אני שומע אותך (מיקרופון) ורואה אותך (מצלמה).</p>
+    <div id="status">מתחבר…</div>
+    <div class="err" id="err"></div>
+  </div>
+  <script>
+    (async () => {
+      const status = document.getElementById("status");
+      const err = document.getElementById("err");
+      try {
+        const res = await fetch("/api/meetings/forecast/ensure", { method: "POST" });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const id = data.meeting?.id;
+        if (!id) throw new Error("No meeting id");
+        status.textContent = "עובר לחדר התחזית…";
+        location.replace(`/meeting/${id}`);
+      } catch (e) {
+        status.textContent = "נכשל";
+        err.textContent = String(e.message || e);
+      }
+    })();
+  </script>
+</body>
+</html>
