@@ -30,6 +30,8 @@ from org_platform.content_studio.llm import DEFAULT_DRAFT, TONES, content_studio
 from org_platform.publish.env_loader import load_dotenv
 from org_platform.publish.godaddy import GoDaddyError
 from org_platform.publish.publisher import build_publish_plan, credentials_status, run_publish
+from org_platform.site_editor import db as site_db
+from org_platform.site_editor import store as site_store
 from org_platform.store.platform import get_platform
 
 # Load /workspace/.env (or cwd .env) so GODADDY_* keys are available when present.
@@ -1301,6 +1303,63 @@ def dashboard_page() -> FileResponse:
 def content_studio_page() -> FileResponse:
     """Writing + Translate studio — Azure rewrite with safe fallbacks."""
     return FileResponse(STATIC_DIR / "content-studio.html")
+
+
+@app.get("/site-editor")
+@app.get("/site-editor.html")
+@app.get("/cms")
+def site_editor_page() -> FileResponse:
+    """Site Editor CMS — manager workspace; SQL failures never crash the page."""
+    return FileResponse(STATIC_DIR / "site-editor.html")
+
+
+class SiteTicketRequest(BaseModel):
+    title: str = "Untitled ticket"
+    body: str = ""
+    priority: str = "P2"
+
+
+class SiteDocumentRequest(BaseModel):
+    title: str = "Untitled"
+    content: str = ""
+
+
+@app.get("/api/site-editor/db-status")
+def site_editor_db_status() -> Dict[str, Any]:
+    # Structured status only — never dump raw SQLAlchemy InterfaceError to HTML.
+    return site_db.probe_database()
+
+
+@app.get("/api/site-editor/tickets")
+def site_editor_tickets() -> Dict[str, Any]:
+    return {"tickets": site_store.list_tickets()}
+
+
+@app.post("/api/site-editor/tickets")
+def site_editor_create_ticket(body: SiteTicketRequest) -> Dict[str, Any]:
+    ticket = site_store.create_ticket(body.title, body.body, body.priority)
+    return {"ok": True, "ticket": ticket}
+
+
+@app.get("/api/site-editor/documents")
+def site_editor_documents() -> Dict[str, Any]:
+    return {"documents": site_store.list_documents()}
+
+
+@app.post("/api/site-editor/documents")
+def site_editor_create_document(body: SiteDocumentRequest) -> Dict[str, Any]:
+    doc = site_store.create_md_document(body.title, body.content)
+    return {"ok": True, "document": doc}
+
+
+@app.get("/api/site-editor/activity")
+def site_editor_activity() -> Dict[str, Any]:
+    return {"activity": site_store.list_activity()}
+
+
+@app.get("/api/site-editor/project")
+def site_editor_project() -> Dict[str, Any]:
+    return {"ok": True, "project": site_store.project_details()}
 
 
 class ContentStudioRequest(BaseModel):

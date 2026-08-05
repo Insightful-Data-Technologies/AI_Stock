@@ -12,8 +12,8 @@ from pydantic import BaseModel
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HUB_PORT = int(os.environ.get("HUB_PORT", "4720"))
-# Accept either Launch Center port the user already uses.
-ALLOWED_PORTS = [4720, 4600]
+# Accept Launch Center ports the user already uses, plus CMS port 8511.
+ALLOWED_PORTS = [4720, 4600, 8511]
 
 os.environ.setdefault("ORG_DATA_DIR", os.environ.get("ORG_DATA_DIR", "/tmp/org_platform_data_launch"))
 Path(os.environ["ORG_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
@@ -98,6 +98,15 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "url": f"{base}/content-studio",
             "color": "yellow",
         },
+        {
+            "id": "site-editor",
+            "title": "Site Editor CMS",
+            "port": port,
+            "path": "/site-editor",
+            "on": True,
+            "url": f"{base}/site-editor",
+            "color": "yellow",
+        },
     ]
 
 
@@ -106,6 +115,8 @@ def _launch_path(key: str) -> str:
         return "/dashboard"
     if key in {"content_studio", "contentstudio"}:
         return "/content-studio"
+    if key in {"site_editor", "siteeditor", "cms"}:
+        return "/site-editor"
     return "/meeting-room"
 
 
@@ -159,6 +170,9 @@ def launch_app(body: LaunchRequest, request: Request) -> Dict[str, Any]:
         "meeting_room",
         "content_studio",
         "contentstudio",
+        "site_editor",
+        "siteeditor",
+        "cms",
     }:
         raise HTTPException(400, f"Unknown app id: {body.id}")
     path = _launch_path(key)

@@ -267,6 +267,16 @@
         launchKey: "content_studio",
         yellow: true,
       },
+      {
+        id: "site-editor",
+        tab: "builders",
+        title: "Site Editor CMS",
+        subtitle: "Operations · tickets · MD docs",
+        description: "Manager CMS — Operations/Company Core without SQL sa2 crash",
+        path: "/site-editor",
+        launchKey: "site_editor",
+        yellow: true,
+      },
     ];
 
     let activeTab = "meetings";
@@ -299,6 +309,7 @@
           a.id === "general-dashboard" ||
           a.id === "meeting-room" ||
           a.id === "content-studio" ||
+          a.id === "site-editor" ||
           activeTab === "all" ||
           a.tab === activeTab
       );
