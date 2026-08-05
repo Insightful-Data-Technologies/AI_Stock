@@ -51,15 +51,8 @@ def _base(request: Optional[Request] = None) -> str:
 def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
     port = _request_port(request)
     base = _base(request)
+    # Everything that used to show Off · 3000 (red) is forced On on this port.
     return [
-        {
-            "id": "meeting-room",
-            "title": "Meeting Room",
-            "port": port,
-            "path": "/meeting-room",
-            "on": True,
-            "url": f"{base}/meeting-room",
-        },
         {
             "id": "general-dashboard",
             "title": "General dashboard",
@@ -67,6 +60,34 @@ def _app_rows(request: Optional[Request] = None) -> List[Dict[str, Any]]:
             "path": "/dashboard",
             "on": True,
             "url": f"{base}/dashboard",
+            "color": "yellow",
+        },
+        {
+            "id": "meeting-room",
+            "title": "Meeting Room",
+            "port": port,
+            "path": "/meeting-room",
+            "on": True,
+            "url": f"{base}/meeting-room",
+            "color": "yellow",
+        },
+        {
+            "id": "one-on-one",
+            "title": "One on One Meeting",
+            "port": port,
+            "path": "/meeting-room",
+            "on": True,
+            "url": f"{base}/meeting-room",
+            "color": "green",
+        },
+        {
+            "id": "war-room",
+            "title": "Multi-Agent War Room",
+            "port": port,
+            "path": "/meeting-room",
+            "on": True,
+            "url": f"{base}/meeting-room",
+            "color": "green",
         },
     ]
 
